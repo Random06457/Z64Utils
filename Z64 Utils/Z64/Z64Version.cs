@@ -36,6 +36,7 @@ namespace Z64
         OotUSAMq,
         OotEuropeMqDbg,
         OotEuropeGC,
+        OotEuropeGCDbg,
         OotEuropeMq,
         OotJapanGcZeldaCollection,
     }
@@ -117,6 +118,7 @@ namespace Z64
         {
             //source : https://wiki.cloudmodding.com/mm/Build_Dates
 
+            // TODO : split team/date
             //mm
             { "zelda@srd44 00-03-31 02:22:11", Z64VersionEnum.MmJapan10 },
             { "zelda@srd44 00-04-04 09:34:16", Z64VersionEnum.MmJapan11 },
@@ -138,6 +140,7 @@ namespace Z64
             { "zelda@srd022j   02-12-19 14:05:42", Z64VersionEnum.OotUSAMq },
             { "zelda@srd022j   03-02-21 00:16:31", Z64VersionEnum.OotEuropeMqDbg },
             { "zelda@srd022j   03-02-21 20:12:23", Z64VersionEnum.OotEuropeGC },
+            { "zelda@srd022j   03-02-21 00:49:18", Z64VersionEnum.OotEuropeGCDbg },
             { "zelda@srd022j   03-02-21 20:37:19", Z64VersionEnum.OotEuropeMq },
             { "zelda@srd022j   03-10-08 21:53:00", Z64VersionEnum.OotJapanGcZeldaCollection },
         };

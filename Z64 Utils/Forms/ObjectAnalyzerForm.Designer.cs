@@ -45,6 +45,7 @@
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.ucodeTextBox = new System.Windows.Forms.TextBox();
             this.tabPage3 = new System.Windows.Forms.TabPage();
+            this.pic_texture = new Z64.Forms.TextureBox();
             this.tabPage4 = new System.Windows.Forms.TabPage();
             this.listView_vtx = new System.Windows.Forms.ListView();
             this.columnHeader4 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -66,22 +67,23 @@
             this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.findDlistsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.analyzeDlistsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.importJSONToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.exportJSONToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.resetToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.settingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.disassemblySettingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.importJSONToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.exportJSONToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-            this.pic_texture = new Z64.Forms.TextureBox();
+            this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.exportCToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.tabControl1.SuspendLayout();
             this.tabPage2.SuspendLayout();
             this.tabPage3.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pic_texture)).BeginInit();
             this.tabPage4.SuspendLayout();
             this.tabPage5.SuspendLayout();
             this.contextMenuStrip1.SuspendLayout();
             this.menuStrip1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pic_texture)).BeginInit();
             this.SuspendLayout();
             // 
             // tabControl1
@@ -148,6 +150,20 @@
             this.tabPage3.TabIndex = 2;
             this.tabPage3.Text = "texture";
             this.tabPage3.UseVisualStyleBackColor = true;
+            // 
+            // pic_texture
+            // 
+            this.pic_texture.AlphaTileSize = 10;
+            this.pic_texture.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.pic_texture.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+            this.pic_texture.Location = new System.Drawing.Point(6, 6);
+            this.pic_texture.Name = "pic_texture";
+            this.pic_texture.Size = new System.Drawing.Size(622, 461);
+            this.pic_texture.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.pic_texture.TabIndex = 0;
+            this.pic_texture.TabStop = false;
             // 
             // tabPage4
             // 
@@ -308,6 +324,7 @@
             // menuStrip1
             // 
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.fileToolStripMenuItem,
             this.toolsToolStripMenuItem,
             this.settingsToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
@@ -342,6 +359,20 @@
             this.analyzeDlistsToolStripMenuItem.Text = "Analyze Dlists";
             this.analyzeDlistsToolStripMenuItem.Click += new System.EventHandler(this.analyzeDlistsToolStripMenuItem_Click);
             // 
+            // importJSONToolStripMenuItem
+            // 
+            this.importJSONToolStripMenuItem.Name = "importJSONToolStripMenuItem";
+            this.importJSONToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.importJSONToolStripMenuItem.Text = "Import JSON";
+            this.importJSONToolStripMenuItem.Click += new System.EventHandler(this.importJSONToolStripMenuItem_Click);
+            // 
+            // exportJSONToolStripMenuItem
+            // 
+            this.exportJSONToolStripMenuItem.Name = "exportJSONToolStripMenuItem";
+            this.exportJSONToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.exportJSONToolStripMenuItem.Text = "Export JSON";
+            this.exportJSONToolStripMenuItem.Click += new System.EventHandler(this.exportJSONToolStripMenuItem_Click);
+            // 
             // resetToolStripMenuItem
             // 
             this.resetToolStripMenuItem.Name = "resetToolStripMenuItem";
@@ -364,37 +395,24 @@
             this.disassemblySettingsToolStripMenuItem.Text = "Disassembly Settings";
             this.disassemblySettingsToolStripMenuItem.Click += new System.EventHandler(this.disassemblySettingsToolStripMenuItem_Click);
             // 
-            // importJSONToolStripMenuItem
-            // 
-            this.importJSONToolStripMenuItem.Name = "importJSONToolStripMenuItem";
-            this.importJSONToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.importJSONToolStripMenuItem.Text = "Import JSON";
-            this.importJSONToolStripMenuItem.Click += new System.EventHandler(this.importJSONToolStripMenuItem_Click);
-            // 
-            // exportJSONToolStripMenuItem
-            // 
-            this.exportJSONToolStripMenuItem.Name = "exportJSONToolStripMenuItem";
-            this.exportJSONToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.exportJSONToolStripMenuItem.Text = "Export JSON";
-            this.exportJSONToolStripMenuItem.Click += new System.EventHandler(this.exportJSONToolStripMenuItem_Click);
-            // 
             // openFileDialog1
             // 
             this.openFileDialog1.FileName = "openFileDialog1";
             // 
-            // pic_texture
+            // fileToolStripMenuItem
             // 
-            this.pic_texture.AlphaTileSize = 10;
-            this.pic_texture.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.pic_texture.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
-            this.pic_texture.Location = new System.Drawing.Point(6, 6);
-            this.pic_texture.Name = "pic_texture";
-            this.pic_texture.Size = new System.Drawing.Size(622, 461);
-            this.pic_texture.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.pic_texture.TabIndex = 0;
-            this.pic_texture.TabStop = false;
+            this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.exportCToolStripMenuItem});
+            this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
+            this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
+            this.fileToolStripMenuItem.Text = "File";
+            // 
+            // exportCToolStripMenuItem
+            // 
+            this.exportCToolStripMenuItem.Name = "exportCToolStripMenuItem";
+            this.exportCToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.exportCToolStripMenuItem.Text = "Export C";
+            this.exportCToolStripMenuItem.Click += new System.EventHandler(this.exportCToolStripMenuItem_Click);
             // 
             // ObjectAnalyzerForm
             // 
@@ -412,12 +430,12 @@
             this.tabPage2.ResumeLayout(false);
             this.tabPage2.PerformLayout();
             this.tabPage3.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.pic_texture)).EndInit();
             this.tabPage4.ResumeLayout(false);
             this.tabPage5.ResumeLayout(false);
             this.contextMenuStrip1.ResumeLayout(false);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pic_texture)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -459,5 +477,7 @@
         private System.Windows.Forms.ToolStripMenuItem exportJSONToolStripMenuItem;
         private System.Windows.Forms.SaveFileDialog saveFileDialog1;
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
+        private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem exportCToolStripMenuItem;
     }
 }

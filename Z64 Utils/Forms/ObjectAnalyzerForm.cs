@@ -228,5 +228,82 @@ namespace Z64.Forms
                 UpdateMap();
             }
         }
+
+        private void exportCToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            saveFileDialog1.FileName = "";
+            saveFileDialog1.Filter = Filters.C;
+            if (saveFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                StringWriter sw = new StringWriter();
+                foreach (var entry in _obj.Entries)
+                {
+                    int entryOff = _obj.OffsetOf(entry);
+                    switch (entry.GetEntryType())
+                    {
+                        case Z64Object.EntryType.DList:
+                            {
+                                sw.WriteLine($"Gfx dlist_{entryOff:X8}[] = \r\n{{");
+                                bool oldStatic = RDPDisassembler.Configuration.Static;
+
+                                RDPDisassembler.Configuration.Static = true;
+                                RDPDisassembler dis = new RDPDisassembler(entry.GetData(), new SegmentedAddress(_segment, _obj.OffsetOf(entry)).VAddr);
+                                dis.Disassemble().ForEach(l => sw.WriteLine($"    {l}")); ;
+
+                                RDPDisassembler.Configuration.Static = oldStatic;
+                                sw.WriteLine("};");
+                                break;
+                            }
+                        case Z64Object.EntryType.Vertex:
+                            {
+                                sw.WriteLine($"Vtx_t vertices_{entryOff:X8}[] = \r\n{{");
+
+                                var vtx = (Z64Object.VertexHolder)entry;
+                                vtx.Vertices.ForEach(v => sw.WriteLine($"    {{ {v.X}, {v.Y}, {v.Z}, 0x{v.Flag:X4}, {v.TexX}, {v.TexY}, {v.R}, {v.G}, {v.B}, {v.A} }},"));
+
+                                sw.WriteLine("};");
+                                break;
+                            }
+                        case Z64Object.EntryType.Texture:
+                            {
+                                sw.WriteLine($"u8 tex_{entryOff:X8}[] = \r\n{{");
+
+                                var tex = entry.GetData();
+                                for (int i = 0; i < tex.Length; i+= 16)
+                                {
+                                    sw.Write("    ");
+                                    for (int j = 0; j < 16 && i + j < tex.Length; j++)
+                                        sw.Write($"0x{tex[i + j]:X2}, ");
+                                    sw.Write("\r\n");
+                                }
+
+                                sw.WriteLine("};");
+                                break;
+                            }
+                        case Z64Object.EntryType.Unknown:
+                            {
+                                sw.WriteLine($"u8 unk_{entryOff:X8}[] = \r\n{{");
+
+                                var bytes = entry.GetData();
+                                for (int i = 0; i < bytes.Length; i += 16)
+                                {
+                                    sw.Write("    ");
+                                    for (int j = 0; j < 16 && i+j < bytes.Length; j++)
+                                        sw.Write($"0x{bytes[i + j]:X2}, ");
+                                    sw.Write("\r\n");
+                                }
+
+                                sw.WriteLine("};");
+                                break;
+                            }
+                        default: throw new Exception("Invalid Entry Type");
+                    }
+
+                    sw.Write("\r\n");
+                }
+
+                File.WriteAllText(saveFileDialog1.FileName, sw.ToString());
+            }
+        }
     }
 }

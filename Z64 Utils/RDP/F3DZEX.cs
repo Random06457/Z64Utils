@@ -453,8 +453,8 @@ namespace RDP
                 FixedPoint ult = new FixedPoint(br.ReadInt32(16), 10, 5, true);
                 br.ReadByte(); //F1
                 br.SkipBits(3*8);
-                FixedPoint dsdx = new FixedPoint(br.ReadInt32(16), 10, 5, true);
-                FixedPoint dtdy = new FixedPoint(br.ReadInt32(16), 10, 5, true);
+                FixedPoint dsdx = new FixedPoint(br.ReadInt32(16), 5, 10, true);
+                FixedPoint dtdy = new FixedPoint(br.ReadInt32(16), 5, 10, true);
 
                 args.Add("lrx", lrx);
                 args.Add("lry", lry);
@@ -484,8 +484,8 @@ namespace RDP
                 FixedPoint ult = new FixedPoint(br.ReadInt32(16), 10, 5, true);
                 br.ReadByte(); //F1
                 br.SkipBits(3*8);
-                FixedPoint dsdx = new FixedPoint(br.ReadInt32(16), 10, 5, true);
-                FixedPoint dtdy = new FixedPoint(br.ReadInt32(16), 10, 5, true);
+                FixedPoint dsdx = new FixedPoint(br.ReadInt32(16), 5, 10, true);
+                FixedPoint dtdy = new FixedPoint(br.ReadInt32(16), 5, 10, true);
 
                 args.Add("lrx", lrx);
                 args.Add("lry", lry);

@@ -13,5 +13,6 @@ namespace Common
         public const string N64 = "N64 Rom(*.n64; *.z64)|*.n64;*.z64";
         public const string BIN = "Bin Files (*.bin)|*.bin";
         public const string JSON = "JSON Files (*.json)|*.json";
+        public const string C = "C Files (*.c)|*.c";
     }
 }

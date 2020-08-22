@@ -200,6 +200,8 @@
       <DependentUpon>TextureViewer.cs</DependentUpon>
     </Compile>
     <Compile Include="RDP\F3DZEXCmd.cs" />
+    <Compile Include="Z64\Elf32.cs" />
+    <Compile Include="Z64\Z64Module.cs" />
     <Compile Include="Z64\Z64Version.cs" />
     <Compile Include="Z64\Z64Game.cs" />
     <Compile Include="Z64\Z64Memory.cs" />
@@ -311,7 +313,6 @@
     <None Include="Resources\cube.png" />
     <None Include="Resources\memory.png" />
     <None Include="Resources\multiple-files.png" />
-    <Content Include="truth.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

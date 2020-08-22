@@ -18,7 +18,6 @@ namespace Z64
         [STAThread]
         static void Main()
         {
-
             Thread.CurrentThread.CurrentCulture = CultureInfo.CreateSpecificCulture("en-US");
 
             Z64Version.LoadRessources();   

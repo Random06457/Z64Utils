@@ -434,11 +434,11 @@ namespace RDP
                 case F3DZEX.OpCodeID.G_VTX: return $"gsSPVertex({DisAddress(info.Args["vaddr"])}, {info.Args["numv"]}, {info.Args["vbidx"]})";
                 case F3DZEX.OpCodeID.G_MODIFYVTX: return $"gsSPModifyVertex({info.Args["where"]}, {info.Args["vbidx"]}, {info.Args["val"]})";
                 case F3DZEX.OpCodeID.G_CULLDL: return $"gsSPCullDisplayList({info.Args["vfirst"]}, {info.Args["vlast"]})";
-                case F3DZEX.OpCodeID.G_BRANCH_Z: return $"gsSPBranchLessZraw({DisAddress(info.Args["newdl"])}, {info.Args["vbidx"]}, 0x{info.Args["zval"]:X})";
+                case F3DZEX.OpCodeID.G_BRANCH_Z: return $"gsSPBranchLessZraw({DisAddress(_wordHi)}, {info.Args["vbidx"]}, 0x{info.Args["zval"]:X})";
                 case F3DZEX.OpCodeID.G_TRI1: return $"gsSP1Triangle({info.Args["v0"]}, {info.Args["v1"]}, {info.Args["v2"]}, 0)";
                 case F3DZEX.OpCodeID.G_TRI2: return $"gsSP2Triangles({info.Args["v00"]}, {info.Args["v01"]}, {info.Args["v02"]}, 0, {info.Args["v10"]}, {info.Args["v11"]}, {info.Args["v12"]}, 0)";
                 case F3DZEX.OpCodeID.G_QUAD: return $"gsSPQuadrangle({info.Args["v0"]}, {info.Args["v1"]}, {info.Args["v2"]}, {info.Args["v3"]}, 0)";
-                case F3DZEX.OpCodeID.G_DMA_IO: return $"gsSPDma_io({info.Args["flag"]}, 0x{info.Args["dmem"]:X}, 0x{ info.Args["dram"]:X}, 0x{info.Args["size"]:X})";
+                case F3DZEX.OpCodeID.G_DMA_IO: return $"gsSPDma_io(0x{info.Args["flag"]:X}, 0x{info.Args["dmem"]:X}, 0x{ info.Args["dram"]:X}, 0x{info.Args["size"]:X})";
                 case F3DZEX.OpCodeID.G_TEXTURE: return $"gsSPTexture(0x{info.Args["scaleS"]:X}, 0x{info.Args["scaleT"]:X}, {info.Args["level"]}, {(RDPEnum.G_TX_tile)info.Args["tile"]}, {info.Args["on"]})";
                 case F3DZEX.OpCodeID.G_POPMTX: return $"gsSPPopMatrixN(G_MTX_MODELVIEW, {info.Args["num"]})";
                 case F3DZEX.OpCodeID.G_GEOMETRYMODE:

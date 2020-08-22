@@ -357,7 +357,6 @@ namespace Z64
                     progressCalback?.Invoke(0, $"Processing files... [{i}/?] \"{GetFileName(entry.VRomStart)}\"");
                 else
                     progressCalback?.Invoke((float)i / filecount, $"Processing files... [{i}/{filecount}] \"{GetFileName(entry.VRomStart)}\"");
-
                 var file = entry.ToFile(this);
                 _files.Add(file);
                 if (entry.Valid() && entry.Exist())

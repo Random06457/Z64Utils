@@ -276,7 +276,8 @@ namespace N64
                 ret[t * 4 + 0] = b;
                 ret[t * 4 + 1] = b;
                 ret[t * 4 + 2] = b;
-                ret[t * 4 + 3] = b;
+                ret[t * 4 + 3] = 0xFF;
+                //ret[t * 4 + 3] = b;
 
                 b = (byte)((inBuff[t] & 0xF) * 0x11);
                 ret[t * 4 + 4] = b;
