@@ -187,7 +187,7 @@ namespace Z64.Forms
             var dlist = GetCurrentHolder<Z64Object.DListHolder>();
 
             DListViewerForm.OpenInstance(_game);
-            DListViewerForm.Instance.SetSegment(_segment, RDPRenderer.Segment.FromBytes(_data));
+            DListViewerForm.Instance.SetSegment(_segment, RDPRenderer.Segment.FromBytes(_data, "[Selected Dlist]"));
             DListViewerForm.Instance.SetAddress(new SegmentedAddress(_segment, _obj.OffsetOf(dlist)).VAddr);
         }
 

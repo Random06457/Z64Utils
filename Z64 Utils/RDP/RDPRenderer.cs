@@ -27,11 +27,12 @@ namespace RDP
 
             public byte[] Data { get; set; }
             public uint Address { get; set; }
+            public string Label { get; set; }
 
             public bool IsVram() => Data == null;
 
-            public static Segment FromVram(uint addr) => new Segment() { Data = null, Address = addr };
-            public static Segment FromBytes(byte[] data) => new Segment() { Data = data, Address = 0 };
+            public static Segment FromVram(uint addr, string label) => new Segment() { Data = null, Address = addr, Label = label, };
+            public static Segment FromBytes(byte[] data, string label) => new Segment() { Data = data, Address = 0, Label = label, };
         }
 
         public Segment[] Segments { get; private set; }
@@ -68,6 +69,8 @@ namespace RDP
             _started = false;
             _game = game;
             Segments = new Segment[Segment.COUNT];
+            for (int i = 0; i < Segments.Length; i++)
+                Segments[i] = Segment.FromVram(0, "[NULL]");
             CurrentConfig = cfg;
         }
         public void Start(uint vaddr)
@@ -166,9 +169,25 @@ namespace RDP
         }
 
         
+        
         private byte[] ReadBytes(uint vaddr, int count)
         {
             SegmentedAddress addr = new SegmentedAddress(vaddr);
+            string path = $"{vaddr:X8}";
+
+            int resolveCount = 0;
+            while (addr.Segmented && Segments[addr.SegmentId].IsVram() && addr.VAddr != 0)
+            {
+                if (resolveCount > 16)
+                    throw new Exception($"Could not resolve address 0x{vaddr:X}. Path: {path}");
+
+                path += $" -> {Segments[addr.SegmentId].Label}+0x{addr.SegmentOff:X}";
+                addr = new SegmentedAddress(Segments[addr.SegmentId].Address + addr.SegmentOff);
+                resolveCount++;
+            }
+
+            if (addr.VAddr == 0)
+                throw new Exception($"Could not read 0x{count:X} bytes at address {path}");
 
             if (!addr.Segmented)
             {
@@ -185,7 +204,7 @@ namespace RDP
                     }
                     catch (Z64MemoryException ex)
                     {
-                        throw new Exception($"Could not read 0x{count:X} bytes at address 0x{vaddr:X8} (pointing to address 0x{(seg.Address + addr.SegmentOff):X8})");
+                        throw new Exception($"Could not read 0x{count:X} bytes at address {path}");
                     }
                 }
                 else if (addr.SegmentOff + count <= seg.Data.Length)
@@ -196,7 +215,7 @@ namespace RDP
                 }
             }
 
-            throw new Exception($"Could not read 0x{count:X} bytes at address 0x{vaddr:X8}");
+            throw new Exception($"Could not read 0x{count:X} bytes at address {path}");
         }
         
         private void DecodeTexIfRequired()

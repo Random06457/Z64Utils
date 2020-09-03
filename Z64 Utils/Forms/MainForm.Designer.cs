@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem2 = new System.Windows.Forms.ListViewItem(new string[] {
             "",
             "00000000-00000000",
             "00000000-00000000",
@@ -145,7 +145,7 @@
             this.listView_files.FullRowSelect = true;
             this.listView_files.HideSelection = false;
             this.listView_files.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem1});
+            listViewItem2});
             this.listView_files.Location = new System.Drawing.Point(6, 53);
             this.listView_files.MultiSelect = false;
             this.listView_files.Name = "listView_files";
@@ -217,6 +217,7 @@
             // 
             // toolStripButton1
             // 
+            this.toolStripButton1.AutoToolTip = false;
             this.toolStripButton1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.openToolStripMenuItem,
             this.exportFSToolStripMenuItem,
@@ -231,7 +232,7 @@
             // 
             this.openToolStripMenuItem.Image = global::Z64.Properties.Resources.open;
             this.openToolStripMenuItem.Name = "openToolStripMenuItem";
-            this.openToolStripMenuItem.Size = new System.Drawing.Size(123, 22);
+            this.openToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.openToolStripMenuItem.Text = "Open";
             this.openToolStripMenuItem.Click += new System.EventHandler(this.OpenToolStripMenuItem_Click);
             // 
@@ -239,7 +240,7 @@
             // 
             this.exportFSToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("exportFSToolStripMenuItem.Image")));
             this.exportFSToolStripMenuItem.Name = "exportFSToolStripMenuItem";
-            this.exportFSToolStripMenuItem.Size = new System.Drawing.Size(123, 22);
+            this.exportFSToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.exportFSToolStripMenuItem.Text = "Export FS";
             this.exportFSToolStripMenuItem.Click += new System.EventHandler(this.ExportFSToolStripMenuItem_Click);
             // 
@@ -247,12 +248,13 @@
             // 
             this.saveToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("saveToolStripMenuItem.Image")));
             this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
-            this.saveToolStripMenuItem.Size = new System.Drawing.Size(123, 22);
+            this.saveToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.saveToolStripMenuItem.Text = "Save As";
             this.saveToolStripMenuItem.Click += new System.EventHandler(this.SaveToolStripMenuItem_Click);
             // 
             // toolStripDropDownButton1
             // 
+            this.toolStripDropDownButton1.AutoToolTip = false;
             this.toolStripDropDownButton1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.openObjectToolStripMenuItem,
             this.f3DEXDisassemblerToolStripMenuItem,
@@ -298,6 +300,7 @@
             // 
             // toolStripDropDownButton2
             // 
+            this.toolStripDropDownButton2.AutoToolTip = false;
             this.toolStripDropDownButton2.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
             this.toolStripDropDownButton2.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.checkNewReleasesToolStripMenuItem,

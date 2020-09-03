@@ -148,6 +148,12 @@
     <Compile Include="Forms\RenderSettingsForm.Designer.cs">
       <DependentUpon>RenderSettingsForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\SegmentEditForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\SegmentEditForm.Designer.cs">
+      <DependentUpon>SegmentEditForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\TextForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -200,8 +206,6 @@
       <DependentUpon>TextureViewer.cs</DependentUpon>
     </Compile>
     <Compile Include="RDP\F3DZEXCmd.cs" />
-    <Compile Include="Z64\Elf32.cs" />
-    <Compile Include="Z64\Z64Module.cs" />
     <Compile Include="Z64\Z64Version.cs" />
     <Compile Include="Z64\Z64Game.cs" />
     <Compile Include="Z64\Z64Memory.cs" />
@@ -247,6 +251,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\RenderSettingsForm.resx">
       <DependentUpon>RenderSettingsForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\SegmentEditForm.resx">
+      <DependentUpon>SegmentEditForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\TextForm.resx">
       <DependentUpon>TextForm.cs</DependentUpon>

@@ -47,62 +47,18 @@ namespace Z64.Forms
         }
         public void SetSegment(RDPRenderer.Segment seg)
         {
-            addressValue.ForeColor = Color.Black;
-            importFileButton.ForeColor = Color.Black;
-            dmaFileButton.ForeColor = Color.Black;
-
-            if (seg.IsVram())
-            {
-                addressValue.Text = seg.Address.ToString("X8");
-                addressValue.ForeColor = Color.Green;
-            }
-            else
-            {
-                importFileButton.ForeColor = Color.Green;
-                dmaFileButton.ForeColor = Color.Green;
-            }
+            label1.Text = seg.Label;
         }
 
         private void importFileButton_Click(object sender, EventArgs e)
         {
-            openFileDialog1.FileName = "";
-            openFileDialog1.Filter = Filters.ALL;
-            if (openFileDialog1.ShowDialog() == DialogResult.OK)
-            {
-                SegmentChanged?.Invoke(this, RDPRenderer.Segment.FromBytes(File.ReadAllBytes(openFileDialog1.FileName)));
-
-                addressValue.ForeColor = Color.Black;
-                importFileButton.ForeColor = Color.Green;
-                dmaFileButton.ForeColor = Color.Black;
-            }
-        }
-
-
-        private void dmaFileButton_Click(object sender, EventArgs e)
-        {
-            DmaFileSelectForm form = new DmaFileSelectForm(_game);
+            SegmentEditForm form = new SegmentEditForm(_game);
+            form.Text += " " + SegmentID;
             if (form.ShowDialog() == DialogResult.OK)
             {
-                SegmentChanged?.Invoke(this, RDPRenderer.Segment.FromBytes(form.SelectedFile.Data));
-
-                addressValue.ForeColor = Color.Black;
-                importFileButton.ForeColor = Color.Black;
-                dmaFileButton.ForeColor = Color.Green;
+                SetSegment(form.ResultSegment);
+                SegmentChanged?.Invoke(this, form.ResultSegment);
             }
-        }
-
-        private void addressValue_Validated(object sender, EventArgs e)
-        {
-            SegmentChanged?.Invoke(this, RDPRenderer.Segment.FromVram(uint.Parse(addressValue.Text, NumberStyles.HexNumber)));
-
-            addressValue.ForeColor = Color.Green;
-            importFileButton.ForeColor = Color.Black;
-            dmaFileButton.ForeColor = Color.Black;
-        }
-
-        private void addressValue_Validating(object sender, CancelEventArgs e)
-        {
-            e.Cancel = !uint.TryParse(addressValue.Text, NumberStyles.HexNumber, new CultureInfo("en-US"), out uint result);
         }
     }
 }
