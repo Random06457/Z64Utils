@@ -67,6 +67,7 @@ namespace Z64.Forms
                     _dmaFileName = _game.GetFileName(form.SelectedFile.VRomStart);
                     ResultSegment = RDPRenderer.Segment.FromBytes(form.SelectedFile.Data, _dmaFileName);
                     button1.ForeColor = Color.Green;
+                    okBtn.Enabled = _dmaFileName != null;
                 }
             }
             else
@@ -78,6 +79,7 @@ namespace Z64.Forms
                     _fileName = openFileDialog1.FileName;
                     ResultSegment = RDPRenderer.Segment.FromBytes(File.ReadAllBytes(_fileName), Path.GetFileName(_fileName));
                     button1.ForeColor = Color.Green;
+                    okBtn.Enabled = _fileName != null;
                 }
             }
         }
