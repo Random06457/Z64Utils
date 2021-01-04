@@ -431,7 +431,7 @@ namespace Z64
                         if ((jointIndicesSize % 6) != 0)
                         {
                             byte[] possiblePadding = new byte[jointIndicesSize % 6];
-                            Buffer.BlockCopy(data, (int)(jointIndicesSeg.SegmentOff + jointIndicesSize - (jointIndicesSize % 2)),
+                            Buffer.BlockCopy(data, (int)(jointIndicesSeg.SegmentOff + jointIndicesSize - (jointIndicesSize % 6)),
                                 possiblePadding, 0, jointIndicesSize % 6);
                             // if assumed struct padding is nonzero, consider invalid
                             if (possiblePadding.Any(b => b != 0))
