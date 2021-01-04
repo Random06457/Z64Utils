@@ -218,7 +218,7 @@ namespace Z64
             {
                 Raw = data;
                 if ((data.Length % 4) != 0)
-                    throw new Z64ObjectException($"Invalid data size (0x{data.Length:X} should be a multiple of 4");
+                    throw new Z64ObjectException($"Invalid data size (0x{data.Length:X}) should be a multiple of 4");
 
                 LimbSegments = new SegmentedAddress[data.Length / 4];
                 for (int i = 0; i < data.Length/4; i++)
@@ -336,7 +336,7 @@ namespace Z64
             {
                 Raw = data;
                 if ((data.Length % 2) != 0)
-                    throw new Z64ObjectException($"Invalid data size (0x{data.Length:X} should be a multiple of 2");
+                    throw new Z64ObjectException($"Invalid data size (0x{data.Length:X}) should be a multiple of 2");
 
                 FrameData = new short[data.Length / 2];
                 for (int i = 0; i < data.Length / 2; i++)
@@ -371,7 +371,7 @@ namespace Z64
             {
                 Raw = data;
                 if ((data.Length % 6) != 0)
-                    throw new Z64ObjectException($"Invalid data size (0x{data.Length:X} should be a multiple of 6");
+                    throw new Z64ObjectException($"Invalid data size (0x{data.Length:X}) should be a multiple of 6");
 
                 JointIndices = new JointIndex[data.Length / 6];
                 for (int i = 0; i < data.Length / 6; i++)
