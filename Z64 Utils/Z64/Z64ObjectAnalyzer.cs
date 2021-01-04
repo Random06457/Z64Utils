@@ -412,10 +412,35 @@ namespace Z64
                     if (frameDataSeg.SegmentId == segmentId && jointIndicesSeg.SegmentId == segmentId &&
                         frameDataSeg.SegmentOff < data.Length && jointIndicesSeg.SegmentOff < data.Length)
                     {
-                        obj.AddAnimation(ANIMATION_HEADER_SIZE, off: i);
                         // Assumes these are all in order and end at the start of the next, which seems to be the case so far
-                        obj.AddFrameData((int)(jointIndicesSeg.SegmentOff - frameDataSeg.SegmentOff), off:(int)frameDataSeg.SegmentOff);
-                        obj.AddJointIndices((int)(i - jointIndicesSeg.SegmentOff), off:(int)jointIndicesSeg.SegmentOff);
+                        int frameDataSize = (int)(jointIndicesSeg.SegmentOff - frameDataSeg.SegmentOff);
+                        int jointIndicesSize = (int)(i - jointIndicesSeg.SegmentOff);
+
+                        // if not a multiple of 2, check for struct padding
+                        if ((frameDataSize % 2) != 0)
+                        {
+                            byte[] possiblePadding = new byte[frameDataSize % 2];
+                            Buffer.BlockCopy(data, (int)(frameDataSeg.SegmentOff + frameDataSize - (frameDataSize % 2)), 
+                                possiblePadding, 0, frameDataSize % 2);
+                            // if assumed struct padding is nonzero, consider invalid
+                            if (possiblePadding.Any(b => b != 0))
+                                continue;
+                            frameDataSize -= (frameDataSize % 2);
+                        }
+                        // if not a multiple of 6, check for struct padding
+                        if ((jointIndicesSize % 6) != 0)
+                        {
+                            byte[] possiblePadding = new byte[jointIndicesSize % 6];
+                            Buffer.BlockCopy(data, (int)(frameDataSeg.SegmentOff + jointIndicesSize - (jointIndicesSize % 2)),
+                                possiblePadding, 0, jointIndicesSize % 6);
+                            // if assumed struct padding is nonzero, consider invalid
+                            if (possiblePadding.Any(b => b != 0))
+                                continue;
+                            jointIndicesSize -= (jointIndicesSize % 6);
+                        }
+                        obj.AddAnimation(ANIMATION_HEADER_SIZE, off: i);
+                        obj.AddFrameData(frameDataSize, off:(int)frameDataSeg.SegmentOff);
+                        obj.AddJointIndices(jointIndicesSize, off:(int)jointIndicesSeg.SegmentOff);
                     }
                 }
             }
