@@ -45,6 +45,7 @@
             this.textBox1.Size = new System.Drawing.Size(776, 426);
             this.textBox1.TabIndex = 0;
             this.textBox1.WordWrap = false;
+            this.textBox1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TextForm_KeyDown);
             // 
             // TextForm
             // 
