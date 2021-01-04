@@ -19,5 +19,13 @@ namespace Z64.Forms
             Text = title;
             textBox1.Text = message;
         }
+
+        private void TextForm_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Escape || e.KeyCode == Keys.Enter)
+            {
+                this.Close();
+            }
+        }
     }
 }

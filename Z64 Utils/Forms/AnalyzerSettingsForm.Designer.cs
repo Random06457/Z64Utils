@@ -51,7 +51,7 @@
             this.textBoxOpCodeList.Name = "textBoxOpCodeList";
             this.textBoxOpCodeList.ScrollBars = System.Windows.Forms.ScrollBars.Both;
             this.textBoxOpCodeList.Size = new System.Drawing.Size(458, 107);
-            this.textBoxOpCodeList.TabIndex = 0;
+            this.textBoxOpCodeList.TabIndex = 8;
             this.textBoxOpCodeList.WordWrap = false;
             this.textBoxOpCodeList.TextChanged += new System.EventHandler(this.textBoxOpCodeList_TextChanged);
             // 
@@ -130,7 +130,7 @@
             this.buttonOK.Location = new System.Drawing.Point(207, 457);
             this.buttonOK.Name = "buttonOK";
             this.buttonOK.Size = new System.Drawing.Size(75, 23);
-            this.buttonOK.TabIndex = 8;
+            this.buttonOK.TabIndex = 0;
             this.buttonOK.Text = "OK";
             this.buttonOK.UseVisualStyleBackColor = true;
             this.buttonOK.Click += new System.EventHandler(this.buttonOK_Click);

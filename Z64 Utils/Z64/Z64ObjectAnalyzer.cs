@@ -8,6 +8,7 @@ using RDP;
 using N64;
 using System.Text.RegularExpressions;
 using System.IO;
+using Z64.Common;
 
 namespace Z64
 {
@@ -330,7 +331,120 @@ namespace Z64
                     return Math.Max(i, texels / i);
             return 0;
         }
-        
+
+        public static void FindSkeletons(Z64Object obj, byte[] data, int segmentId)
+        {
+            const int SKELETON_HEADER_SIZE = 0x8;
+            const int FLEX_SKELETON_HEADER_SIZE = SKELETON_HEADER_SIZE + 0x4;
+            const int SKELETON_LIMB_SIZE = 0xC; // only supports StandardLimb so far
+            // Search for Skeleton Headers
+            // Structure: SS OO OO OO XX 00 00 00 [XX 00 00 00]
+            for (int i = 0; i < data.Length - SKELETON_HEADER_SIZE; i += 4)
+            {
+                var segment = new SegmentedAddress(ArrayUtil.ReadUint32BE(data, i));
+                // check for segmentId match, check for valid segment offset,
+                // check for Limbs 0x4 alignment, check for nonzero limb count,
+                // check for zeroes in struct padding
+                if (segment.SegmentId == segmentId && segment.SegmentOff < data.Length && 
+                    (segment.SegmentOff % 4) == 0 && data[i+4] != 0 &&
+                    data[i + 5] == 0 && data[i + 6] == 0 && data[i + 7] == 0)
+                {
+                    if (!obj.IsOffsetFree(i))
+                        continue;
+                    
+                    int nLimbs = data[i + 4];
+                    byte[] limbsData = new byte[nLimbs * 4];
+                    Buffer.BlockCopy(data, (int)segment.SegmentOff, limbsData, 0, nLimbs * 4);
+                    // check for limbs array ending at the start of the skeleton header,
+                    // check for limbs array's segmented addresses being 0xC apart from one another
+                    if (segment.SegmentOff + nLimbs * 4 == i &&
+                        ArrayUtil.ReadUint32BE(limbsData, 4) - ArrayUtil.ReadUint32BE(limbsData, 0) == SKELETON_LIMB_SIZE)
+                    {
+                        int nNonNullDlists = 0;
+                        obj.AddSkeletonLimbs(nLimbs * 4, off: (int)segment.SegmentOff);
+                        for (int j = 0; j < nLimbs * 4; j += 4)
+                        {
+                            SegmentedAddress limbSeg = new SegmentedAddress(ArrayUtil.ReadUint32BE(limbsData, j));
+                            if (limbSeg.SegmentId != segmentId)
+                                throw new Z64ObjectAnalyzerException(
+                                    $"Limb segment {limbSeg.Segmented} is not the correct segment id, mis-detected SkeletonHeader?");
+                            obj.AddSkeletonLimb(SKELETON_LIMB_SIZE, off: (int)limbSeg.SegmentOff);
+                            // check if dlist is non-null (dlists may be null in general, this is only for FlexSkeletonHeader detection)
+                            if (ArrayUtil.ReadUint32BE(data, (int)(limbSeg.SegmentOff + 0x8)) != 0)
+                                nNonNullDlists++;
+                        }
+                        // try to detect flex headers over normal headers
+                        // check for the existence of extra bytes beyond standard header size,
+                        // check if nothing is already assumed to occupy that space,
+                        // check if the number of dlists is equal to the actual number of non-null dlists,
+                        // check struct padding
+                        if (i < data.Length - FLEX_SKELETON_HEADER_SIZE && obj.IsOffsetFree(i + SKELETON_HEADER_SIZE) &&
+                            data[i + 8] == nNonNullDlists && data[i + 9] == 0 && data[i + 10] == 0 && data[i + 11] == 0)
+                        {
+                            obj.AddFlexSkeleton(FLEX_SKELETON_HEADER_SIZE, off: i);
+                        }
+                        else
+                        {
+                            obj.AddSkeleton(SKELETON_HEADER_SIZE, off: i);
+                        }
+                    }
+                }
+            }
+        }
+        public static void FindAnimations(Z64Object obj, byte[] data, int segmentId)
+        {
+            const int ANIMATION_HEADER_SIZE = 0x10;
+            // Search for Animation Headers
+            // Structure: FF FF 00 00 SS OO OO OO SS OO OO OO II II 00 00
+            for (int i = 0; i < data.Length - ANIMATION_HEADER_SIZE; i += 4)
+            {
+                var frameCount = ArrayUtil.ReadInt16BE(data, i);
+                // check positive nonzero frame count, check struct padding zeroes
+                if (frameCount > 0 &&
+                    data[i + 2] == 0 && data[i + 3] == 0 && data[i + 14] == 0 && data[i + 15] == 0)
+                {
+                    if (!obj.IsOffsetFree(i))
+                        continue;
+                    
+                    var frameDataSeg = new SegmentedAddress(ArrayUtil.ReadUint32BE(data, i+4));
+                    var jointIndicesSeg = new SegmentedAddress(ArrayUtil.ReadUint32BE(data, i+8));
+                    // check for segmentId match, check for valid segment offsets
+                    if (frameDataSeg.SegmentId == segmentId && jointIndicesSeg.SegmentId == segmentId &&
+                        frameDataSeg.SegmentOff < data.Length && jointIndicesSeg.SegmentOff < data.Length)
+                    {
+                        // Assumes these are all in order and end at the start of the next, which seems to be the case so far
+                        int frameDataSize = (int)(jointIndicesSeg.SegmentOff - frameDataSeg.SegmentOff);
+                        int jointIndicesSize = (int)(i - jointIndicesSeg.SegmentOff);
+
+                        // if not a multiple of 2, check for struct padding
+                        if ((frameDataSize % 2) != 0)
+                        {
+                            byte[] possiblePadding = new byte[frameDataSize % 2];
+                            Buffer.BlockCopy(data, (int)(frameDataSeg.SegmentOff + frameDataSize - (frameDataSize % 2)), 
+                                possiblePadding, 0, frameDataSize % 2);
+                            // if assumed struct padding is nonzero, consider invalid
+                            if (possiblePadding.Any(b => b != 0))
+                                continue;
+                            frameDataSize -= (frameDataSize % 2);
+                        }
+                        // if not a multiple of 6, check for struct padding
+                        if ((jointIndicesSize % 6) != 0)
+                        {
+                            byte[] possiblePadding = new byte[jointIndicesSize % 6];
+                            Buffer.BlockCopy(data, (int)(jointIndicesSeg.SegmentOff + jointIndicesSize - (jointIndicesSize % 6)),
+                                possiblePadding, 0, jointIndicesSize % 6);
+                            // if assumed struct padding is nonzero, consider invalid
+                            if (possiblePadding.Any(b => b != 0))
+                                continue;
+                            jointIndicesSize -= (jointIndicesSize % 6);
+                        }
+                        obj.AddAnimation(ANIMATION_HEADER_SIZE, off: i);
+                        obj.AddFrameData(frameDataSize, off:(int)frameDataSeg.SegmentOff);
+                        obj.AddJointIndices(jointIndicesSize, off:(int)jointIndicesSeg.SegmentOff);
+                    }
+                }
+            }
+        }
 
         public static void FindDlists(Z64Object obj, byte[] data, int segmentId, Config cfg)
         {
@@ -493,6 +607,11 @@ namespace Z64
                 }
             }
 
+            // These are carried out here as they are dependent on a lot of heuristics.
+            // Having lots of the object already mapped out reduces possible mis-identifications.
+            FindSkeletons(obj, data, segmentId);
+            FindAnimations(obj, data, segmentId);
+            
             obj.GroupUnkEntries();
             obj.FixNames();
             obj.SetData(data);

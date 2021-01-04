@@ -11,6 +11,7 @@ using N64;
 using RDP;
 using Syroot.BinaryData;
 using Common;
+using Z64.Common;
 
 namespace Z64
 {
@@ -33,6 +34,13 @@ namespace Z64
             DList,
             Vertex,
             Texture,
+            AnimationHeader,
+            FrameData,
+            JointIndices,
+            SkeletonHeader,
+            FlexSkeletonHeader,
+            SkeletonLimbs,
+            SkeletonLimb,
             Unknown,
         }
 
@@ -154,6 +162,229 @@ namespace Z64
                 Texture = data;
             }
             public override int GetSize() => Texture.Length;
+        }
+        public class SkeletonLimbHolder : ObjectHolder
+        {
+            public byte[] Raw { get; set; }
+
+            public short JointX { get; set; }
+            public short JointY { get; set; }
+            public short JointZ { get; set; }
+            public byte Parent { get; set; }
+            public byte Child { get; set; }
+            public SegmentedAddress DListSeg { get; set; }
+
+            public SkeletonLimbHolder(string name, byte[] data) : base(name)
+            {
+                SetData(data);
+            }
+
+            public override byte[] GetData() => Raw;
+
+            public override EntryType GetEntryType()
+            {
+                return EntryType.SkeletonLimb;
+            }
+            public override void SetData(byte[] data)
+            {
+                Raw = data;
+                JointX = ArrayUtil.ReadInt16BE(data, 0);
+                JointY = ArrayUtil.ReadInt16BE(data, 2);
+                JointZ = ArrayUtil.ReadInt16BE(data, 4);
+                Parent = data[6];
+                Child = data[7];
+                DListSeg = new SegmentedAddress(ArrayUtil.ReadUint32BE(data, 8));
+            }
+            public override int GetSize() => Raw.Length;
+        }
+        public class SkeletonLimbsHolder : ObjectHolder
+        {
+            public byte[] Raw { get; set; }
+
+            public SegmentedAddress[] LimbSegments { get; set; }
+
+            public SkeletonLimbsHolder(string name, byte[] data) : base(name)
+            {
+                SetData(data);
+            }
+
+            public override byte[] GetData() => Raw;
+
+            public override EntryType GetEntryType()
+            {
+                return EntryType.SkeletonLimbs;
+            }
+            public override void SetData(byte[] data)
+            {
+                Raw = data;
+                if ((data.Length % 4) != 0)
+                    throw new Z64ObjectException($"Invalid data size (0x{data.Length:X}) should be a multiple of 4");
+
+                LimbSegments = new SegmentedAddress[data.Length / 4];
+                for (int i = 0; i < data.Length/4; i++)
+                {
+                    LimbSegments[i] = new SegmentedAddress(ArrayUtil.ReadUint32BE(data, i * 4));
+                }
+            }
+            public override int GetSize() => Raw.Length;
+        }
+        public class SkeletonHolder : ObjectHolder
+        {
+            public byte[] Raw { get; set; }
+            
+            public int LimbCount { get; set; }
+            public SegmentedAddress LimbsSeg { get; set; }
+            
+            public SkeletonHolder(string name, byte[] data) : base(name)
+            {
+                SetData(data);
+            }
+
+            public override byte[] GetData() => Raw;
+
+            public override EntryType GetEntryType()
+            {
+                return EntryType.SkeletonHeader;
+            }
+            public override void SetData(byte[] data)
+            {
+                Raw = data;
+                LimbsSeg = new SegmentedAddress(ArrayUtil.ReadUint32BE(data));
+                LimbCount = data[4];
+            }
+            public override int GetSize() => Raw.Length;
+
+        }
+
+        public class FlexSkeletonHolder : ObjectHolder
+        {
+            public byte[] Raw { get; set; }
+            
+            public int LimbCount { get; set; }
+            public SegmentedAddress LimbsSeg { get; set; }
+            public int DListCount { get; set; }
+
+            public FlexSkeletonHolder(string name, byte[] data) : base(name)
+            {
+                SetData(data);
+            }
+
+            public override byte[] GetData() => Raw;
+
+            public override EntryType GetEntryType()
+            {
+                return EntryType.FlexSkeletonHeader;
+            }
+            public override void SetData(byte[] data)
+            {
+                Raw = data;
+                LimbsSeg = new SegmentedAddress(ArrayUtil.ReadUint32BE(data));
+                LimbCount = data[4];
+                DListCount = data[8];
+            }
+            public override int GetSize() => Raw.Length;
+
+        }
+        public class AnimationHolder : ObjectHolder
+        {
+            public byte[] Raw { get; set; }
+
+            public short FrameCount { get; set; }
+            public SegmentedAddress FrameData { get; set; }
+            public SegmentedAddress JointIndices { get; set; }
+            public ushort StaticIndexMax { get; set; }
+
+            public AnimationHolder(string name, byte[] data) : base(name)
+            {
+                SetData(data);
+            }
+
+            public override byte[] GetData() => Raw;
+
+            public override EntryType GetEntryType()
+            {
+                return EntryType.AnimationHeader;
+            }
+            public override void SetData(byte[] data)
+            {
+                Raw = data;
+                FrameCount = ArrayUtil.ReadInt16BE(data, 0);
+                FrameData = new SegmentedAddress(ArrayUtil.ReadUint32BE(data, 4));
+                JointIndices = new SegmentedAddress(ArrayUtil.ReadUint32BE(data, 8));
+                StaticIndexMax = ArrayUtil.ReadUInt16BE(data, 12);
+            }
+            public override int GetSize() => Raw.Length;
+        }
+        public class AnimationFrameDataHolder : ObjectHolder
+        {
+            public byte[] Raw { get; set; }
+            
+            public short[] FrameData { get; set; }
+
+            public AnimationFrameDataHolder(string name, byte[] data) : base(name)
+            {
+                SetData(data);
+            }
+
+            public override byte[] GetData() => Raw;
+
+            public override EntryType GetEntryType()
+            {
+                return EntryType.FrameData;
+            }
+            public override void SetData(byte[] data)
+            {
+                Raw = data;
+                if ((data.Length % 2) != 0)
+                    throw new Z64ObjectException($"Invalid data size (0x{data.Length:X}) should be a multiple of 2");
+
+                FrameData = new short[data.Length / 2];
+                for (int i = 0; i < data.Length / 2; i++)
+                {
+                    FrameData[i] = ArrayUtil.ReadInt16BE(data, i * 2);
+                }
+            }
+            public override int GetSize() => Raw.Length;
+        }
+        public class AnimationJointIndicesHolder : ObjectHolder
+        {
+            public struct JointIndex
+            {
+                public ushort x, y, z;
+            };
+
+            public byte[] Raw { get; set; }
+            public JointIndex[] JointIndices { get; set; }
+
+            public AnimationJointIndicesHolder(string name, byte[] data) : base(name)
+            {
+                SetData(data);
+            }
+
+            public override byte[] GetData() => Raw;
+
+            public override EntryType GetEntryType()
+            {
+                return EntryType.JointIndices;
+            }
+            public override void SetData(byte[] data)
+            {
+                Raw = data;
+                if ((data.Length % 6) != 0)
+                    throw new Z64ObjectException($"Invalid data size (0x{data.Length:X}) should be a multiple of 6");
+
+                JointIndices = new JointIndex[data.Length / 6];
+                for (int i = 0; i < data.Length / 6; i++)
+                {
+                    JointIndices[i] = 
+                        new JointIndex() {
+                            x = ArrayUtil.ReadUInt16BE(data, i * 6),
+                            y = ArrayUtil.ReadUInt16BE(data, i * 6 + 2),
+                            z = ArrayUtil.ReadUInt16BE(data, i * 6 + 4)
+                        };
+                }
+            }
+            public override int GetSize() => Raw.Length;
         }
 
         public List<ObjectHolder> Entries { get; set; }
@@ -374,21 +605,88 @@ namespace Z64
             AddVertexHolder(holder, off);
             return holder;
         }
-
+        public SkeletonLimbHolder AddSkeletonLimb(int size, string name = null, int off = -1, int skel_off = -1)
+        {
+            if (off == -1) off = GetSize();
+            var holder = new SkeletonLimbHolder(name?? $"skel_{skel_off:X8}_limb_{off:X8}", new byte[size]);
+            return (SkeletonLimbHolder)AddHolder(holder, off);
+        }
+        public SkeletonLimbsHolder AddSkeletonLimbs(int size, string name = null, int off = -1, int skel_off = -1)
+        {
+            if (off == -1) off = GetSize();
+            var holder = new SkeletonLimbsHolder(name?? $"skel_{skel_off:X8}_limbs_{off:X8}", new byte[size]);
+            return (SkeletonLimbsHolder)AddHolder(holder, off);
+        }
+        public SkeletonHolder AddSkeleton(int size, string name = null, int off = -1)
+        {
+            if (off == -1) off = GetSize();
+            var holder = new SkeletonHolder(name?? $"skel_{off:X8}", new byte[size]);
+            return (SkeletonHolder)AddHolder(holder, off);
+        }
+        public FlexSkeletonHolder AddFlexSkeleton(int size, string name = null, int off = -1)
+        {
+            if (off == -1) off = GetSize();
+            var holder = new FlexSkeletonHolder(name ?? $"skel_{off:X8}", new byte[size]);
+            return (FlexSkeletonHolder)AddHolder(holder, off);
+        }
+        public AnimationHolder AddAnimation(int size, string name = null, int off = -1)
+        {
+            if (off == -1) off = GetSize();
+            var holder = new AnimationHolder(name?? $"anim_{off:X8}", new byte[size]);
+            return (AnimationHolder)AddHolder(holder, off);
+        }
+        public AnimationFrameDataHolder AddFrameData(int size, string name = null, int off = -1)
+        {
+            if (off == -1) off = GetSize();
+            var holder = new AnimationFrameDataHolder(name ?? $"framedata_{off:X8}", new byte[size]);
+            return (AnimationFrameDataHolder)AddHolder(holder, off);
+        }
+        public AnimationJointIndicesHolder AddJointIndices(int size, string name = null, int off = -1)
+        {
+            if (off == -1) off = GetSize();
+            var holder = new AnimationJointIndicesHolder(name ?? $"jointindices_{off:X8}", new byte[size]);
+            return (AnimationJointIndicesHolder)AddHolder(holder, off);
+        }
 
         public void FixNames()
         {
             int entryOff = 0;
             foreach (var entry in Entries)
             {
-                entry.Name = (entry.GetEntryType() == EntryType.DList
-                    ? "dlist_"
-                    : entry.GetEntryType() == EntryType.Texture
-                        ? "tex_"
-                        : entry.GetEntryType() == EntryType.Vertex
-                            ? "vtx_"
-                            : "unk_") + entryOff.ToString("X8");
-
+                switch (entry.GetEntryType())
+                {
+                    case EntryType.AnimationHeader:
+                        entry.Name = "anim_" + entryOff.ToString("X8");
+                        break;
+                    case EntryType.FrameData:
+                        entry.Name = "framedata_" + entryOff.ToString("X8");
+                        break;
+                    case EntryType.JointIndices:
+                        entry.Name = "jointindices_" + entryOff.ToString("X8");
+                        break;
+                    case EntryType.SkeletonHeader:
+                    case EntryType.FlexSkeletonHeader:
+                        entry.Name = "skel_" + entryOff.ToString("X8");
+                        break;
+                    case EntryType.SkeletonLimbs:
+                        entry.Name = "limbs_" + entryOff.ToString("X8");
+                        break;
+                    case EntryType.SkeletonLimb:
+                        entry.Name = "limb_" + entryOff.ToString("X8");
+                        break;
+                    case EntryType.DList:
+                        entry.Name = "dlist_" + entryOff.ToString("X8");
+                        break;
+                    case EntryType.Texture:
+                        entry.Name = "tex_" + entryOff.ToString("X8");
+                        break;
+                    case EntryType.Vertex:
+                        entry.Name = "vtx_" + entryOff.ToString("X8");
+                        break;
+                    default:
+                        entry.Name = "unk_" + entryOff.ToString("X8");
+                        break;
+                }
                 entryOff += entry.GetSize();
             }
             foreach (var entry in Entries)

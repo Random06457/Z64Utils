@@ -45,6 +45,34 @@ namespace Z64.Forms
             UpdateMap();
         }
 
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == (Keys.Control | Keys.F))
+            {
+                var form = new AnalyzerSettingsForm();
+                if (form.ShowDialog() == DialogResult.OK)
+                {
+                    Z64ObjectAnalyzer.FindDlists(_obj, _data, _segment, form.Result);
+                    UpdateMap();
+                }
+                return true;
+            }
+            else if (keyData == (Keys.Control | Keys.A))
+            {
+                var errors = Z64ObjectAnalyzer.AnalyzeDlists(_obj, _data, _segment);
+                if (errors.Count > 0)
+                {
+                    StringWriter sw = new StringWriter();
+                    errors.ForEach(error => sw.WriteLine(error));
+                    TextForm form = new TextForm(SystemIcons.Warning, "Warning", sw.ToString());
+                    form.ShowDialog();
+                }
+                UpdateMap();
+                return true;
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
         public void UpdateDisassembly()
         {
             var dlist = GetCurrentHolder<Z64Object.DListHolder>();
@@ -140,6 +168,13 @@ namespace Z64.Forms
                         break;
                     }
                 case Z64Object.EntryType.Unknown:
+                case Z64Object.EntryType.SkeletonHeader:
+                case Z64Object.EntryType.FlexSkeletonHeader:
+                case Z64Object.EntryType.SkeletonLimb:
+                case Z64Object.EntryType.SkeletonLimbs:
+                case Z64Object.EntryType.AnimationHeader:
+                case Z64Object.EntryType.FrameData:
+                case Z64Object.EntryType.JointIndices:
                     {
                         tabControl1.SelectedIndex = 4;
 
