@@ -84,11 +84,11 @@ namespace Z64.Forms
                     var lines = disas.Disassemble();
                     StringWriter sw = new StringWriter();
                     lines.ForEach(s => sw.WriteLine(s));
-                    ucodeTextBox.Text = sw.ToString();
+                    textBox_holderInfo.Text = sw.ToString();
                 }
                 catch (Exception ex)
                 {
-                    ucodeTextBox.Text = "ERROR";
+                    textBox_holderInfo.Text = "ERROR";
                 }
             }
         }
@@ -126,7 +126,7 @@ namespace Z64.Forms
             var holder = GetCurrentHolder<Z64Object.ObjectHolder>();
             if (holder == null)
             {
-                tabControl1.SelectedIndex = 0;
+                tabControl1.SelectedTab = tabPage_empty;
                 return;
             }
 
@@ -134,13 +134,13 @@ namespace Z64.Forms
             {
                 case Z64Object.EntryType.DList:
                     {
-                        tabControl1.SelectedIndex = 1;
+                        tabControl1.SelectedTab = tabPage_text;
                         UpdateDisassembly();
                         break;
                     }
                 case Z64Object.EntryType.Vertex:
                     {
-                        tabControl1.SelectedIndex = 3;
+                        tabControl1.SelectedTab = tabPage_vtx;
                         var vtx = (Z64Object.VertexHolder)holder;
 
                         listView_vtx.BeginUpdate();
@@ -161,29 +161,100 @@ namespace Z64.Forms
                     }
                 case Z64Object.EntryType.Texture:
                     {
-                        tabControl1.SelectedIndex = 2;
+                        tabControl1.SelectedTab = tabPage_texture;
                         var tex = (Z64Object.TextureHolder)holder;
                         if ((tex.Format != N64.N64TexFormat.CI4 && tex.Format != N64.N64TexFormat.CI8) || tex.Tlut != null)
                             pic_texture.Image = tex.GetBitmap();
                         break;
                     }
-                case Z64Object.EntryType.Unknown:
                 case Z64Object.EntryType.SkeletonHeader:
+                    {
+                        tabControl1.SelectedTab = tabPage_text;
+                        var skel = (Z64Object.SkeletonHolder)holder;
+                        StringWriter sw = new StringWriter();
+                        sw.WriteLine($"Limbs: 0x{skel.LimbsSeg.VAddr:X8}");
+                        sw.WriteLine($"Limb Count: {skel.LimbCount}");
+                        textBox_holderInfo.Text = sw.ToString();
+                        break;
+                    }
                 case Z64Object.EntryType.FlexSkeletonHeader:
-                case Z64Object.EntryType.SkeletonLimb:
+                    {
+                        tabControl1.SelectedTab = tabPage_text;
+                        var skel = (Z64Object.FlexSkeletonHolder)holder;
+
+                        StringWriter sw = new StringWriter();
+                        sw.WriteLine($"Limbs: 0x{skel.LimbsSeg.VAddr:X8}");
+                        sw.WriteLine($"Limb Count: {skel.LimbCount}");
+                        sw.WriteLine($"DList Count: {skel.DListCount}");
+
+                        textBox_holderInfo.Text = sw.ToString();
+                        break;
+                    }
                 case Z64Object.EntryType.SkeletonLimbs:
+                    {
+                        tabControl1.SelectedTab = tabPage_text;
+                        var limbs = (Z64Object.SkeletonLimbsHolder)holder;
+
+                        StringWriter sw = new StringWriter();
+                        sw.WriteLine($"Limbs:");
+                        foreach (var limb in limbs.LimbSegments)
+                            sw.WriteLine($"0x{limb.VAddr:X8}");
+
+                        textBox_holderInfo.Text = sw.ToString();
+                        break;
+                    }
+                case Z64Object.EntryType.SkeletonLimb:
+                    {
+                        tabControl1.SelectedTab = tabPage_text;
+                        var limb = (Z64Object.SkeletonLimbHolder)holder;
+
+                        StringWriter sw = new StringWriter();
+                        sw.WriteLine($"Position: {{ {limb.JointX}, {limb.JointY}, {limb.JointZ} }}");
+                        sw.WriteLine($"Child: 0x{limb.Child:X2}");
+                        sw.WriteLine($"Sibling: 0x{limb.Sibling:X2}");
+                        sw.WriteLine($"DList : 0x{limb.DListSeg.VAddr:X8}");
+
+                        textBox_holderInfo.Text = sw.ToString();
+                        break;
+                    }
                 case Z64Object.EntryType.AnimationHeader:
-                case Z64Object.EntryType.FrameData:
+                    {
+                        tabControl1.SelectedTab = tabPage_text;
+                        var anim = (Z64Object.AnimationHolder)holder;
+
+                        StringWriter sw = new StringWriter();
+                        sw.WriteLine($"Frame Count: {anim.FrameCount}");
+                        sw.WriteLine($"Frame Data: 0x{anim.FrameData.VAddr:X8}");
+                        sw.WriteLine($"Joint Indices: 0x{anim.JointIndices.VAddr:X8}");
+                        sw.WriteLine($"Static Index Max: 0x{anim.StaticIndexMax}");
+
+                        textBox_holderInfo.Text = sw.ToString();
+                        break;
+                    }
                 case Z64Object.EntryType.JointIndices:
                     {
-                        tabControl1.SelectedIndex = 4;
+                        tabControl1.SelectedTab = tabPage_text;
+                        var joints = (Z64Object.AnimationJointIndicesHolder)holder;
 
-                        var provider = new Be.Windows.Forms.DynamicByteProvider(holder.GetData());;
+                        StringWriter sw = new StringWriter();
+                        sw.WriteLine($"Joints:");
+                        foreach (var joint in joints.JointIndices)
+                            sw.WriteLine($"{{ frameData[{joint.X}], frameData[{joint.Y}], frameData[{joint.Z}] }}");
+
+                        textBox_holderInfo.Text = sw.ToString();
+                        break;
+                    }
+                case Z64Object.EntryType.FrameData:
+                case Z64Object.EntryType.Unknown:
+                    {
+                        tabControl1.SelectedTab = tabPage_unknow;
+
+                        var provider = new DynamicByteProvider(holder.GetData());;
                         hexBox1.ByteProvider = provider;
                         hexBox1.LineInfoOffset = new SegmentedAddress(_segment, _obj.OffsetOf(holder)).VAddr;
                         break;
                     }
-                default: tabControl1.SelectedIndex = 0; break;
+                default: tabControl1.SelectedTab = tabPage_empty; break;
             }
             listView_map.Focus();
         }

@@ -334,12 +334,9 @@ namespace Z64
 
         public static void FindSkeletons(Z64Object obj, byte[] data, int segmentId)
         {
-            const int SKELETON_HEADER_SIZE = 0x8;
-            const int FLEX_SKELETON_HEADER_SIZE = SKELETON_HEADER_SIZE + 0x4;
-            const int SKELETON_LIMB_SIZE = 0xC; // only supports StandardLimb so far
             // Search for Skeleton Headers
             // Structure: SS OO OO OO XX 00 00 00 [XX 00 00 00]
-            for (int i = 0; i < data.Length - SKELETON_HEADER_SIZE; i += 4)
+            for (int i = 0; i < data.Length - Z64Object.SkeletonHolder.HEADER_SIZE; i += 4)
             {
                 var segment = new SegmentedAddress(ArrayUtil.ReadUint32BE(data, i));
                 // check for segmentId match, check for valid segment offset,
@@ -358,17 +355,17 @@ namespace Z64
                     // check for limbs array ending at the start of the skeleton header,
                     // check for limbs array's segmented addresses being 0xC apart from one another
                     if (segment.SegmentOff + nLimbs * 4 == i &&
-                        ArrayUtil.ReadUint32BE(limbsData, 4) - ArrayUtil.ReadUint32BE(limbsData, 0) == SKELETON_LIMB_SIZE)
+                        ArrayUtil.ReadUint32BE(limbsData, 4) - ArrayUtil.ReadUint32BE(limbsData, 0) == Z64Object.SkeletonLimbHolder.ENTRY_SIZE)
                     {
                         int nNonNullDlists = 0;
-                        obj.AddSkeletonLimbs(nLimbs * 4, off: (int)segment.SegmentOff);
+                        obj.AddSkeletonLimbs(nLimbs, off: (int)segment.SegmentOff);
                         for (int j = 0; j < nLimbs * 4; j += 4)
                         {
                             SegmentedAddress limbSeg = new SegmentedAddress(ArrayUtil.ReadUint32BE(limbsData, j));
                             if (limbSeg.SegmentId != segmentId)
                                 throw new Z64ObjectAnalyzerException(
                                     $"Limb segment {limbSeg.Segmented} is not the correct segment id, mis-detected SkeletonHeader?");
-                            obj.AddSkeletonLimb(SKELETON_LIMB_SIZE, off: (int)limbSeg.SegmentOff);
+                            obj.AddSkeletonLimb(off: (int)limbSeg.SegmentOff);
                             // check if dlist is non-null (dlists may be null in general, this is only for FlexSkeletonHeader detection)
                             if (ArrayUtil.ReadUint32BE(data, (int)(limbSeg.SegmentOff + 0x8)) != 0)
                                 nNonNullDlists++;
@@ -378,14 +375,14 @@ namespace Z64
                         // check if nothing is already assumed to occupy that space,
                         // check if the number of dlists is equal to the actual number of non-null dlists,
                         // check struct padding
-                        if (i < data.Length - FLEX_SKELETON_HEADER_SIZE && obj.IsOffsetFree(i + SKELETON_HEADER_SIZE) &&
+                        if (i < data.Length - Z64Object.FlexSkeletonHolder.HEADER_SIZE && obj.IsOffsetFree(i + Z64Object.SkeletonHolder.HEADER_SIZE) &&
                             data[i + 8] == nNonNullDlists && data[i + 9] == 0 && data[i + 10] == 0 && data[i + 11] == 0)
                         {
-                            obj.AddFlexSkeleton(FLEX_SKELETON_HEADER_SIZE, off: i);
+                            obj.AddFlexSkeleton(off: i);
                         }
                         else
                         {
-                            obj.AddSkeleton(SKELETON_HEADER_SIZE, off: i);
+                            obj.AddSkeleton(off: i);
                         }
                     }
                 }
@@ -393,10 +390,9 @@ namespace Z64
         }
         public static void FindAnimations(Z64Object obj, byte[] data, int segmentId)
         {
-            const int ANIMATION_HEADER_SIZE = 0x10;
             // Search for Animation Headers
             // Structure: FF FF 00 00 SS OO OO OO SS OO OO OO II II 00 00
-            for (int i = 0; i < data.Length - ANIMATION_HEADER_SIZE; i += 4)
+            for (int i = 0; i < data.Length - Z64Object.AnimationHolder.HEADER_SIZE; i += 4)
             {
                 var frameCount = ArrayUtil.ReadInt16BE(data, i);
                 // check positive nonzero frame count, check struct padding zeroes
@@ -438,9 +434,9 @@ namespace Z64
                                 continue;
                             jointIndicesSize -= (jointIndicesSize % 6);
                         }
-                        obj.AddAnimation(ANIMATION_HEADER_SIZE, off: i);
-                        obj.AddFrameData(frameDataSize, off:(int)frameDataSeg.SegmentOff);
-                        obj.AddJointIndices(jointIndicesSize, off:(int)jointIndicesSeg.SegmentOff);
+                        obj.AddAnimation(off: i);
+                        obj.AddFrameData(frameDataSize/2, off:(int)frameDataSeg.SegmentOff);
+                        obj.AddJointIndices(jointIndicesSize/Z64Object.AnimationJointIndicesHolder.ENTRY_SIZE, off:(int)jointIndicesSeg.SegmentOff);
                     }
                 }
             }

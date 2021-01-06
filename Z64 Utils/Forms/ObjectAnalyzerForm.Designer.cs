@@ -41,24 +41,24 @@
             "Vertex"}, -1);
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ObjectAnalyzerForm));
             this.tabControl1 = new System.Windows.Forms.TabControl();
-            this.tabPage1 = new System.Windows.Forms.TabPage();
-            this.tabPage2 = new System.Windows.Forms.TabPage();
-            this.ucodeTextBox = new System.Windows.Forms.TextBox();
-            this.tabPage3 = new System.Windows.Forms.TabPage();
+            this.tabPage_empty = new System.Windows.Forms.TabPage();
+            this.tabPage_text = new System.Windows.Forms.TabPage();
+            this.textBox_holderInfo = new System.Windows.Forms.TextBox();
+            this.tabPage_texture = new System.Windows.Forms.TabPage();
             this.pic_texture = new Z64.Forms.TextureBox();
-            this.tabPage4 = new System.Windows.Forms.TabPage();
+            this.tabPage_vtx = new System.Windows.Forms.TabPage();
             this.listView_vtx = new System.Windows.Forms.ListView();
-            this.columnHeader4 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.columnHeader5 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.columnHeader6 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.columnHeader7 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.columnHeader8 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.tabPage5 = new System.Windows.Forms.TabPage();
+            this.columnHeader4 = new System.Windows.Forms.ColumnHeader();
+            this.columnHeader5 = new System.Windows.Forms.ColumnHeader();
+            this.columnHeader6 = new System.Windows.Forms.ColumnHeader();
+            this.columnHeader7 = new System.Windows.Forms.ColumnHeader();
+            this.columnHeader8 = new System.Windows.Forms.ColumnHeader();
+            this.tabPage_unknow = new System.Windows.Forms.TabPage();
             this.hexBox1 = new Be.Windows.Forms.HexBox();
             this.listView_map = new System.Windows.Forms.ListView();
-            this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader1 = new System.Windows.Forms.ColumnHeader();
+            this.columnHeader2 = new System.Windows.Forms.ColumnHeader();
+            this.columnHeader3 = new System.Windows.Forms.ColumnHeader();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.showInDisplayViewerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.addToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -77,11 +77,11 @@
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.tabControl1.SuspendLayout();
-            this.tabPage2.SuspendLayout();
-            this.tabPage3.SuspendLayout();
+            this.tabPage_text.SuspendLayout();
+            this.tabPage_texture.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pic_texture)).BeginInit();
-            this.tabPage4.SuspendLayout();
-            this.tabPage5.SuspendLayout();
+            this.tabPage_vtx.SuspendLayout();
+            this.tabPage_unknow.SuspendLayout();
             this.contextMenuStrip1.SuspendLayout();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -91,11 +91,11 @@
             this.tabControl1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.tabControl1.Controls.Add(this.tabPage1);
-            this.tabControl1.Controls.Add(this.tabPage2);
-            this.tabControl1.Controls.Add(this.tabPage3);
-            this.tabControl1.Controls.Add(this.tabPage4);
-            this.tabControl1.Controls.Add(this.tabPage5);
+            this.tabControl1.Controls.Add(this.tabPage_empty);
+            this.tabControl1.Controls.Add(this.tabPage_text);
+            this.tabControl1.Controls.Add(this.tabPage_texture);
+            this.tabControl1.Controls.Add(this.tabPage_vtx);
+            this.tabControl1.Controls.Add(this.tabPage_unknow);
             this.tabControl1.ItemSize = new System.Drawing.Size(47, 18);
             this.tabControl1.Location = new System.Drawing.Point(377, 27);
             this.tabControl1.MinimumSize = new System.Drawing.Size(357, 207);
@@ -104,52 +104,52 @@
             this.tabControl1.Size = new System.Drawing.Size(632, 499);
             this.tabControl1.TabIndex = 8;
             // 
-            // tabPage1
+            // tabPage_empty
             // 
-            this.tabPage1.Location = new System.Drawing.Point(4, 22);
-            this.tabPage1.Name = "tabPage1";
-            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(624, 473);
-            this.tabPage1.TabIndex = 0;
-            this.tabPage1.Text = "nothing";
-            this.tabPage1.UseVisualStyleBackColor = true;
+            this.tabPage_empty.Location = new System.Drawing.Point(4, 22);
+            this.tabPage_empty.Name = "tabPage_empty";
+            this.tabPage_empty.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage_empty.Size = new System.Drawing.Size(624, 473);
+            this.tabPage_empty.TabIndex = 0;
+            this.tabPage_empty.Text = "nothing";
+            this.tabPage_empty.UseVisualStyleBackColor = true;
             // 
-            // tabPage2
+            // tabPage_text
             // 
-            this.tabPage2.Controls.Add(this.ucodeTextBox);
-            this.tabPage2.Location = new System.Drawing.Point(4, 22);
-            this.tabPage2.Name = "tabPage2";
-            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(624, 473);
-            this.tabPage2.TabIndex = 1;
-            this.tabPage2.Text = "ucode";
-            this.tabPage2.UseVisualStyleBackColor = true;
+            this.tabPage_text.Controls.Add(this.textBox_holderInfo);
+            this.tabPage_text.Location = new System.Drawing.Point(4, 22);
+            this.tabPage_text.Name = "tabPage_text";
+            this.tabPage_text.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage_text.Size = new System.Drawing.Size(624, 473);
+            this.tabPage_text.TabIndex = 1;
+            this.tabPage_text.Text = "ucode";
+            this.tabPage_text.UseVisualStyleBackColor = true;
             // 
-            // ucodeTextBox
+            // textBox_holderInfo
             // 
-            this.ucodeTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            this.textBox_holderInfo.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.ucodeTextBox.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ucodeTextBox.Location = new System.Drawing.Point(6, 6);
-            this.ucodeTextBox.Multiline = true;
-            this.ucodeTextBox.Name = "ucodeTextBox";
-            this.ucodeTextBox.ReadOnly = true;
-            this.ucodeTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.ucodeTextBox.Size = new System.Drawing.Size(617, 461);
-            this.ucodeTextBox.TabIndex = 7;
-            this.ucodeTextBox.WordWrap = false;
+            this.textBox_holderInfo.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.textBox_holderInfo.Location = new System.Drawing.Point(6, 6);
+            this.textBox_holderInfo.Multiline = true;
+            this.textBox_holderInfo.Name = "textBox_holderInfo";
+            this.textBox_holderInfo.ReadOnly = true;
+            this.textBox_holderInfo.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            this.textBox_holderInfo.Size = new System.Drawing.Size(617, 461);
+            this.textBox_holderInfo.TabIndex = 7;
+            this.textBox_holderInfo.WordWrap = false;
             // 
-            // tabPage3
+            // tabPage_texture
             // 
-            this.tabPage3.Controls.Add(this.pic_texture);
-            this.tabPage3.Location = new System.Drawing.Point(4, 22);
-            this.tabPage3.Name = "tabPage3";
-            this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(624, 473);
-            this.tabPage3.TabIndex = 2;
-            this.tabPage3.Text = "texture";
-            this.tabPage3.UseVisualStyleBackColor = true;
+            this.tabPage_texture.Controls.Add(this.pic_texture);
+            this.tabPage_texture.Location = new System.Drawing.Point(4, 22);
+            this.tabPage_texture.Name = "tabPage_texture";
+            this.tabPage_texture.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage_texture.Size = new System.Drawing.Size(624, 473);
+            this.tabPage_texture.TabIndex = 2;
+            this.tabPage_texture.Text = "texture";
+            this.tabPage_texture.UseVisualStyleBackColor = true;
             // 
             // pic_texture
             // 
@@ -165,16 +165,16 @@
             this.pic_texture.TabIndex = 0;
             this.pic_texture.TabStop = false;
             // 
-            // tabPage4
+            // tabPage_vtx
             // 
-            this.tabPage4.Controls.Add(this.listView_vtx);
-            this.tabPage4.Location = new System.Drawing.Point(4, 22);
-            this.tabPage4.Name = "tabPage4";
-            this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage4.Size = new System.Drawing.Size(624, 473);
-            this.tabPage4.TabIndex = 3;
-            this.tabPage4.Text = "vertex";
-            this.tabPage4.UseVisualStyleBackColor = true;
+            this.tabPage_vtx.Controls.Add(this.listView_vtx);
+            this.tabPage_vtx.Location = new System.Drawing.Point(4, 22);
+            this.tabPage_vtx.Name = "tabPage_vtx";
+            this.tabPage_vtx.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage_vtx.Size = new System.Drawing.Size(624, 473);
+            this.tabPage_vtx.TabIndex = 3;
+            this.tabPage_vtx.Text = "vertex";
+            this.tabPage_vtx.UseVisualStyleBackColor = true;
             // 
             // listView_vtx
             // 
@@ -187,7 +187,7 @@
             this.columnHeader6,
             this.columnHeader7,
             this.columnHeader8});
-            this.listView_vtx.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.listView_vtx.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.listView_vtx.FullRowSelect = true;
             this.listView_vtx.HideSelection = false;
             this.listView_vtx.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
@@ -224,16 +224,16 @@
             this.columnHeader8.Text = "Normal/Color";
             this.columnHeader8.Width = 149;
             // 
-            // tabPage5
+            // tabPage_unknow
             // 
-            this.tabPage5.Controls.Add(this.hexBox1);
-            this.tabPage5.Location = new System.Drawing.Point(4, 22);
-            this.tabPage5.Name = "tabPage5";
-            this.tabPage5.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage5.Size = new System.Drawing.Size(624, 473);
-            this.tabPage5.TabIndex = 4;
-            this.tabPage5.Text = "unknow";
-            this.tabPage5.UseVisualStyleBackColor = true;
+            this.tabPage_unknow.Controls.Add(this.hexBox1);
+            this.tabPage_unknow.Location = new System.Drawing.Point(4, 22);
+            this.tabPage_unknow.Name = "tabPage_unknow";
+            this.tabPage_unknow.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage_unknow.Size = new System.Drawing.Size(624, 473);
+            this.tabPage_unknow.TabIndex = 4;
+            this.tabPage_unknow.Text = "unknow";
+            this.tabPage_unknow.UseVisualStyleBackColor = true;
             // 
             // hexBox1
             // 
@@ -241,7 +241,7 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.hexBox1.ColumnInfoVisible = true;
-            this.hexBox1.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.hexBox1.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.hexBox1.LineInfoVisible = true;
             this.hexBox1.Location = new System.Drawing.Point(6, 6);
             this.hexBox1.Name = "hexBox1";
@@ -262,7 +262,7 @@
             this.columnHeader2,
             this.columnHeader3});
             this.listView_map.ContextMenuStrip = this.contextMenuStrip1;
-            this.listView_map.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.listView_map.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.listView_map.FullRowSelect = true;
             this.listView_map.HideSelection = false;
             this.listView_map.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
@@ -430,12 +430,12 @@
             this.Name = "ObjectAnalyzerForm";
             this.Text = "Object Analyzer";
             this.tabControl1.ResumeLayout(false);
-            this.tabPage2.ResumeLayout(false);
-            this.tabPage2.PerformLayout();
-            this.tabPage3.ResumeLayout(false);
+            this.tabPage_text.ResumeLayout(false);
+            this.tabPage_text.PerformLayout();
+            this.tabPage_texture.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pic_texture)).EndInit();
-            this.tabPage4.ResumeLayout(false);
-            this.tabPage5.ResumeLayout(false);
+            this.tabPage_vtx.ResumeLayout(false);
+            this.tabPage_unknow.ResumeLayout(false);
             this.contextMenuStrip1.ResumeLayout(false);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
@@ -447,12 +447,11 @@
         #endregion
 
         private System.Windows.Forms.TabControl tabControl1;
-        private System.Windows.Forms.TabPage tabPage1;
-        private System.Windows.Forms.TabPage tabPage2;
-        private System.Windows.Forms.TabPage tabPage3;
+        private System.Windows.Forms.TabPage tabPage_empty;
+        private System.Windows.Forms.TabPage tabPage_texture;
         private TextureBox pic_texture;
-        private System.Windows.Forms.TabPage tabPage4;
-        private System.Windows.Forms.TabPage tabPage5;
+        private System.Windows.Forms.TabPage tabPage_vtx;
+        private System.Windows.Forms.TabPage tabPage_unknow;
         private System.Windows.Forms.ListView listView_map;
         private System.Windows.Forms.ColumnHeader columnHeader1;
         private System.Windows.Forms.ColumnHeader columnHeader2;
@@ -460,7 +459,7 @@
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem toolsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem findDlistsToolStripMenuItem;
-        private System.Windows.Forms.TextBox ucodeTextBox;
+        private System.Windows.Forms.TextBox textBox_holderInfo;
         private System.Windows.Forms.ToolStripMenuItem analyzeDlistsToolStripMenuItem;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
         private System.Windows.Forms.ToolStripMenuItem showInDisplayViewerToolStripMenuItem;
@@ -482,5 +481,6 @@
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
         private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem exportCToolStripMenuItem;
+        private System.Windows.Forms.TabPage tabPage_text;
     }
 }
