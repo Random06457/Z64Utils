@@ -349,7 +349,7 @@ namespace Z64.Forms
                     {
                         case Z64Object.EntryType.DList:
                             {
-                                sw.WriteLine($"Gfx dlist_{entryOff:X8}[] = \r\n{{");
+                                sw.WriteLine($"Gfx {entry.Name}[] = \r\n{{");
                                 bool oldStatic = RDPDisassembler.Configuration.Static;
 
                                 RDPDisassembler.Configuration.Static = true;
@@ -362,7 +362,7 @@ namespace Z64.Forms
                             }
                         case Z64Object.EntryType.Vertex:
                             {
-                                sw.WriteLine($"Vtx_t vertices_{entryOff:X8}[] = \r\n{{");
+                                sw.WriteLine($"Vtx_t {entry.Name}[] = \r\n{{");
 
                                 var vtx = (Z64Object.VertexHolder)entry;
                                 vtx.Vertices.ForEach(v => sw.WriteLine($"    {{ {v.X}, {v.Y}, {v.Z}, 0x{v.Flag:X4}, {v.TexX}, {v.TexY}, {v.R}, {v.G}, {v.B}, {v.A} }},"));
@@ -372,7 +372,7 @@ namespace Z64.Forms
                             }
                         case Z64Object.EntryType.Texture:
                             {
-                                sw.WriteLine($"u8 tex_{entryOff:X8}[] = \r\n{{");
+                                sw.WriteLine($"u8 {entry.Name}[] = \r\n{{");
 
                                 var tex = entry.GetData();
                                 for (int i = 0; i < tex.Length; i+= 16)
@@ -388,7 +388,7 @@ namespace Z64.Forms
                             }
                         case Z64Object.EntryType.Unknown:
                             {
-                                sw.WriteLine($"u8 unk_{entryOff:X8}[] = \r\n{{");
+                                sw.WriteLine($"u8 {entry.Name}[] = \r\n{{");
 
                                 var bytes = entry.GetData();
                                 for (int i = 0; i < bytes.Length; i += 16)
@@ -399,6 +399,61 @@ namespace Z64.Forms
                                     sw.Write("\r\n");
                                 }
 
+                                sw.WriteLine("};");
+                                break;
+                            }
+                        case Z64Object.EntryType.AnimationHeader:
+                            {
+                                var holder = (Z64Object.AnimationHolder)entry;
+                                sw.WriteLine($"AnimationHeader {entry.Name} = {{ {{ {holder.FrameCount} }}, 0x{holder.FrameData.VAddr}, 0x{holder.JointIndices.VAddr}, {holder.StaticIndexMax} }};");
+                                break;
+                            }
+                        case Z64Object.EntryType.FrameData:
+                            {
+                                var holder = (Z64Object.AnimationFrameDataHolder)entry;
+                                sw.WriteLine($"s16 {entry.Name}[] = {{");
+                                for (int i = 0; i < 8; i += 8)
+                                {
+                                    sw.Write("    ");
+                                    for (int j = 0; j < 8 && i+j < holder.FrameData.Length; j++)
+                                        sw.Write($"0x{holder.FrameData[i + j]:X4}, ");
+                                }
+                                sw.WriteLine("};");
+                                break;
+                            }
+                        case Z64Object.EntryType.JointIndices:
+                            {
+                                var holder = (Z64Object.AnimationJointIndicesHolder)entry;
+                                sw.WriteLine($"JointIndex {entry.Name}[] = {{");
+                                foreach (var joint in holder.JointIndices)
+                                    sw.WriteLine($"    {{ {joint.X}, {joint.Y}, {joint.Z} }}, ");
+                                sw.WriteLine("};");
+                                break;
+                            }
+                        case Z64Object.EntryType.SkeletonHeader:
+                            {
+                                var holder = (Z64Object.SkeletonHolder)entry;
+                                sw.WriteLine($"SkeletonHeader {entry.Name} = {{ 0x{holder.LimbsSeg.VAddr}, {holder.LimbCount} }};");
+                                break;
+                            }
+                        case Z64Object.EntryType.FlexSkeletonHeader:
+                            {
+                                var holder = (Z64Object.FlexSkeletonHolder)entry;
+                                sw.WriteLine($"FlexSkeletonHeader {entry.Name} = {{ {{ 0x{holder.LimbsSeg.VAddr}, {holder.LimbCount} }}, {holder.DListCount} }};");
+                                break;
+                            }
+                        case Z64Object.EntryType.SkeletonLimb:
+                            {
+                                var holder = (Z64Object.SkeletonLimbHolder)entry;
+                                sw.WriteLine($"StandardLimb {entry.Name} = {{ {{ {holder.JointX}, {holder.JointY}, {holder.JointZ} }}, {holder.Child}, {holder.Sibling}, 0x{holder.DListSeg.VAddr:X8} }};");
+                                break;
+                            }
+                        case Z64Object.EntryType.SkeletonLimbs:
+                            {
+                                var holder = (Z64Object.SkeletonLimbsHolder)entry;
+                                sw.WriteLine($"void* {entry.Name}[] = {{");
+                                foreach (var limb in holder.LimbSegments)
+                                    sw.WriteLine($"0x{limb.VAddr:X8}, ");
                                 sw.WriteLine("};");
                                 break;
                             }
