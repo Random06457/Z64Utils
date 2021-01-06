@@ -12,7 +12,7 @@ using System.Globalization;
 
 namespace Z64.Forms
 {
-    public partial class TextureViewer : Form
+    public partial class TextureViewer : MicrosoftFontForm
     {
         Z64Game _game;
         public TextureViewer(Z64Game game)

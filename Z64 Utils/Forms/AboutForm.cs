@@ -11,7 +11,7 @@ using System.Windows.Forms;
 
 namespace Z64.Forms
 {
-    public partial class AboutForm : Form
+    public partial class AboutForm : MicrosoftFontForm
     {
         public AboutForm()
         {
@@ -32,6 +32,11 @@ namespace Z64.Forms
         private void linkLabel3_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             Process.Start(@"https://wiki.cloudmodding.com");
+        }
+
+        private void linkLabel4_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            Process.Start(@"https://github.com/zeldaret");
         }
     }
 }

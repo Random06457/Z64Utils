@@ -12,7 +12,7 @@ using RDP;
 
 namespace Z64.Forms
 {
-    public partial class AnalyzerSettingsForm : Form
+    public partial class AnalyzerSettingsForm : MicrosoftFontForm
     {
         public Z64ObjectAnalyzer.Config Result { get; set; }
 

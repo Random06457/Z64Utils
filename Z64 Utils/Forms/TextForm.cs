@@ -10,7 +10,7 @@ using System.Windows.Forms;
 
 namespace Z64.Forms
 {
-    public partial class TextForm : Form
+    public partial class TextForm : MicrosoftFontForm
     {
         public TextForm(Icon icon, string title, string message)
         {

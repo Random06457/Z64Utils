@@ -14,7 +14,7 @@ using System.Globalization;
 
 namespace Z64.Forms
 {
-    public partial class SegmentEditForm : Form
+    public partial class SegmentEditForm : MicrosoftFontForm
     {
         public RDPRenderer.Segment ResultSegment { get; set; }
 

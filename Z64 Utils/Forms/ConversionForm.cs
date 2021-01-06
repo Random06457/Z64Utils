@@ -12,7 +12,7 @@ using System.IO;
 
 namespace Z64.Forms
 {
-    public partial class ConversionForm : Form
+    public partial class ConversionForm : MicrosoftFontForm
     {
         Z64Game _game;
         public ConversionForm(Z64Game game)
