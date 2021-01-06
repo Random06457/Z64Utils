@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.ListViewItem listViewItem2 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem(new string[] {
             "",
             "00000000-00000000",
             "00000000-00000000",
@@ -43,10 +43,10 @@
             this.label3 = new System.Windows.Forms.Label();
             this.textBox_fileFilter = new System.Windows.Forms.TextBox();
             this.listView_files = new System.Windows.Forms.ListView();
-            this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.columnHeader4 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader1 = new System.Windows.Forms.ColumnHeader();
+            this.columnHeader2 = new System.Windows.Forms.ColumnHeader();
+            this.columnHeader3 = new System.Windows.Forms.ColumnHeader();
+            this.columnHeader4 = new System.Windows.Forms.ColumnHeader();
             this.contextMenuStrip_fs = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.openObjectViewerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.injectToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -65,6 +65,7 @@
             this.checkNewReleasesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
+            this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
             this.tabControl1.SuspendLayout();
             this.tabPage5.SuspendLayout();
             this.contextMenuStrip_fs.SuspendLayout();
@@ -141,11 +142,11 @@
             this.columnHeader3,
             this.columnHeader4});
             this.listView_files.ContextMenuStrip = this.contextMenuStrip_fs;
-            this.listView_files.Font = new System.Drawing.Font("Consolas", 8.25F);
+            this.listView_files.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.listView_files.FullRowSelect = true;
             this.listView_files.HideSelection = false;
             this.listView_files.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem2});
+            listViewItem1});
             this.listView_files.Location = new System.Drawing.Point(6, 53);
             this.listView_files.MultiSelect = false;
             this.listView_files.Name = "listView_files";
@@ -230,9 +231,8 @@
             // 
             // openToolStripMenuItem
             // 
-            this.openToolStripMenuItem.Image = global::Z64.Properties.Resources.open;
             this.openToolStripMenuItem.Name = "openToolStripMenuItem";
-            this.openToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.openToolStripMenuItem.Size = new System.Drawing.Size(123, 22);
             this.openToolStripMenuItem.Text = "Open";
             this.openToolStripMenuItem.Click += new System.EventHandler(this.OpenToolStripMenuItem_Click);
             // 
@@ -240,7 +240,7 @@
             // 
             this.exportFSToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("exportFSToolStripMenuItem.Image")));
             this.exportFSToolStripMenuItem.Name = "exportFSToolStripMenuItem";
-            this.exportFSToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.exportFSToolStripMenuItem.Size = new System.Drawing.Size(123, 22);
             this.exportFSToolStripMenuItem.Text = "Export FS";
             this.exportFSToolStripMenuItem.Click += new System.EventHandler(this.ExportFSToolStripMenuItem_Click);
             // 
@@ -248,7 +248,7 @@
             // 
             this.saveToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("saveToolStripMenuItem.Image")));
             this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
-            this.saveToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.saveToolStripMenuItem.Size = new System.Drawing.Size(123, 22);
             this.saveToolStripMenuItem.Text = "Save As";
             this.saveToolStripMenuItem.Click += new System.EventHandler(this.SaveToolStripMenuItem_Click);
             // 
@@ -260,15 +260,13 @@
             this.f3DEXDisassemblerToolStripMenuItem,
             this.ROMRAMConversionsToolStripMenuItem,
             this.textureViewerToolStripMenuItem});
-            this.toolStripDropDownButton1.Image = global::Z64.Properties.Resources.tools;
             this.toolStripDropDownButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripDropDownButton1.Name = "toolStripDropDownButton1";
-            this.toolStripDropDownButton1.Size = new System.Drawing.Size(63, 22);
+            this.toolStripDropDownButton1.Size = new System.Drawing.Size(47, 22);
             this.toolStripDropDownButton1.Text = "Tools";
             // 
             // openObjectToolStripMenuItem
             // 
-            this.openObjectToolStripMenuItem.Image = global::Z64.Properties.Resources.cube;
             this.openObjectToolStripMenuItem.Name = "openObjectToolStripMenuItem";
             this.openObjectToolStripMenuItem.Size = new System.Drawing.Size(200, 22);
             this.openObjectToolStripMenuItem.Text = "Open DList Viewer";
@@ -284,7 +282,6 @@
             // 
             // ROMRAMConversionsToolStripMenuItem
             // 
-            this.ROMRAMConversionsToolStripMenuItem.Image = global::Z64.Properties.Resources.conversion;
             this.ROMRAMConversionsToolStripMenuItem.Name = "ROMRAMConversionsToolStripMenuItem";
             this.ROMRAMConversionsToolStripMenuItem.Size = new System.Drawing.Size(200, 22);
             this.ROMRAMConversionsToolStripMenuItem.Text = "ROM/RAM Conversions";
@@ -292,7 +289,6 @@
             // 
             // textureViewerToolStripMenuItem
             // 
-            this.textureViewerToolStripMenuItem.Image = global::Z64.Properties.Resources.texture;
             this.textureViewerToolStripMenuItem.Name = "textureViewerToolStripMenuItem";
             this.textureViewerToolStripMenuItem.Size = new System.Drawing.Size(200, 22);
             this.textureViewerToolStripMenuItem.Text = "Texture Viewer";
@@ -381,6 +377,7 @@
         private System.Windows.Forms.ToolStripDropDownButton toolStripDropDownButton2;
         private System.Windows.Forms.ToolStripMenuItem checkNewReleasesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
+        private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
     }
 }
 

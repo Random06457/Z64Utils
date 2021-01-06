@@ -10,16 +10,28 @@ using System.Windows.Forms;
 
 namespace Z64.Forms
 {
-    public partial class DmaFileSelectForm : Form
+    public partial class DmaFileSelectForm : MicrosoftFontForm
     {
         public Z64File SelectedFile { get; private set; }
 
         Z64Game _game;
+        string[] _fileItemsText;
+        string _lastSearch = null;
 
         public DmaFileSelectForm(Z64Game game)
         {
             InitializeComponent();
             _game = game;
+
+            _fileItemsText = new string[_game.GetFileCount()];
+            for (int i = 0; i < _game.GetFileCount(); i++)
+            {
+                var file = _game.GetFileFromIndex(i);
+                if (!file.Valid())
+                    continue;
+
+                _fileItemsText[i] = ($"{_game.GetFileName(file.VRomStart).ToLower()} {file.VRomStart:x8} {file.VRomEnd:x8}");
+            }
             UpdateFileList();
         }
 
@@ -31,30 +43,36 @@ namespace Z64.Forms
         private void UpdateFileList()
         {
             fileListView.BeginUpdate();
-            fileListView.Items.Clear();
-            for (int i = 0; i < _game.GetFileCount(); i++)
+            string search = searchBox.Text.ToLower();
+            if (_lastSearch != null && search.Contains(_lastSearch))
             {
-                var file = _game.GetFileFromIndex(i);
-                if (!file.Valid())
-                    continue;
-
-                string name = _game.GetFileName(file.VRomStart);
-                string vrom = $"{file.VRomStart:X8}-{file.VRomEnd:X8}";
-                string rom = $"{file.RomStart:X8}-{file.RomEnd:X8}";
-                string type = "Unknow";
-
-                if (name.ToLower().Contains(searchBox.Text.ToLower()) ||
-                    vrom.ToLower().Contains(searchBox.Text.ToLower()) ||
-                    rom.ToLower().Contains(searchBox.Text.ToLower()) ||
-                    type.ToLower().Contains(searchBox.Text.ToLower()))
-                {
-
-                    var item = fileListView.Items.Add(name);
-                    item.Tag = file.VRomStart;
-                    item.SubItems.AddRange(new string[] { vrom, rom, type });
-                }
-
+                for (int i = 0; i < fileListView.Items.Count; i++)
+                    if (!_fileItemsText[(int)fileListView.Items[i].Tag].Contains(search))
+                        fileListView.Items.RemoveAt(i--);
             }
+            else
+            {
+                fileListView.Items.Clear();
+                for (int i = 0; i < _game.GetFileCount(); i++)
+                {
+                    var file = _game.GetFileFromIndex(i);
+                    if (!file.Valid())
+                        continue;
+
+                    if (_fileItemsText[i].Contains(search))
+                    {
+                        string name = _game.GetFileName(file.VRomStart);
+                        string vrom = $"{file.VRomStart:X8}-{file.VRomEnd:X8}";
+                        string rom = $"{file.RomStart:X8}-{file.RomEnd:X8}";
+                        string type = "Unknow";
+
+                        var item = fileListView.Items.Add(name);
+                        item.SubItems.AddRange(new string[] { vrom, rom, type });
+                        item.Tag = i;
+                    }
+                }
+            }
+            _lastSearch = search;
             fileListView.EndUpdate();
         }
 
@@ -62,7 +80,7 @@ namespace Z64.Forms
         {
             if (fileListView.SelectedItems.Count == 1)
             {
-                SelectedFile = _game.GetFile((int)fileListView.SelectedItems[0].Tag);
+                SelectedFile = _game.GetFileFromIndex((int)fileListView.SelectedItems[0].Tag);
                 DialogResult = DialogResult.OK;
                 Close();
             }

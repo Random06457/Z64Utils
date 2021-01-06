@@ -19,7 +19,7 @@ using Common;
 
 namespace Z64.Forms
 {
-    public partial class DListViewerForm : Form
+    public partial class DListViewerForm : MicrosoftFontForm
     {
         public static DListViewerForm Instance { get; set; }
 

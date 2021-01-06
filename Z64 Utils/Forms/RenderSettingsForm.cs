@@ -11,7 +11,7 @@ using RDP;
 
 namespace Z64.Forms
 {
-    public partial class RenderSettingsForm : Form
+    public partial class RenderSettingsForm : MicrosoftFontForm
     {
         public event EventHandler SettingsChanged;
 

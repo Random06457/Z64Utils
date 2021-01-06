@@ -10,7 +10,7 @@ using System.Windows.Forms;
 
 namespace Z64.Forms
 {
-    public partial class EditValueForm : Form
+    public partial class EditValueForm : MicrosoftFontForm
     {
         Func<string, string> _callback = s => null;
         public string Result { get; private set; }

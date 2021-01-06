@@ -13,7 +13,7 @@ using Common;
 
 namespace Z64.Forms
 {
-    public partial class DisasmForm : Form
+    public partial class DisasmForm : MicrosoftFontForm
     {
         List<F3DZEX.CommandInfo> _dlist;
         uint _vaddr;
@@ -21,6 +21,7 @@ namespace Z64.Forms
         public DisasmForm(List<F3DZEX.CommandInfo> dlist = null, uint vaddr = 0)
         {
             InitializeComponent();
+            this.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
 
             _dlist = dlist;
             _vaddr = vaddr;
