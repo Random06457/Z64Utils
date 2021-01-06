@@ -12,7 +12,7 @@ using RDP;
 
 namespace Z64.Forms
 {
-    public partial class DisasmSettingsForm : Form
+    public partial class DisasmSettingsForm : MicrosoftFontForm
     {
         public static DisasmSettingsForm Instance { get; set; }
 

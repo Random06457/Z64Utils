@@ -15,7 +15,7 @@ using Common;
 
 namespace Z64.Forms
 {
-    public partial class ObjectAnalyzerForm : Form
+    public partial class ObjectAnalyzerForm : MicrosoftFontForm
     {
         byte[] _data;
         Z64Object _obj;

@@ -13,7 +13,7 @@ using Common;
 
 namespace Z64.Forms
 {
-    public partial class DisasmForm : Form
+    public partial class DisasmForm : MicrosoftFontForm
     {
         List<F3DZEX.CommandInfo> _dlist;
         uint _vaddr;

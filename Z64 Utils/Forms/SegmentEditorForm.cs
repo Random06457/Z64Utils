@@ -11,7 +11,7 @@ using RDP;
 
 namespace Z64.Forms
 {
-    public partial class SegmentEditorForm : Form
+    public partial class SegmentEditorForm : MicrosoftFontForm
     {
         public event EventHandler<RDPRenderer.Segment> SegmentsChanged;
         public SegmentEditorForm(Z64Game game, RDPRenderer renderer)

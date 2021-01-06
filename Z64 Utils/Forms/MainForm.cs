@@ -21,9 +21,11 @@ using System.Diagnostics;
 
 namespace Z64.Forms
 {
-    public partial class MainForm : Form
+    public partial class MainForm : MicrosoftFontForm
     {
         Z64Game _game = null;
+        string[] _fileItemsText;
+        string _lastSearch = null;
 
         public MainForm()
         {
@@ -80,30 +82,36 @@ namespace Z64.Forms
         private void UpdateFileList()
         {
             listView_files.BeginUpdate();
-            listView_files.Items.Clear();
-            for (int i = 0; i < _game.GetFileCount(); i++)
+            string search = textBox_fileFilter.Text.ToLower();
+            if (_lastSearch != null && search.Contains(_lastSearch))
             {
-                var file = _game.GetFileFromIndex(i);
-                if (!file.Valid())
-                    continue;
-
-                string name = _game.GetFileName(file.VRomStart);
-                string vrom = $"{file.VRomStart:X8}-{file.VRomEnd:X8}";
-                string rom = $"{file.RomStart:X8}-{file.RomEnd:X8}";
-                string type = "Unknow";
-
-                if (name.ToLower().Contains(textBox_fileFilter.Text.ToLower()) ||
-                    vrom.ToLower().Contains(textBox_fileFilter.Text.ToLower()) ||
-                    rom.ToLower().Contains(textBox_fileFilter.Text.ToLower()) ||
-                    type.ToLower().Contains(textBox_fileFilter.Text.ToLower()))
-                {
-
-                    var item = listView_files.Items.Add(name);
-                    item.Tag = file.VRomStart;
-                    item.SubItems.AddRange(new string[] { vrom, rom, type });
-                }
-
+                for (int i = 0; i < listView_files.Items.Count; i++)
+                    if (!_fileItemsText[(int)listView_files.Items[i].Tag].Contains(search))
+                        listView_files.Items.RemoveAt(i--);
             }
+            else
+            {
+                listView_files.Items.Clear();
+                for (int i = 0; i < _game.GetFileCount(); i++)
+                {
+                    var file = _game.GetFileFromIndex(i);
+                    if (!file.Valid())
+                        continue;
+
+                    if (_fileItemsText[i].Contains(search))
+                    {
+                        string name = _game.GetFileName(file.VRomStart);
+                        string vrom = $"{file.VRomStart:X8}-{file.VRomEnd:X8}";
+                        string rom = $"{file.RomStart:X8}-{file.RomEnd:X8}";
+                        string type = "Unknow";
+
+                        var item = listView_files.Items.Add(name);
+                        item.SubItems.AddRange(new string[] { vrom, rom, type });
+                        item.Tag = i;
+                    }
+                }
+            }
+            _lastSearch = search;
             listView_files.EndUpdate();
         }
 
@@ -145,6 +153,18 @@ namespace Z64.Forms
                         if (_game != null)
                         {
                             Text = $"Z64 Utils - {Path.GetFileName(openFileDialog1.FileName)} [ver. {_game.Version} ({_game.BuildID})]";
+
+
+                            _fileItemsText = new string[_game.GetFileCount()];
+                            for (int i = 0; i < _game.GetFileCount(); i++)
+                            {
+                                var file = _game.GetFileFromIndex(i);
+                                if (!file.Valid())
+                                    continue;
+
+                                _fileItemsText[i] = ($"{_game.GetFileName(file.VRomStart).ToLower()} {file.VRomStart:x8} {file.VRomEnd:x8}");
+                            }
+
                             UpdateFileList();
                         }
                         UpdateControls();
@@ -169,8 +189,8 @@ namespace Z64.Forms
 
         private void ExportFSToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            FolderSelectDialog fbox = new FolderSelectDialog();
-            if (fbox.ShowDialog() == DialogResult.OK)
+            folderBrowserDialog1.SelectedPath = "";
+            if (folderBrowserDialog1.ShowDialog() == DialogResult.OK)
             {
                 StartTask(() => {
                     for (int i = 0; i < _game.GetFileCount(); i++)
@@ -182,7 +202,7 @@ namespace Z64.Forms
                             string name = $"{_game.GetFileName(file.VRomStart):X8}";
                             if (string.IsNullOrEmpty(name) || Utils.IsValidFileName(name))
                                 name = $"{file.VRomStart:X8}-{file.VRomEnd:X8}";
-                            File.WriteAllBytes($"{fbox.SelectedPath}/{name}.bin", file.Data);
+                            File.WriteAllBytes($"{folderBrowserDialog1.SelectedPath}/{name}.bin", file.Data);
                         }
                     }
                 });
@@ -194,7 +214,7 @@ namespace Z64.Forms
             if (listView_files.SelectedIndices.Count != 1)
                 return;
             var item = listView_files.SelectedItems[0];
-            int vrom = (int)item.Tag;
+            int vrom = _game.GetFileFromIndex((int)item.Tag).VRomStart;
 
             openFileDialog1.FileName = "";
             openFileDialog1.Filter = Filters.ALL;
@@ -209,8 +229,7 @@ namespace Z64.Forms
             if (listView_files.SelectedIndices.Count != 1)
                 return;
             var item = listView_files.SelectedItems[0];
-            int vrom = (int)item.Tag;
-            var file = _game.GetFile(vrom);
+            var file = _game.GetFileFromIndex((int)item.Tag);
 
             if (!file.Valid())
             {
@@ -223,7 +242,7 @@ namespace Z64.Forms
                 return;
             }
 
-            saveFileDialog1.FileName = $"{_game.GetFileName(vrom)}.bin";
+            saveFileDialog1.FileName = $"{_game.GetFileName(file.VRomStart)}.bin";
             saveFileDialog1.Filter = Filters.ALL;
             if (saveFileDialog1.ShowDialog() == DialogResult.OK)
             {
@@ -236,9 +255,8 @@ namespace Z64.Forms
             if (listView_files.SelectedIndices.Count != 1)
                 return;
             var item = listView_files.SelectedItems[0];
-            int vrom = (int)item.Tag;
+            var file = _game.GetFileFromIndex((int)item.Tag);
 
-            var file = _game.GetFile(vrom);
             if (!file.Valid())
             {
                 MessageBox.Show("Invalid File");
