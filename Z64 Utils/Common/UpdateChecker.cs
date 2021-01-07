@@ -10,7 +10,7 @@ namespace Common
     public static class UpdateChecker
     {
         public const string ReleaseURL = @"https://github.com/Random06457/Z64Utils/releases";
-        public const string CurrentTag = "v1.0.3";
+        public const string CurrentTag = "v1.0.4";
         public static string GetLatestTag()
         {
             HttpWebRequest req = (HttpWebRequest)WebRequest.Create($"{ReleaseURL}/latest");
