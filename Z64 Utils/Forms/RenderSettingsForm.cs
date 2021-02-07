@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using RDP;
+using F3DZEX;
 
 namespace Z64.Forms
 {
@@ -15,10 +15,10 @@ namespace Z64.Forms
     {
         public event EventHandler SettingsChanged;
 
-        RDPRenderer.Config _rendererCfg;
+        Renderer.Config _rendererCfg;
         ModelViewerControl.Config _controlCfg;
 
-        public RenderSettingsForm(RDPRenderer.Config rendererCfg, ModelViewerControl.Config controlCfg)
+        public RenderSettingsForm(Renderer.Config rendererCfg, ModelViewerControl.Config controlCfg)
         {
             InitializeComponent();
             _rendererCfg = rendererCfg;

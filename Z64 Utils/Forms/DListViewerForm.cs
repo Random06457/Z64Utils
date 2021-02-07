@@ -17,37 +17,111 @@ using Syroot.BinaryData;
 using Z64;
 using Common;
 
+using DList = System.Collections.Generic.List<System.Tuple<uint, F3DZEX.Command.CommandInfo>>;
+
 namespace Z64.Forms
 {
     public partial class DListViewerForm : MicrosoftFontForm
     {
+        class RenderRoutine
+        {
+            public uint Address;
+            public int X;
+            public int Y;
+            public int Z;
+            public DList DList;
+
+            public RenderRoutine(uint addr, int x = 0, int y = 0, int z = 0)
+            {
+                Address = addr;
+                X = x;
+                Y = y;
+                Z = z;
+                DList = null;
+            }
+            public RenderRoutine(F3DZEX.Renderer renderer, uint addr, int x = 0, int y = 0, int z = 0) : this(addr, x, y, z)
+            {
+                DList = renderer.GetFullDlist(addr);
+            }
+
+            public override string ToString() => $"{Address:X8} [{X};{Y};{Z}]";
+        }
+
         public static DListViewerForm Instance { get; set; }
 
         Z64Game _game;
-        RDPRenderer _renderer;
+        F3DZEX.Renderer _renderer;
         SegmentEditorForm _segForm;
         DisasmForm _disasForm;
         RenderSettingsForm _settingsForm;
-        List<F3DZEX.CommandInfo> _dlist = new List<F3DZEX.CommandInfo>();
-        RDPRenderer.Config _rendererCfg;
+        F3DZEX.Renderer.Config _rendererCfg;
         ModelViewerControl.Config _controlCfg;
-        uint _vaddr;
+
+        List<RenderRoutine> _routines;
+
 
         private DListViewerForm(Z64Game game)
         {
             _game = game;
-            _rendererCfg = new RDPRenderer.Config();
+            _rendererCfg = new F3DZEX.Renderer.Config();
             _controlCfg = new ModelViewerControl.Config();
 
             InitializeComponent();
             Toolkit.Init();
 
-            _renderer = new RDPRenderer(game, _rendererCfg);
+            _renderer = new F3DZEX.Renderer(game, _rendererCfg);
             modelViewer.CurrentConfig = _controlCfg;
-            modelViewer.RenderCallback = _renderer.Render;
+            modelViewer.RenderCallback = RenderCallback;
 
-            StartRender();
+            _routines = new List<RenderRoutine>();
+            SetupDLists();
+            NewRender();
         }
+
+        void SetupDLists()
+        {
+            _renderer.ClearErrors();
+            foreach (RenderRoutine routine in _routines)
+                routine.DList = _renderer.GetFullDlist(routine.Address);
+        }
+
+        void RenderCallback()
+        {
+            foreach (RenderRoutine routine in _routines)
+            {
+                GL.PushMatrix();
+                GL.Translate(routine.X, routine.Y, routine.Z);
+                _renderer.RenderDList(routine.DList);
+                GL.PopMatrix();
+            }
+
+            toolStripStatusErrorLabel.Text = _renderer.RenderFailed()
+                ? $"RENDER ERROR AT 0x{_renderer.RenderErrorAddr:X8}! ({_renderer.ErrorMsg})"
+                : "";
+        }
+        private void NewRender(object sender = null, EventArgs e = null)
+        {
+            _renderer.ClearErrors();
+
+            toolStripStatusErrorLabel.Text = "";
+
+            // TODO: on listbox item changed
+            /*
+            if (_renderer.Routines.Count > 0)
+            {
+                uint addr = _renderer.Routines.First().Entrypoint;
+                _disasForm?.Update(addr, _renderer.GetDlist(addr));
+            }
+            else
+                _disasForm?.Update(0, new List<F3DZEX.Command.CommandInfo>());
+            */
+
+            modelViewer.Render();
+        }
+
+
+
+
 
         public static void OpenInstance(Z64Game game)
         {
@@ -62,48 +136,43 @@ namespace Z64.Forms
             }
         }
         
-        public void SetSegment(int index, RDPRenderer.Segment segment)
+        public void SetSegment(int index, F3DZEX.Memory.Segment segment)
         {
-            if (index >= 0 && index < RDPRenderer.Segment.COUNT)
+            if (index >= 0 && index < F3DZEX.Memory.Segment.COUNT)
             {
-                _renderer.Segments[index] = segment;
+                _renderer.Memory.Segments[index] = segment;
+                SetupDLists();
+                NewRender();
             }
         }
-        public void SetAddress(uint vaddr)
+
+        public void SetSingleDlist(uint vaddr)
         {
-            toolStripTextBoxEntrypoint.Text = vaddr.ToString("X8");
-            StartRender();
+            listBox_routines.Items.Clear();
+            _routines.Clear();
+
+            var routine = new RenderRoutine(_renderer, vaddr);
+            listBox_routines.Items.Add(routine.ToString());
+            _routines.Add(routine);
+
+            NewRender();
+        }
+
+        public void AddDList(uint vaddr)
+        {
+            var routine = new RenderRoutine(_renderer, vaddr);
+            listBox_routines.Items.Add(routine.ToString());
+            _routines.Add(routine);
+
+            NewRender();
         }
 
 
-        private void UpdateRender(object sender = null, EventArgs e = null)
-        {
-            _renderer.UpdateErrors();
-            toolStripStatusErrorLabel.Text = _renderer.RenderFailed()
-                ? $"RENDER ERROR AT 0x{_renderer.RenderErrorAddr:X8}! ({_renderer.ErrorMsg})"
-                : "";
 
-            modelViewer.Render();
-        }
 
-        //Address
-        private void toolStripTextBoxEntrypoint_Validating(object sender, CancelEventArgs e)
-        {
-            e.Cancel = !uint.TryParse(toolStripTextBoxEntrypoint.Text, NumberStyles.HexNumber, new CultureInfo("en-US"), out uint result);
-        }
 
-        private void StartRender(object sender = null, EventArgs e = null)
-        {
-            toolStripStatusErrorLabel.Text = "";
-            _vaddr = uint.Parse(toolStripTextBoxEntrypoint.Text, NumberStyles.HexNumber);
 
-            _dlist = _renderer.GetDlist(_vaddr);
-            if (_dlist == null)
-                _dlist = new List<F3DZEX.CommandInfo>();
-            _renderer.Start(_vaddr);
-            UpdateRender();
-            _disasForm?.Update(_vaddr, _dlist);
-        }
+
 
         private void toolStripTextBoxEntrypoint_KeyDown(object sender, KeyEventArgs e)
         {
@@ -114,7 +183,7 @@ namespace Z64.Forms
             }
         }
 
-        private void toolStripButton2_Click(object sender, EventArgs e)
+        private void toolStripSegmentsBtn_Click(object sender, EventArgs e)
         {
             if (_segForm != null)
             {
@@ -124,23 +193,18 @@ namespace Z64.Forms
             {
                 _segForm = new SegmentEditorForm(_game, _renderer);
                 _segForm.SegmentsChanged += SegForm_SegmentsChanged;
-                _segForm.FormClosed += SegForm_FormClosed;
+                _segForm.FormClosed += (sender, e) => _segForm = null;
                 _segForm.Show();
             }
         }
 
-        private void SegForm_SegmentsChanged(object sender, RDPRenderer.Segment e)
+        private void SegForm_SegmentsChanged(object sender, F3DZEX.Memory.Segment e)
         {
-            _renderer.Segments[(int)sender] = e;
-            UpdateRender();
+            _renderer.Memory.Segments[(int)sender] = e;
+            NewRender();
         }
 
-        private void SegForm_FormClosed(object sender, FormClosedEventArgs e)
-        {
-            _segForm = null;
-        }
-
-        private void toolStripButton3_Click(object sender, EventArgs e)
+        private void toolStripDisasBtn_Click(object sender, EventArgs e)
         {
             if (_disasForm != null)
             {
@@ -148,16 +212,15 @@ namespace Z64.Forms
             }
             else
             {
-                _disasForm = new DisasmForm(_dlist, _vaddr);
-                _disasForm.FormClosed += DisasForm_FormClosed;
+                _disasForm = new DisasmForm(new List<F3DZEX.Command.CommandInfo>());
+
+                if (listBox_routines.SelectedIndex != -1)
+                    _disasForm.Update(_routines[listBox_routines.SelectedIndex].DList);
+                _disasForm.FormClosed += (sender, e) => _disasForm = null;
                 _disasForm.Show();
             }
         }
 
-        private void DisasForm_FormClosed(object sender, FormClosedEventArgs e)
-        {
-            _disasForm = null;
-        }
 
         private void DListViewerForm_FormClosed(object sender, FormClosedEventArgs e)
         {
@@ -167,7 +230,7 @@ namespace Z64.Forms
             _settingsForm?.Close();
         }
 
-        private void toolStripButton1_Click(object sender, EventArgs e)
+        private void toolStripRenderCfgBtn_Click(object sender, EventArgs e)
         {
             if (_settingsForm != null)
             {
@@ -176,15 +239,10 @@ namespace Z64.Forms
             else
             {
                 _settingsForm = new RenderSettingsForm(_rendererCfg, _controlCfg);
-                _settingsForm.FormClosed += SettingsForm_FormClosed;
-                _settingsForm.SettingsChanged += UpdateRender;
+                _settingsForm.FormClosed += (sender, e) => _settingsForm = null;
+                _settingsForm.SettingsChanged += (sender, e) => { modelViewer.Render(); };
                 _settingsForm.Show();
             }
-        }
-
-        private void SettingsForm_FormClosed(object sender, FormClosedEventArgs e)
-        {
-            _settingsForm = null;
         }
 
         private void saveScreenToolStripMenuItem_Click(object sender, EventArgs e)

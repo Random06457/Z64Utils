@@ -4,11 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Common;
-using RDP;
+using F3DZEX;
 using N64;
 using System.Text.RegularExpressions;
 using System.IO;
 using Z64.Common;
+using static F3DZEX.Command;
+using RDP;
 
 namespace Z64
 {
@@ -29,8 +31,8 @@ namespace Z64
         {
             public class OpCodePattern
             {
-                public F3DZEX.OpCodeID ID { get; private set; }
-                private List<Tuple<int, List<F3DZEX.OpCodeID>>> _pattern;
+                public OpCodeID ID { get; private set; }
+                private List<Tuple<int, List<OpCodeID>>> _pattern;
 
                 private OpCodePattern()
                 {
@@ -60,7 +62,7 @@ namespace Z64
 
                 private static bool ValidOpCodeID(string id)
                 {
-                    var values = Enum.GetValues(typeof(F3DZEX.OpCodeID));
+                    var values = Enum.GetValues(typeof(OpCodeID));
                     foreach (var v in values)
                         if (v.ToString() == id)
                             return true;
@@ -78,37 +80,37 @@ namespace Z64
                     if (!ValidOpCodeID(parts[0]))
                         return null;
 
-                    ret.ID = (F3DZEX.OpCodeID)Enum.Parse(typeof(F3DZEX.OpCodeID), parts[0]);
+                    ret.ID = (OpCodeID)Enum.Parse(typeof(OpCodeID), parts[0]);
                     var entries = parts[1].Split(',').ToList();
                     if (entries.FindAll(s => s == "*").Count != 1)
                         return null;
 
                     int idx = entries.IndexOf("*");
 
-                    ret._pattern = new List<Tuple<int, List<F3DZEX.OpCodeID>>>();
+                    ret._pattern = new List<Tuple<int, List<OpCodeID>>>();
                     for (int i = 0; i < entries.Count; i++)
                     {
                         if (entries[i] == "*")
                         {
-                            ret._pattern.Add(new Tuple<int, List<F3DZEX.OpCodeID>>(0, new List<F3DZEX.OpCodeID>() { ret.ID }));
+                            ret._pattern.Add(new Tuple<int, List<OpCodeID>>(0, new List<OpCodeID>() { ret.ID }));
                             continue;
                         }
 
                         if (entries[i] == "?")
                         {
-                            ret._pattern.Add(new Tuple<int, List<F3DZEX.OpCodeID>>(i-idx, new List<F3DZEX.OpCodeID>()));
+                            ret._pattern.Add(new Tuple<int, List<OpCodeID>>(i-idx, new List<OpCodeID>()));
                             continue;
                         }
 
-                        var ids = new List<F3DZEX.OpCodeID>();
+                        var ids = new List<OpCodeID>();
 
                         var idStr = entries[i].Split('|').ToList();
                         if (!idStr.TrueForAll(s => ValidOpCodeID(s)))
                             return null;
                         foreach (var s in idStr)
-                            ids.Add((F3DZEX.OpCodeID)Enum.Parse(typeof(F3DZEX.OpCodeID), s));
+                            ids.Add((OpCodeID)Enum.Parse(typeof(OpCodeID), s));
 
-                        ret._pattern.Add(new Tuple<int, List<F3DZEX.OpCodeID>>(i-idx, ids));
+                        ret._pattern.Add(new Tuple<int, List<OpCodeID>>(i-idx, ids));
                     }
 
                     return ret;
@@ -139,7 +141,7 @@ namespace Z64
                 }
             }
 
-            public List<F3DZEX.OpCodeID> ImprobableOpCodes { get; set; } = new List<F3DZEX.OpCodeID>();
+            public List<OpCodeID> ImprobableOpCodes { get; set; } = new List<OpCodeID>();
             public List<OpCodePattern> Patterns { get; set; } = new List<OpCodePattern>();
 
         }
@@ -184,7 +186,7 @@ namespace Z64
             List<ReservedRegion> regions = new List<ReservedRegion>();
             List<int> dlists = new List<int>();
 
-            var codeEnds = Utils.FindData(data, new byte[] { (byte)F3DZEX.OpCodeID.G_ENDDL, 0, 0, 0, 0, 0, 0, 0, }, 8);
+            var codeEnds = Utils.FindData(data, new byte[] { (byte)OpCodeID.G_ENDDL, 0, 0, 0, 0, 0, 0, 0, }, 8);
             codeEnds.Insert(0, 0);
             for (int i = 1; i < codeEnds.Count; i++)
             {
@@ -194,53 +196,53 @@ namespace Z64
 
                 for (int off = end; off >= codeEnds[i-1]+8; off -= 8)
                 {
-                    F3DZEX.OpCodeID op = (F3DZEX.OpCodeID)data[off];
+                    OpCodeID op = (OpCodeID)data[off];
 
                     if (IsOverlap(off, regions) || !IsOpCodeCorrect(data, off, cfg))
                         break;
 
                     switch (op)
                     {
-                        case F3DZEX.OpCodeID.G_RDPHALF_1:
+                        case OpCodeID.G_RDPHALF_1:
                             {
-                                half1 = F3DZEX.DecodeCommand<F3DZEX.GRdpHalf>(data, off).word;
+                                half1 = F3DZEX.Command.DecodeCommand<F3DZEX.Command.GRdpHalf>(data, off).word;
                                 break;
                             }
-                        case F3DZEX.OpCodeID.G_BRANCH_Z:
+                        case OpCodeID.G_BRANCH_Z:
                             {
                                 AddDlist(dlists, segmentId, half1, data.Length);
                                 break;
                             }
-                        case F3DZEX.OpCodeID.G_DL:
+                        case OpCodeID.G_DL:
                             {
-                                var gdl = F3DZEX.DecodeCommand<F3DZEX.GDl>(data, off);
+                                var gdl = F3DZEX.Command.DecodeCommand<F3DZEX.Command.GDl>(data, off);
                                 AddDlist(dlists, segmentId, gdl.dl, data.Length);
                                 break;
                             }
-                        case F3DZEX.OpCodeID.G_VTX:
+                        case OpCodeID.G_VTX:
                             {
-                                var gmtx = F3DZEX.DecodeCommand<F3DZEX.GVtx>(data, off);
+                                var gmtx = F3DZEX.Command.DecodeCommand<F3DZEX.Command.GVtx>(data, off);
                                 AddRegion(regions, segmentId, gmtx.vaddr, gmtx.numv * 0x10, data.Length);
                                 break;
                             }
-                        case F3DZEX.OpCodeID.G_SETTIMG:
+                        case OpCodeID.G_SETTIMG:
                             {
-                                var settimg = F3DZEX.DecodeCommand<F3DZEX.GSetTImg>(data, off);
+                                var settimg = F3DZEX.Command.DecodeCommand<F3DZEX.Command.GSetTImg>(data, off);
                                 if (texels == -1)
                                     break;
                                 AddRegion(regions, segmentId, settimg.imgaddr, N64Texture.GetTexSize(texels, settimg.siz), data.Length);
                                 texels = -1;
                                 break;
                             }
-                        case F3DZEX.OpCodeID.G_LOADBLOCK:
+                        case OpCodeID.G_LOADBLOCK:
                             {
-                                var loadblock = F3DZEX.DecodeCommand<F3DZEX.GLoadBlock>(data, off);
+                                var loadblock = F3DZEX.Command.DecodeCommand<F3DZEX.Command.GLoadBlock>(data, off);
                                 texels = loadblock.texels+1;
                                 break;
                             }
-                        case F3DZEX.OpCodeID.G_LOADTLUT:
+                        case OpCodeID.G_LOADTLUT:
                             {
-                                var loadtlut = F3DZEX.DecodeCommand<F3DZEX.GLoadTlut>(data, off);
+                                var loadtlut = F3DZEX.Command.DecodeCommand<F3DZEX.Command.GLoadTlut>(data, off);
                                 texels = loadtlut.count+1;
                                 break;
                             }
@@ -254,10 +256,10 @@ namespace Z64
 
         private static bool IsOpCodeCorrect(byte[] data, int off, Config cfg)
         {
-            F3DZEX.OpCodeID id = (F3DZEX.OpCodeID)data[off];
+            OpCodeID id = (OpCodeID)data[off];
 
             // check invalid opcodes
-            if (!F3DZEX.DEC_TABLE.ContainsKey(id))
+            if (!DEC_TABLE.ContainsKey(id))
                 return false;
 
             // check improbable opcodes
@@ -279,7 +281,7 @@ namespace Z64
         {
             List<int> dlists = new List<int>();
 
-            var codeEnds = Utils.FindData(data, new byte[] { (byte)F3DZEX.OpCodeID.G_ENDDL, 0, 0, 0, 0, 0, 0, 0, }, 8);
+            var codeEnds = Utils.FindData(data, new byte[] { (byte)OpCodeID.G_ENDDL, 0, 0, 0, 0, 0, 0, 0, }, 8);
             codeEnds.Insert(0, 0);
 
             regions.Sort((a, b) => a.Off >= b.Off ? 1 : -1);
@@ -453,9 +455,9 @@ namespace Z64
             {
                 for (int off = start; off < data.Length; off += 8)
                 {
-                    if (data[off] == (byte)F3DZEX.OpCodeID.G_ENDDL)
+                    if (data[off] == (byte)OpCodeID.G_ENDDL)
                     {
-                        obj.AddDList(off + 8 - start, off:start);
+                        obj.AddDList(off + 8 - start, off: start);
                         break;
                     }
                 }
@@ -482,22 +484,22 @@ namespace Z64
             foreach (var dlist in dlists)
             {
                 uint lastTexAddr = 0xFFFFFFFF;
-                RDPEnum.G_IM_FMT lastFmt = (RDPEnum.G_IM_FMT)(-1);
-                RDPEnum.G_IM_SIZ lastSiz = (RDPEnum.G_IM_SIZ)(-1);
+                Enums.G_IM_FMT lastFmt = (Enums.G_IM_FMT)(-1);
+                Enums.G_IM_SIZ lastSiz = (Enums.G_IM_SIZ)(-1);
                 Z64Object.TextureHolder lastTlut = null;
                 Z64Object.TextureHolder lastCiTex = null;
 
                 bool exit = false;
                 for (int i = dlist; i < data.Length && !exit; i += 8)
                 {
-                    F3DZEX.OpCodeID op = (F3DZEX.OpCodeID)data[i];
+                    OpCodeID op = (OpCodeID)data[i];
                     switch (op)
                     {
-                        case F3DZEX.OpCodeID.G_QUAD:
-                        case F3DZEX.OpCodeID.G_TRI2:
-                        case F3DZEX.OpCodeID.G_TRI1:
-                        case F3DZEX.OpCodeID.G_TEXRECTFLIP:
-                        case F3DZEX.OpCodeID.G_TEXRECT:
+                        case OpCodeID.G_QUAD:
+                        case OpCodeID.G_TRI2:
+                        case OpCodeID.G_TRI1:
+                        case OpCodeID.G_TEXRECTFLIP:
+                        case OpCodeID.G_TEXRECT:
                             {
                                 if (lastCiTex != null && lastTlut != null)
                                 {
@@ -506,14 +508,14 @@ namespace Z64
                                 }
                                 break;
                             }
-                        case F3DZEX.OpCodeID.G_ENDDL:
+                        case OpCodeID.G_ENDDL:
                             {
                                 exit = true;
                                 break;
                             }
-                        case F3DZEX.OpCodeID.G_VTX:
+                        case OpCodeID.G_VTX:
                             {
-                                var gvtx = F3DZEX.DecodeCommand<F3DZEX.GVtx>(data, i);
+                                var gvtx = F3DZEX.Command.DecodeCommand<F3DZEX.Command.GVtx>(data, i);
 
                                 var addr = new SegmentedAddress(gvtx.vaddr);
                                 if (addr.Segmented && addr.SegmentId == segmentId)
@@ -529,25 +531,25 @@ namespace Z64
                                 }
                                 break;
                             }
-                        case F3DZEX.OpCodeID.G_SETTIMG:
+                        case OpCodeID.G_SETTIMG:
                             {
-                                var settimg = F3DZEX.DecodeCommand<F3DZEX.GSetTImg>(data, i);
+                                var settimg = F3DZEX.Command.DecodeCommand<F3DZEX.Command.GSetTImg>(data, i);
                                 lastTexAddr = settimg.imgaddr;
                                 break;
                             }
-                        case F3DZEX.OpCodeID.G_SETTILE:
+                        case OpCodeID.G_SETTILE:
                             {
-                                var settile = F3DZEX.DecodeCommand<F3DZEX.GSetTile>(data, i);
-                                if (settile.tile != RDPEnum.G_TX_tile.G_TX_LOADTILE)
+                                var settile = F3DZEX.Command.DecodeCommand<F3DZEX.Command.GSetTile>(data, i);
+                                if (settile.tile != Enums.G_TX_tile.G_TX_LOADTILE)
                                 {
                                     lastFmt = settile.fmt;
                                     lastSiz = settile.siz;
                                 }
                                 break;
                             }
-                        case F3DZEX.OpCodeID.G_SETTILESIZE:
+                        case OpCodeID.G_SETTILESIZE:
                             {
-                                var settilesize = F3DZEX.DecodeCommand<F3DZEX.GLoadTile>(data, i);
+                                var settilesize = F3DZEX.Command.DecodeCommand<F3DZEX.Command.GLoadTile>(data, i);
                                 var addr = new SegmentedAddress(lastTexAddr);
 
                                 if ((int)lastFmt == -1 || (int)lastSiz == -1 || lastTexAddr == 0xFFFFFFFF)
@@ -561,7 +563,7 @@ namespace Z64
                                     try
                                     {
                                         var tex = obj.AddTexture((int)(settilesize.lrs.Float() + 1), (int)(settilesize.lrt.Float() + 1), N64Texture.ConvertFormat(lastFmt, lastSiz), off: (int)addr.SegmentOff);
-                                        if (lastFmt == RDPEnum.G_IM_FMT.G_IM_FMT_CI)
+                                        if (lastFmt == Enums.G_IM_FMT.G_IM_FMT_CI)
                                             lastCiTex = tex;
                                     }
                                     catch (Exception ex)
@@ -570,15 +572,15 @@ namespace Z64
                                     }
                                 }
 
-                                lastFmt = (RDPEnum.G_IM_FMT)(-1);
-                                lastSiz = (RDPEnum.G_IM_SIZ)(-1);
+                                lastFmt = (Enums.G_IM_FMT)(-1);
+                                lastSiz = (Enums.G_IM_SIZ)(-1);
                                 lastTexAddr = 0xFFFFFFFF;
 
                                 break;
                             }
-                        case F3DZEX.OpCodeID.G_LOADTLUT:
+                        case OpCodeID.G_LOADTLUT:
                             {
-                                var loadtlut = F3DZEX.DecodeCommand<F3DZEX.GLoadTlut>(data, i);
+                                var loadtlut = F3DZEX.Command.DecodeCommand<F3DZEX.Command.GLoadTlut>(data, i);
                                 var addr = new SegmentedAddress(lastTexAddr);
 
                                 if (lastTexAddr == 0xFFFFFFFF)
@@ -589,7 +591,7 @@ namespace Z64
                                 {
                                     try
                                     {
-                                        lastTlut = obj.AddTexture(w, (loadtlut.count + 1) / w, N64Texture.ConvertFormat(RDPEnum.G_IM_FMT.G_IM_FMT_RGBA, RDPEnum.G_IM_SIZ.G_IM_SIZ_16b), off: (int)addr.SegmentOff);
+                                        lastTlut = obj.AddTexture(w, (loadtlut.count + 1) / w, N64Texture.ConvertFormat(Enums.G_IM_FMT.G_IM_FMT_RGBA, Enums.G_IM_SIZ.G_IM_SIZ_16b), off: (int)addr.SegmentOff);
                                     }
                                     catch (Exception ex)
                                     {

@@ -294,7 +294,7 @@ namespace Z64.Forms
 
         private void f3DEXDisassemblerToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            new DisasmForm().Show();
+            new DisasmForm(null).Show();
         }
 
         private void ROMRAMConversionsToolStripMenuItem_Click(object sender, EventArgs e)

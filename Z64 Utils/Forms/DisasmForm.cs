@@ -8,38 +8,51 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using RDP;
 using Common;
+using DList = System.Collections.Generic.List<System.Tuple<uint, F3DZEX.Command.CommandInfo>>;
 
 namespace Z64.Forms
 {
     public partial class DisasmForm : MicrosoftFontForm
     {
-        List<F3DZEX.CommandInfo> _dlist;
-        uint _vaddr;
+        uint? _vaddr;
+        DList _dlist;
+        List<F3DZEX.Command.CommandInfo> _cmds;
 
-        public DisasmForm(List<F3DZEX.CommandInfo> dlist = null, uint vaddr = 0)
+        public DisasmForm(List<F3DZEX.Command.CommandInfo> cmds, uint vaddr = 0)
+        {
+            InitializeComponent();
+
+            _dlist = null;
+            _cmds = cmds;
+            _vaddr = vaddr;
+            if (_cmds != null)
+            {
+                textBox_bytes.Visible = label_bytes.Visible = label_disas.Visible = false;
+                textBox_disassembly.Location = new Point(10, 30);
+                textBox_disassembly.Size = new Size(Width - 40, Height - 80);
+            }
+        }
+
+        public DisasmForm(DList dlist)
         {
             InitializeComponent();
 
             _dlist = dlist;
-            _vaddr = vaddr;
+            _cmds = null;
+            _vaddr = null;
             if (_dlist != null)
             {
                 textBox_bytes.Visible = label_bytes.Visible = label_disas.Visible = false;
                 textBox_disassembly.Location = new Point(10, 30);
                 textBox_disassembly.Size = new Size(Width-40, Height-80);
             }
-            else
-            {
-                _dlist = new List<F3DZEX.CommandInfo>();
-            }
             UpdateDisassembly();
         }
 
-        public void Update(uint vaddr, List<F3DZEX.CommandInfo> dlist)
+        public void Update(DList dlist)
         {
-            _vaddr = vaddr;
+            _cmds = null;
             _dlist = dlist;
             UpdateDisassembly();
         }
@@ -55,16 +68,16 @@ namespace Z64.Forms
                 byte[] data = Utils.HexToBytes(textBox_bytes.Text);
                 try
                 {
-                    _dlist = F3DZEX.DecodeDList(data, 0);
+                    _cmds = F3DZEX.Command.DecodeDList(data, 0);
                 }
                 catch
                 {
-                    _dlist = new List<F3DZEX.CommandInfo>();
+                    _cmds = new List<F3DZEX.Command.CommandInfo>();
                 }
             }
             else
             {
-                _dlist = new List<F3DZEX.CommandInfo>();
+                _cmds = new List<F3DZEX.Command.CommandInfo>();
             }
 
             UpdateDisassembly();
@@ -77,7 +90,7 @@ namespace Z64.Forms
 
         public void UpdateDisassembly()
         {
-            RDPDisassembler disas = new RDPDisassembler(_dlist, _vaddr);
+            F3DZEX.Disassembler disas = _vaddr != null ? new F3DZEX.Disassembler(_cmds, _vaddr.Value) : new F3DZEX.Disassembler(_dlist);
             var lines = disas.Disassemble();
             StringWriter sw = new StringWriter();
             foreach (var line in lines)

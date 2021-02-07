@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using RDP;
 
-namespace RDP
+namespace F3DZEX
 {
-    public static partial class F3DZEX
+    public static partial class Command
     {
         [System.AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = true)]
         sealed class CmdAttribute : Attribute
@@ -32,8 +33,8 @@ namespace RDP
         [Cmd(OpCodeID.G_SETTIMG)]
         public struct GSetTImg
         {
-            public RDPEnum.G_IM_FMT fmt { get; set; }
-            public RDPEnum.G_IM_SIZ siz { get; set; }
+            public Enums.G_IM_FMT fmt { get; set; }
+            public Enums.G_IM_SIZ siz { get; set; }
             public int width { get; set; }
             public uint imgaddr { get; set; }
         }
@@ -44,7 +45,7 @@ namespace RDP
         {
             public FixedPoint uls { get; set; }
             public FixedPoint ult { get; set; }
-            public RDPEnum.G_TX_tile tile { get; set; }
+            public Enums.G_TX_tile tile { get; set; }
             public FixedPoint lrs { get; set; }
             public FixedPoint lrt { get; set; }
         }
@@ -52,22 +53,22 @@ namespace RDP
         [Cmd(OpCodeID.G_LOADTLUT)]
         public struct GLoadTlut
         {
-            public RDPEnum.G_TX_tile tile { get; set; }
+            public Enums.G_TX_tile tile { get; set; }
             public int count { get; set; }
         }
         [Cmd(OpCodeID.G_SETTILE)]
         public struct GSetTile
         {
-            public RDPEnum.G_IM_FMT fmt { get; set; }
-            public RDPEnum.G_IM_SIZ siz { get; set; }
+            public Enums.G_IM_FMT fmt { get; set; }
+            public Enums.G_IM_SIZ siz { get; set; }
             public int line { get; set; }
             public int tmem { get; set; }
-            public RDPEnum.G_TX_tile tile { get; set; }
+            public Enums.G_TX_tile tile { get; set; }
             public int palette { get; set; }
-            public RDPEnum.ClampMirrorFlag cmT { get; set; }
+            public Enums.ClampMirrorFlag cmT { get; set; }
             public int maskT { get; set; }
             public int shiftT { get; set; }
-            public RDPEnum.ClampMirrorFlag cmS { get; set; }
+            public Enums.ClampMirrorFlag cmS { get; set; }
             public int maskS { get; set; }
             public int shiftS { get; set; }
         }
@@ -77,7 +78,7 @@ namespace RDP
         {
             public FixedPoint uls { get; set; }
             public FixedPoint ult { get; set; }
-            public RDPEnum.G_TX_tile tile { get; set; }
+            public Enums.G_TX_tile tile { get; set; }
             public int texels { get; set; }
             public FixedPoint dxt { get; set; }
         }
@@ -150,7 +151,7 @@ namespace RDP
         {
             public FixedPoint lrx { get; set; }
             public FixedPoint lry { get; set; }
-            public RDPEnum.G_TX_tile tile { get; set; }
+            public Enums.G_TX_tile tile { get; set; }
             public FixedPoint ulx { get; set; }
             public FixedPoint uly { get; set; }
             public FixedPoint uls { get; set; }
@@ -198,22 +199,22 @@ namespace RDP
         [Cmd(OpCodeID.G_SETCOMBINE)]
         public struct GSetCombine
         {
-            public RDPEnum.G_CCMUX a0 { get; set; }
-            public RDPEnum.G_CCMUX b0 { get; set; }
-            public RDPEnum.G_CCMUX c0 { get; set; }
-            public RDPEnum.G_CCMUX d0 { get; set; }
-            public RDPEnum.G_ACMUX Aa0 { get; set; }
-            public RDPEnum.G_ACMUX Ab0 { get; set; }
-            public RDPEnum.G_ACMUX Ac0 { get; set; }
-            public RDPEnum.G_ACMUX Ad0 { get; set; }
-            public RDPEnum.G_CCMUX a1 { get; set; }
-            public RDPEnum.G_CCMUX b1 { get; set; }
-            public RDPEnum.G_CCMUX c1 { get; set; }
-            public RDPEnum.G_CCMUX d1 { get; set; }
-            public RDPEnum.G_ACMUX Aa1 { get; set; }
-            public RDPEnum.G_ACMUX Ab1 { get; set; }
-            public RDPEnum.G_ACMUX Ac1 { get; set; }
-            public RDPEnum.G_ACMUX Ad1 { get; set; }
+            public Enums.G_CCMUX a0 { get; set; }
+            public Enums.G_CCMUX b0 { get; set; }
+            public Enums.G_CCMUX c0 { get; set; }
+            public Enums.G_CCMUX d0 { get; set; }
+            public Enums.G_ACMUX Aa0 { get; set; }
+            public Enums.G_ACMUX Ab0 { get; set; }
+            public Enums.G_ACMUX Ac0 { get; set; }
+            public Enums.G_ACMUX Ad0 { get; set; }
+            public Enums.G_CCMUX a1 { get; set; }
+            public Enums.G_CCMUX b1 { get; set; }
+            public Enums.G_CCMUX c1 { get; set; }
+            public Enums.G_CCMUX d1 { get; set; }
+            public Enums.G_ACMUX Aa1 { get; set; }
+            public Enums.G_ACMUX Ab1 { get; set; }
+            public Enums.G_ACMUX Ac1 { get; set; }
+            public Enums.G_ACMUX Ad1 { get; set; }
         }
 
         [Cmd(OpCodeID.G_SETOTHERMODE_L)]
@@ -224,6 +225,21 @@ namespace RDP
             public int len { get; set; }
             public uint data { get; set; }
         }
+
+
+        [Cmd(OpCodeID.G_POPMTX)]
+        public struct GPopMtx
+        {
+            public uint num { get; set; }
+        }
+
+        [Cmd(OpCodeID.G_MTX)]
+        public struct GMtx
+        {
+            public Enums.G_MtxParams param { get; set; }
+            public uint mtxaddr { get; set; }
+        }
+
 
         public class CommandInfo
         {
@@ -308,7 +324,7 @@ namespace RDP
 
             var match = attr.Find(a => a.ID == cmd.ID);
             if (match == null)
-                throw new InvalidRDPOpCodeException("Invalid ID");
+                throw new InvalidF3DZEXOpCodeException("Invalid ID");
 
 
             object obj = Activator.CreateInstance(t);

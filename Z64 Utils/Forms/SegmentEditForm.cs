@@ -11,12 +11,20 @@ using RDP;
 using Common;
 using System.IO;
 using System.Globalization;
+using F3DZEX;
 
 namespace Z64.Forms
 {
     public partial class SegmentEditForm : MicrosoftFontForm
     {
-        public RDPRenderer.Segment ResultSegment { get; set; }
+        const string SRC_EMPTY = "Empty";
+        const string SRC_ADDR = "Address";
+        const string SRC_ROM_FS = "ROM FS";
+        const string SRC_FILE = "File";
+        const string SRC_IDENT_MTX = "Ident Matrices";
+        const string SRC_NULL = "Null Bytes";
+
+        public Memory.Segment ResultSegment { get; set; }
 
         private string _dmaFileName = null;
         private string _fileName = null;
@@ -26,7 +34,16 @@ namespace Z64.Forms
         {
             InitializeComponent();
             _game = game;
-            comboBox1.SelectedIndex = 0;
+
+            comboBox1.Items.Clear();
+            comboBox1.Items.Add(SRC_EMPTY);
+            comboBox1.Items.Add(SRC_ADDR);
+            comboBox1.Items.Add(SRC_ROM_FS);
+            comboBox1.Items.Add(SRC_FILE);
+            comboBox1.Items.Add(SRC_IDENT_MTX);
+            comboBox1.Items.Add(SRC_NULL);
+
+            comboBox1.SelectedItem = SRC_EMPTY;
             DialogResult = DialogResult.Cancel;
 
 
@@ -38,46 +55,52 @@ namespace Z64.Forms
 
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            switch (comboBox1.SelectedIndex)
+            switch (comboBox1.SelectedItem)
             {
-                case 0: // Address
-                    tabControl1.SelectedIndex = 0;
+                case SRC_ADDR: // Address
+                    tabControl1.SelectedTab = tabPage_address;
                     okBtn.Enabled = uint.TryParse(addressValue.Text, NumberStyles.HexNumber, new CultureInfo("en-US"), out uint result);
                     break;
-                case 1: // DMA File
-                    tabControl1.SelectedIndex = 1;
+                case SRC_ROM_FS: // ROM FS
+                    tabControl1.SelectedTab = tabPage_file;
                     okBtn.Enabled = _dmaFileName != null;
                     button1.ForeColor = _dmaFileName == null ? Color.Black : Color.Green;
                     break;
-                case 2: // File
-                    tabControl1.SelectedIndex = 1;
+                case SRC_FILE: // File
+                    tabControl1.SelectedTab = tabPage_file;
                     okBtn.Enabled = _fileName != null;
                     button1.ForeColor = _fileName == null ? Color.Black : Color.Green;
+                    break;
+                case SRC_EMPTY: // Empty
+                case SRC_IDENT_MTX: // Ident Matrices
+                case SRC_NULL: // Null Bytes
+                    tabControl1.SelectedTab = tabPage_empty;
+                    okBtn.Enabled = true;
                     break;
             }
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
-            if (comboBox1.SelectedIndex == 1) // DMA File
+            if (comboBox1.SelectedItem == (object)SRC_ROM_FS) // ROM FS
             {
                 DmaFileSelectForm form = new DmaFileSelectForm(_game);
                 if (form.ShowDialog() == DialogResult.OK)
                 {
                     _dmaFileName = _game.GetFileName(form.SelectedFile.VRomStart);
-                    ResultSegment = RDPRenderer.Segment.FromBytes(form.SelectedFile.Data, _dmaFileName);
+                    ResultSegment = Memory.Segment.FromBytes(_dmaFileName, form.SelectedFile.Data);
                     button1.ForeColor = Color.Green;
                     okBtn.Enabled = _dmaFileName != null;
                 }
             }
-            else
+            else if (comboBox1.SelectedItem == (object)SRC_FILE)// File
             {
                 openFileDialog1.FileName = "";
                 openFileDialog1.Filter = Filters.ALL;
                 if (openFileDialog1.ShowDialog() == DialogResult.OK)
                 {
                     _fileName = openFileDialog1.FileName;
-                    ResultSegment = RDPRenderer.Segment.FromBytes(File.ReadAllBytes(_fileName), Path.GetFileName(_fileName));
+                    ResultSegment = Memory.Segment.FromBytes(Path.GetFileName(_fileName), File.ReadAllBytes(_fileName));
                     button1.ForeColor = Color.Green;
                     okBtn.Enabled = _fileName != null;
                 }
@@ -86,11 +109,35 @@ namespace Z64.Forms
 
         private void okBtn_Click(object sender, EventArgs e)
         {
-            ResultSegment = ResultSegment;
-            if (comboBox1.SelectedIndex == 0)
+            switch (comboBox1.SelectedItem)
             {
-                uint addr = uint.Parse(addressValue.Text, NumberStyles.HexNumber);
-                ResultSegment = RDPRenderer.Segment.FromVram(addr, addr == 0 ? "[NULL]" : $"{addr:X8}");
+                case SRC_ADDR:
+                    uint addr = uint.Parse(addressValue.Text, NumberStyles.HexNumber);
+                    ResultSegment = Memory.Segment.FromVram($"{addr:X8}", addr);
+                    break;
+
+                case SRC_IDENT_MTX:
+                    ResultSegment = Memory.Segment.FromFill("Ident Matrices", new byte[] {
+                        0,1,   0,0,   0,0,   0,0,
+                        0,0,   0,1,   0,0,   0,0,
+                        0,0,   0,0,   0,1,   0,0,
+                        0,0,   0,0,   0,0,   0,1,
+
+                        0,0,   0,0,   0,0,   0,0,
+                        0,0,   0,0,   0,0,   0,0,
+                        0,0,   0,0,   0,0,   0,0,
+                        0,0,   0,0,   0,0,   0,0,
+                    });
+                    break;
+                case SRC_NULL:
+                    ResultSegment = Memory.Segment.FromFill("Null Bytes");
+                    break;
+                case SRC_EMPTY:
+                    ResultSegment = Memory.Segment.Empty();
+                    break;
+
+                default:
+                    break;
             }
             
             DialogResult = DialogResult.OK;

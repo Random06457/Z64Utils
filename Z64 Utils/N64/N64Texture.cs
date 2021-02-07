@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Drawing.Imaging;
 using System.IO;
 using Syroot.BinaryData;
-using static RDP.RDPEnum;
+using static F3DZEX.Enums;
 
 namespace N64
 {

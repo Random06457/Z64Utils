@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using RDP;
+using F3DZEX;
 
 namespace Z64.Forms
 {
@@ -35,13 +35,13 @@ namespace Z64.Forms
         private void buttonNormal_Click(object sender, EventArgs e)
         {
             Result = new Z64ObjectAnalyzer.Config();
-            Result.ImprobableOpCodes = new List<F3DZEX.OpCodeID>()
+            Result.ImprobableOpCodes = new List<F3DZEX.Command.OpCodeID>()
             {
-                F3DZEX.OpCodeID.G_BRANCH_Z,
-                F3DZEX.OpCodeID.G_CULLDL,
-                F3DZEX.OpCodeID.G_NOOP,
-                F3DZEX.OpCodeID.G_SPNOOP,
-                F3DZEX.OpCodeID.G_LOAD_UCODE,
+                F3DZEX.Command.OpCodeID.G_BRANCH_Z,
+                F3DZEX.Command.OpCodeID.G_CULLDL,
+                F3DZEX.Command.OpCodeID.G_NOOP,
+                F3DZEX.Command.OpCodeID.G_SPNOOP,
+                F3DZEX.Command.OpCodeID.G_LOAD_UCODE,
             };
             UpdateTextBoxes();
         }
@@ -49,13 +49,13 @@ namespace Z64.Forms
         private void buttonRestrivtive_Click(object sender, EventArgs e)
         {
             Result = new Z64ObjectAnalyzer.Config();
-            Result.ImprobableOpCodes = new List<F3DZEX.OpCodeID>()
+            Result.ImprobableOpCodes = new List<F3DZEX.Command.OpCodeID>()
             {
-                F3DZEX.OpCodeID.G_BRANCH_Z,
-                F3DZEX.OpCodeID.G_CULLDL,
-                F3DZEX.OpCodeID.G_NOOP,
-                F3DZEX.OpCodeID.G_SPNOOP,
-                F3DZEX.OpCodeID.G_LOAD_UCODE,
+                F3DZEX.Command.OpCodeID.G_BRANCH_Z,
+                F3DZEX.Command.OpCodeID.G_CULLDL,
+                F3DZEX.Command.OpCodeID.G_NOOP,
+                F3DZEX.Command.OpCodeID.G_SPNOOP,
+                F3DZEX.Command.OpCodeID.G_LOAD_UCODE,
             };
             Result.Patterns = new List<Z64ObjectAnalyzer.Config.OpCodePattern>()
             {
@@ -97,7 +97,7 @@ means: When encountering a G_NOOP opcode, check if the last instruction is G_LOA
 
         private static bool ValidOpCodeID(string id)
         {
-            var values = Enum.GetValues(typeof(F3DZEX.OpCodeID));
+            var values = Enum.GetValues(typeof(F3DZEX.Command.OpCodeID));
             foreach (var v in values)
                 if (v.ToString() == id)
                     return true;
@@ -124,7 +124,7 @@ means: When encountering a G_NOOP opcode, check if the last instruction is G_LOA
         private void textBoxOpCodeList_TextChanged(object sender, EventArgs e)
         {
             labelOpCodeListError.Text = "";
-            List<F3DZEX.OpCodeID> ids = new List<F3DZEX.OpCodeID>();
+            List<F3DZEX.Command.OpCodeID> ids = new List<F3DZEX.Command.OpCodeID>();
             var lines = textBoxOpCodeList.Text.Replace(" ", "").Split(new string[] { "\r\n" }, StringSplitOptions.None);
             for (int i = 0; i < lines.Length; i++)
             {
@@ -136,7 +136,7 @@ means: When encountering a G_NOOP opcode, check if the last instruction is G_LOA
                     labelOpCodeListError.Text = $"Error at line {i}";
                     return;
                 }
-                ids.Add((F3DZEX.OpCodeID)Enum.Parse(typeof(F3DZEX.OpCodeID), lines[i]));
+                ids.Add((F3DZEX.Command.OpCodeID)Enum.Parse(typeof(F3DZEX.Command.OpCodeID), lines[i]));
             }
             Result.ImprobableOpCodes = ids;
             UpdateOKButton();

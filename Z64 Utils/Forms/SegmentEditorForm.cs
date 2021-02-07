@@ -7,26 +7,25 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using RDP;
 
 namespace Z64.Forms
 {
     public partial class SegmentEditorForm : MicrosoftFontForm
     {
-        public event EventHandler<RDPRenderer.Segment> SegmentsChanged;
-        public SegmentEditorForm(Z64Game game, RDPRenderer renderer)
+        public event EventHandler<F3DZEX.Memory.Segment> SegmentsChanged;
+        public SegmentEditorForm(Z64Game game, F3DZEX.Renderer renderer)
         {
             InitializeComponent();
             for (int i = 0; i < 16; i++)
             {
                 SegmentControl seg = (SegmentControl)Controls[$"segmentControl{i}"];
                 seg.SetGame(game);
-                seg.SetSegment(renderer.Segments[i]);
+                seg.SetSegment(renderer.Memory.Segments[i]);
                 seg.SegmentChanged += Seg_SegmentChanged;
             }
         }
 
-        private void Seg_SegmentChanged(object sender, RDPRenderer.Segment e)
+        private void Seg_SegmentChanged(object sender, F3DZEX.Memory.Segment e)
         {
             SegmentsChanged?.Invoke(((SegmentControl)sender).SegmentID, e);
         }

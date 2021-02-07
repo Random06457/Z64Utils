@@ -132,22 +132,25 @@ namespace Z64.Forms
 
             GL.Viewport(0, 0, Width, Height);
 
-
-            float aspect_ratio = Width / (float)Height;
-            Matrix4 perpective = Matrix4.CreatePerspectiveFieldOfView(MathHelper.PiOver4, aspect_ratio, 1, 500000);
+            float aspectRatio = Width / (float)Height;
+            Matrix4 prespective = Matrix4.CreatePerspectiveFieldOfView(MathHelper.PiOver4, aspectRatio, 1, 500000);
             GL.MatrixMode(MatrixMode.Projection);
-            GL.LoadMatrix(ref perpective);
-
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            GL.ClearColor(BackColor);
+            GL.LoadMatrix(ref prespective);
 
             GL.Translate(_camPos.X, _camPos.Y, _camPos.Z);
             GL.Rotate(_angle.X, 1.0f, 0.0f, 0.0f);
             GL.Rotate(_angle.Y, 0.0f, 1.0f, 0.0f);
 
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            GL.ClearColor(BackColor);
+
             if (CurrentConfig.ShowGrid)
                 RenderGrid();
+
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.PushMatrix();
             RenderCallback?.Invoke();
+            GL.PopMatrix();
 
             if (CurrentConfig.ShowAxis)
                 RenderAxis();

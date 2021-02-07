@@ -3,34 +3,43 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Common;
+using RDP;
 
-namespace RDP
+namespace F3DZEX
 {
-
     [Serializable]
-    public class RDPOpCodeSizeException : Exception
+    public class F3DZEXOpCodeSizeException : Exception
     {
-        public RDPOpCodeSizeException() { }
-        public RDPOpCodeSizeException(string message) : base(message) { }
-        public RDPOpCodeSizeException(string message, Exception inner) : base(message, inner) { }
-        protected RDPOpCodeSizeException(
+        public F3DZEXOpCodeSizeException() { }
+        public F3DZEXOpCodeSizeException(string message) : base(message) { }
+        public F3DZEXOpCodeSizeException(string message, Exception inner) : base(message, inner) { }
+        protected F3DZEXOpCodeSizeException(
           System.Runtime.Serialization.SerializationInfo info,
           System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
 
     [Serializable]
-    public class InvalidRDPOpCodeException : Exception
+    public class InvalidF3DZEXOpCodeException : Exception
     {
-        public InvalidRDPOpCodeException() { }
-        public InvalidRDPOpCodeException(string message) : base(message) { }
-        public InvalidRDPOpCodeException(string message, Exception inner) : base(message, inner) { }
-        protected InvalidRDPOpCodeException(
+        public InvalidF3DZEXOpCodeException() { }
+        public InvalidF3DZEXOpCodeException(string message) : base(message) { }
+        public InvalidF3DZEXOpCodeException(string message, Exception inner) : base(message, inner) { }
+        protected InvalidF3DZEXOpCodeException(
           System.Runtime.Serialization.SerializationInfo info,
           System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
 
-    public static partial class F3DZEX
+
+    public struct DlistEntry
     {
+        public uint Address;
+        public int Level;
+        public Command.CommandInfo Cmd;
+    }
+
+    public static partial class Command
+    {
+
         public enum OpCodeID
         {
             G_NOOP = 0x00,
@@ -87,7 +96,7 @@ namespace RDP
             G_SETZIMG = 0xFE,
             G_SETCIMG = 0xFF,
         }
-
+        
         public static List<CommandInfo> DecodeDList(byte[] ucode, int off = 0)
         {
             var dlist = new List<CommandInfo>();
@@ -105,7 +114,7 @@ namespace RDP
                         var info = DEC_TABLE[id](br);
                         dlist.Add(info);
                     }
-                    else new InvalidRDPOpCodeException($"Invalid OpCode : {id:X}");
+                    else new InvalidF3DZEXOpCodeException($"Invalid OpCode : {id:X}");
 
                     if (id == OpCodeID.G_ENDDL)
                         break;
@@ -122,7 +131,7 @@ namespace RDP
                 {
                     if (ENC_TABLE.ContainsKey(info.ID))
                         ENC_TABLE[info.ID](info, bw);
-                    else new InvalidRDPOpCodeException($"Invalid OpCode : {info.ID:X}");
+                    else new InvalidF3DZEXOpCodeException($"Invalid OpCode : {info.ID:X}");
                 }
                 return ms.GetBuffer().Take((int)ms.Length).ToArray();
             }
@@ -273,8 +282,8 @@ namespace RDP
                 br.ReadByte();
                 br.ReadByte(2);
                 int level = br.ReadByte(3);
-                var tile = (RDPEnum.G_TX_tile)br.ReadByte(3);
-                var on = (RDPEnum.G_TexOnOff)br.ReadByte(7);
+                var tile = (Enums.G_TX_tile)br.ReadByte(3);
+                var on = (Enums.G_TexOnOff)br.ReadByte(7);
                 br.ReadByte(1);
                 ushort scaleS = br.ReadUInt16();
                 ushort scaleT = br.ReadUInt16();
@@ -315,7 +324,7 @@ namespace RDP
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 br.ReadUInt16();
-                int param = br.ReadByte() ^ 1;
+                Enums.G_MtxParams param = (Enums.G_MtxParams)(br.ReadByte() ^ 1);
                 uint mtxaddr = br.ReadUInt32();
 
                 args.Add("mtxaddr", mtxaddr);
@@ -444,7 +453,7 @@ namespace RDP
                 FixedPoint lrx = new FixedPoint(br.ReadInt32(12), 10, 2);
                 FixedPoint lry = new FixedPoint(br.ReadInt32(12), 10, 2);
                 br.ReadByte(4);
-                var tile = (RDPEnum.G_TX_tile)br.ReadByte(4);
+                var tile = (Enums.G_TX_tile)br.ReadByte(4);
                 FixedPoint ulx = new FixedPoint(br.ReadInt32(12), 10, 2);
                 FixedPoint uly = new FixedPoint(br.ReadInt32(12), 10, 2);
                 br.ReadByte(); //E1
@@ -475,7 +484,7 @@ namespace RDP
                 FixedPoint lrx = new FixedPoint(br.ReadInt32(12), 10, 2);
                 FixedPoint lry = new FixedPoint(br.ReadInt32(12), 10, 2);
                 br.ReadByte(4);
-                var tile = (RDPEnum.G_TX_tile)br.ReadByte(4);
+                var tile = (Enums.G_TX_tile)br.ReadByte(4);
                 FixedPoint ulx = new FixedPoint(br.ReadInt32(12), 10, 2);
                 FixedPoint uly = new FixedPoint(br.ReadInt32(12), 10, 2);
                 br.ReadByte(); //E1
@@ -626,7 +635,7 @@ namespace RDP
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 br.SkipBits(28);
-                var tile = (RDPEnum.G_TX_tile)br.ReadByte(4);
+                var tile = (Enums.G_TX_tile)br.ReadByte(4);
                 int count = br.ReadUInt16(12) >> 2;
                 br.ReadUInt16(12);
 
@@ -652,7 +661,7 @@ namespace RDP
                 var uls = new FixedPoint(br.ReadInt32(12), 10, 2);
                 var ult = new FixedPoint(br.ReadInt32(12), 10, 2);
                 br.ReadByte(4);
-                var tile = (RDPEnum.G_TX_tile)br.ReadByte(4);
+                var tile = (Enums.G_TX_tile)br.ReadByte(4);
                 var lrs = new FixedPoint(br.ReadInt32(12), 10, 2);
                 var lrt = new FixedPoint(br.ReadInt32(12), 10, 2);
 
@@ -671,7 +680,7 @@ namespace RDP
                 var uls = new FixedPoint(br.ReadInt32(12), 10, 2);
                 var ult = new FixedPoint(br.ReadInt32(12), 10, 2);
                 br.ReadByte(4);
-                var tile = (RDPEnum.G_TX_tile)br.ReadByte(4);
+                var tile = (Enums.G_TX_tile)br.ReadByte(4);
                 int texels = br.ReadInt32(12);
                 var dxt = new FixedPoint(br.ReadInt32(12), 1, 11);
 
@@ -690,7 +699,7 @@ namespace RDP
                 var uls = new FixedPoint(br.ReadInt32(12), 10, 2);
                 var ult = new FixedPoint(br.ReadInt32(12), 10, 2);
                 br.ReadByte(4);
-                var tile = (RDPEnum.G_TX_tile)br.ReadByte(4);
+                var tile = (Enums.G_TX_tile)br.ReadByte(4);
                 var lrs = new FixedPoint(br.ReadInt32(12), 10, 2);
                 var lrt = new FixedPoint(br.ReadInt32(12), 10, 2);
 
@@ -705,18 +714,18 @@ namespace RDP
             { OpCodeID.G_SETTILE, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
-                var fmt = (RDPEnum.G_IM_FMT)br.ReadByte(3);
-                var siz = (RDPEnum.G_IM_SIZ)br.ReadByte(2);
+                var fmt = (Enums.G_IM_FMT)br.ReadByte(3);
+                var siz = (Enums.G_IM_SIZ)br.ReadByte(2);
                 br.ReadByte(1);
                 int line = br.ReadInt32(9);
                 int tmem = br.ReadInt32(9);
                 br.ReadByte(5);
-                var tile = (RDPEnum.G_TX_tile)br.ReadByte(3);
+                var tile = (Enums.G_TX_tile)br.ReadByte(3);
                 int palette = br.ReadByte(4);
-                var cmT = (RDPEnum.ClampMirrorFlag)br.ReadByte(2);
+                var cmT = (Enums.ClampMirrorFlag)br.ReadByte(2);
                 int maskT = br.ReadByte(4);
                 int shiftT = br.ReadByte(4);
-                var cmS = (RDPEnum.ClampMirrorFlag)br.ReadByte(2);
+                var cmS = (Enums.ClampMirrorFlag)br.ReadByte(2);
                 int maskS = br.ReadByte(4);
                 int shiftS = br.ReadByte(4);
 
@@ -832,22 +841,22 @@ namespace RDP
             { OpCodeID.G_SETCOMBINE, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
-                var a0 = (RDPEnum.G_CCMUX)br.ReadInt32(4);
-                var c0 = (RDPEnum.G_CCMUX)br.ReadInt32(5);
-                var Aa0 = (RDPEnum.G_ACMUX)br.ReadInt32(3);
-                var Ac0 = (RDPEnum.G_ACMUX)br.ReadInt32(3);
-                var a1 = (RDPEnum.G_CCMUX)br.ReadInt32(4);
-                var c1 = (RDPEnum.G_CCMUX)br.ReadInt32(5);
-                var b0 = (RDPEnum.G_CCMUX)br.ReadInt32(4);
-                var b1 = (RDPEnum.G_CCMUX)br.ReadInt32(4);
-                var Aa1 = (RDPEnum.G_ACMUX)br.ReadInt32(3);
-                var Ac1 = (RDPEnum.G_ACMUX)br.ReadInt32(3);
-                var d0 = (RDPEnum.G_CCMUX)br.ReadInt32(3);
-                var Ab0 = (RDPEnum.G_ACMUX)br.ReadInt32(3);
-                var Ad0 = (RDPEnum.G_ACMUX)br.ReadInt32(3);
-                var d1 = (RDPEnum.G_CCMUX)br.ReadInt32(3);
-                var Ab1 = (RDPEnum.G_ACMUX)br.ReadInt32(3);
-                var Ad1 = (RDPEnum.G_ACMUX)br.ReadInt32(3);
+                var a0 = (Enums.G_CCMUX)br.ReadInt32(4);
+                var c0 = (Enums.G_CCMUX)br.ReadInt32(5);
+                var Aa0 = (Enums.G_ACMUX)br.ReadInt32(3);
+                var Ac0 = (Enums.G_ACMUX)br.ReadInt32(3);
+                var a1 = (Enums.G_CCMUX)br.ReadInt32(4);
+                var c1 = (Enums.G_CCMUX)br.ReadInt32(5);
+                var b0 = (Enums.G_CCMUX)br.ReadInt32(4);
+                var b1 = (Enums.G_CCMUX)br.ReadInt32(4);
+                var Aa1 = (Enums.G_ACMUX)br.ReadInt32(3);
+                var Ac1 = (Enums.G_ACMUX)br.ReadInt32(3);
+                var d0 = (Enums.G_CCMUX)br.ReadInt32(3);
+                var Ab0 = (Enums.G_ACMUX)br.ReadInt32(3);
+                var Ad0 = (Enums.G_ACMUX)br.ReadInt32(3);
+                var d1 = (Enums.G_CCMUX)br.ReadInt32(3);
+                var Ab1 = (Enums.G_ACMUX)br.ReadInt32(3);
+                var Ad1 = (Enums.G_ACMUX)br.ReadInt32(3);
 
                 args.Add("a0", a0);
                 args.Add("b0", b0);
@@ -871,8 +880,8 @@ namespace RDP
             { OpCodeID.G_SETTIMG, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
-                var fmt = (RDPEnum.G_IM_FMT)br.ReadByte(3);
-                var siz = (RDPEnum.G_IM_SIZ)br.ReadByte(2);
+                var fmt = (Enums.G_IM_FMT)br.ReadByte(3);
+                var siz = (Enums.G_IM_SIZ)br.ReadByte(2);
                 br.SkipBits(3+4);
                 int width = br.ReadInt32(12)+1;
                 uint imgaddr = br.ReadUInt32();
@@ -897,8 +906,8 @@ namespace RDP
             { OpCodeID.G_SETCIMG, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
-                var fmt = (RDPEnum.G_IM_FMT)br.ReadByte(3);
-                var siz = (RDPEnum.G_IM_SIZ)br.ReadByte(2);
+                var fmt = (Enums.G_IM_FMT)br.ReadByte(3);
+                var siz = (Enums.G_IM_SIZ)br.ReadByte(2);
                 br.ReadByte(3+4);
                 int width = br.ReadUInt16(12)+1;
                 uint imgaddr = br.ReadUInt32();
@@ -1033,7 +1042,7 @@ namespace RDP
 
                 int level = (int)info.Args["level"];
                 int tile = (int)info.Args["tile"];
-                RDPEnum.G_TexOnOff on = (RDPEnum.G_TexOnOff)info.Args["on"];
+                Enums.G_TexOnOff on = (Enums.G_TexOnOff)info.Args["on"];
                 ushort scaleS = (ushort)info.Args["scaleS"];
                 ushort scaleT = (ushort)info.Args["scaleT"];
 
@@ -1426,8 +1435,8 @@ namespace RDP
 
             { OpCodeID.G_SETTILE, (info, bw) => {
 
-                var fmt = (RDPEnum.G_IM_FMT)info.Args["fmt"];
-                var siz = (RDPEnum.G_IM_SIZ)info.Args["siz"];
+                var fmt = (Enums.G_IM_FMT)info.Args["fmt"];
+                var siz = (Enums.G_IM_SIZ)info.Args["siz"];
                 int line = (int)info.Args["line"];
                 int tmem = (int)info.Args["tmem"];
                 int tile = (int)info.Args["tile"];
@@ -1584,8 +1593,8 @@ namespace RDP
 
             { OpCodeID.G_SETTIMG, (info, bw) => {
 
-                var fmt = (RDPEnum.G_IM_FMT)info.Args["fmt"];
-                var siz = (RDPEnum.G_IM_FMT)info.Args["siz"];
+                var fmt = (Enums.G_IM_FMT)info.Args["fmt"];
+                var siz = (Enums.G_IM_FMT)info.Args["siz"];
                 int width = (int)info.Args["width"];
                 uint imgaddr = (uint)info.Args["imgaddr"];
 
@@ -1608,8 +1617,8 @@ namespace RDP
 
             { OpCodeID.G_SETCIMG, (info, bw) => {
 
-                var fmt = (RDPEnum.G_IM_FMT)info.Args["fmt"];
-                var siz = (RDPEnum.G_IM_FMT)info.Args["siz"];
+                var fmt = (Enums.G_IM_FMT)info.Args["fmt"];
+                var siz = (Enums.G_IM_FMT)info.Args["siz"];
                 int width = (int)info.Args["width"];
                 uint imgaddr = (uint)info.Args["imgaddr"];
 

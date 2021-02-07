@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using RDP;
+using F3DZEX;
 using System.IO;
 using Common;
 using System.Globalization;
@@ -16,7 +16,7 @@ namespace Z64.Forms
 {
     public partial class SegmentControl : UserControl
     {
-        public event EventHandler<RDPRenderer.Segment> SegmentChanged;
+        public event EventHandler<Memory.Segment> SegmentChanged;
         public int SegmentID {
             get {
                 return _segmentId;
@@ -45,7 +45,7 @@ namespace Z64.Forms
         {
             _game = game;
         }
-        public void SetSegment(RDPRenderer.Segment seg)
+        public void SetSegment(Memory.Segment seg)
         {
             label1.Text = seg.Label;
         }

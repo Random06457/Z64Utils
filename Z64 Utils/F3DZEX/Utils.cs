@@ -7,35 +7,11 @@ using System.Drawing;
 using System.Globalization;
 using System.IO;
 using Common;
+using OpenTK;
 
 namespace RDP
 {
-    public struct RDPVec2
-    {
-        public short X { get; set; }
-        public short Y { get; set; }
-
-        public RDPVec2(short x, short y)
-        {
-            X = x;
-            Y = y;
-        }
-    }
-    public struct RDPVec3
-    {
-        public short X { get; set; }
-        public short Y { get; set; }
-        public short Z { get; set; }
-
-        public RDPVec3(short x, short y, short z)
-        {
-            X = x;
-            Y = y;
-            Z = z;
-        }
-    }
-
-    public class RDPVtx
+    public class Vertex
     {
         public const int SIZE = 0x10;
 
@@ -50,15 +26,15 @@ namespace RDP
         public byte B;
         public byte A;
 
-        public RDPVtx()
+        public Vertex()
         {
 
         }
-        public RDPVtx(BinaryStream br)
+        public Vertex(BinaryStream br)
         {
             Parse(br);
         }
-        public RDPVtx(byte[] rawVtx)
+        public Vertex(byte[] rawVtx)
         {
             using (MemoryStream ms = new MemoryStream(rawVtx))
             {
@@ -123,6 +99,89 @@ namespace RDP
         }
     }
 
+    public class Mtx
+    {
+        public const int SIZE = 0x40;
+
+        public short[,] intPart = new short[4, 4];
+        public ushort[,] fracPart = new ushort[4, 4];
+
+        public Mtx()
+        {
+
+        }
+        public Mtx(byte[] data)
+        {
+            using (MemoryStream ms = new MemoryStream(data))
+            {
+                BinaryStream br = new BinaryStream(ms, Syroot.BinaryData.ByteConverter.Big);
+                Parse(br);
+            }
+        }
+        public Mtx(BinaryStream br)
+        {
+            Parse(br);
+        }
+
+        private void Parse(BinaryStream br)
+        {
+            for (int i = 0; i < intPart.GetLength(0); i++)
+            for (int j = 0; j < intPart.GetLength(1); j++)
+                intPart[i, j] = br.ReadInt16();
+
+            for (int i = 0; i < fracPart.GetLength(0); i++)
+            for (int j = 0; j < fracPart.GetLength(1); j++)
+                fracPart[i, j] = br.ReadUInt16();
+        }
+        public void Write(BinaryStream bw)
+        {
+            for (int i = 0; i < intPart.GetLength(0); i++)
+                for (int j = 0; j < intPart.GetLength(1); j++)
+                    bw.Write(intPart[i, j]);
+
+            for (int i = 0; i < fracPart.GetLength(0); i++)
+                for (int j = 0; j < fracPart.GetLength(1); j++)
+                    bw.Write(fracPart[i, j]);
+        }
+
+        public byte[] GetBuffer()
+        {
+            byte[] buff = new byte[SIZE];
+            using (MemoryStream ms = new MemoryStream(buff))
+            {
+                BinaryStream bw = new BinaryStream(ms, Syroot.BinaryData.ByteConverter.Big);
+                Write(bw);
+            }
+            return buff;
+        }
+
+        public Matrix4 ToMatrix4()
+        {
+            Matrix4 ret = new Matrix4();
+
+            for (int i = 0; i < 4; i++)
+                for (int j = 0; j < 4; j++)
+                    ret[i, j] = ((intPart[i, j] << 16) | fracPart[i, j]) / (float)0x10000;
+
+            return ret;
+        }
+
+        public static Mtx FromMatrix4(Matrix4 m4)
+        {
+            Mtx ret = new Mtx();
+
+            for (int i = 0; i < 4; i++)
+                for (int j = 0; j < 4; j++)
+                {
+                    int v = (int)(m4[i, j] * 0x10000);
+                    ret.intPart[i, j] = (short)(v >> 16);
+                    ret.fracPart[i, j] = (ushort)(v & 0xFFFF);
+                }
+
+            return ret;
+        }
+    }
+
     public struct FixedPoint
     {
         public int Raw;
@@ -176,34 +235,4 @@ namespace RDP
                 throw new ArgumentOutOfRangeException($"{nameof(intBits)}/{nameof(fracBits)}");
         }
     }
-
-    public static class RdpUtils
-    {
-        public static float ConvertFixedPoint(int value, int intBits, int fracBits, bool signed = false)
-        {
-            if (intBits < 0)
-                throw new ArgumentOutOfRangeException(nameof(intBits));
-            if (fracBits < 0)
-                throw new ArgumentOutOfRangeException(nameof(fracBits));
-
-            if ((intBits + fracBits) > 32)
-                throw new ArgumentOutOfRangeException($"{nameof(intBits)}/{nameof(fracBits)}");
-
-
-            bool neg = signed
-                ? ((value >> (fracBits + intBits)) & 1) == 1
-                : false;
-
-            float intPart = (uint)((value >> fracBits) & ((1<<intBits)-1));
-            float fracPart = (uint)(value & ((1 << fracBits) - 1));
-
-            float ret = intPart + (fracPart / (1 << fracBits));
-            if (neg)
-                ret *= -1;
-
-            return ret;
-        }
-
-    }
-
 }

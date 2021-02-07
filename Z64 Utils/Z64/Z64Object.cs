@@ -8,10 +8,10 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using N64;
-using RDP;
+using F3DZEX;
 using Syroot.BinaryData;
 using Common;
-using Z64.Common;
+using RDP;
 
 namespace Z64
 {
@@ -75,9 +75,9 @@ namespace Z64
         }
         public class VertexHolder : ObjectHolder
         {
-            public List<RDPVtx> Vertices { get; set; }
+            public List<Vertex> Vertices { get; set; }
 
-            public VertexHolder(string name, List<RDPVtx> vtx) : base(name) => Vertices = vtx;
+            public VertexHolder(string name, List<Vertex> vtx) : base(name) => Vertices = vtx;
 
             public override EntryType GetEntryType() => EntryType.Vertex;
             public override void SetData(byte[] data)
@@ -87,14 +87,14 @@ namespace Z64
 
                 int count = data.Length / 0x10;
 
-                Vertices = new List<RDPVtx>();
+                Vertices = new List<Vertex>();
                 using (MemoryStream ms = new MemoryStream(data))
                 {
                     BinaryStream br = new BinaryStream(ms);
                     br.ByteConverter = ByteConverter.Big;
 
                     for (int i = 0; i < count; i++)
-                        Vertices.Add(new RDPVtx(br));
+                        Vertices.Add(new Vertex(br));
                 }
             }
             public override byte[] GetData()
@@ -110,7 +110,7 @@ namespace Z64
                     return ms.GetBuffer().Take((int)ms.Length).ToArray();
                 }
             }
-            public override int GetSize() => Vertices.Count * RDPVtx.SIZE;
+            public override int GetSize() => Vertices.Count * Vertex.SIZE;
         }
         public class UnknowHolder : ObjectHolder
         {
@@ -289,17 +289,14 @@ namespace Z64
 
         }
 
-        public class FlexSkeletonHolder : ObjectHolder
+        public class FlexSkeletonHolder : SkeletonHolder
         {
-            public const int HEADER_SIZE = SkeletonHolder.HEADER_SIZE + 0x4;
+            public new const int HEADER_SIZE = SkeletonHolder.HEADER_SIZE + 0x4;
             
-            public SegmentedAddress LimbsSeg { get; set; }
-            public byte LimbCount { get; set; }
             public byte DListCount { get; set; }
 
-            public FlexSkeletonHolder(string name, byte[] data) : base(name)
+            public FlexSkeletonHolder(string name, byte[] data) : base(name, data)
             {
-                SetData(data);
             }
             public override EntryType GetEntryType() => EntryType.FlexSkeletonHeader;
 
@@ -335,7 +332,6 @@ namespace Z64
         public class AnimationHolder : ObjectHolder
         {
             public const int HEADER_SIZE = 0x10;
-            public byte[] Raw { get; set; }
 
             public short FrameCount { get; set; }
             public SegmentedAddress FrameData { get; set; }
@@ -606,13 +602,13 @@ namespace Z64
                                 {
                                    Entries[i].GetEntryType() == EntryType.Unknown
                                         ? (ObjectHolder)new UnknowHolder($"unk_{entryOff:X8}", new byte[startDiff])
-                                        : new VertexHolder($"vtx_{entryOff:X8}", new RDPVtx[startDiff/0x10].ToList()),
+                                        : new VertexHolder($"vtx_{entryOff:X8}", new Vertex[startDiff/0x10].ToList()),
 
                                    new VertexHolder($"vtx_{holderOff:X8}", holder.Vertices),
 
                                    Entries[i].GetEntryType() == EntryType.Unknown
                                         ? (ObjectHolder)new UnknowHolder($"unk_{entryOff:X8}", new byte[endDiff])
-                                        : new VertexHolder($"vtx_{(holderOff+holder.GetSize()):X8}", new RDPVtx[endDiff/0x10].ToList()),
+                                        : new VertexHolder($"vtx_{(holderOff+holder.GetSize()):X8}", new Vertex[endDiff/0x10].ToList()),
                                 }.FindAll(e => e.GetSize() > 0);
 
                                 Entries.RemoveAt(i);
@@ -633,12 +629,12 @@ namespace Z64
                                 {
                                    Entries[i].GetEntryType() == EntryType.Unknown
                                         ? (ObjectHolder)new UnknowHolder($"unk_{entryOff:X8}", new byte[startDiff])
-                                        : new VertexHolder($"vtx_{entryOff:X8}", new RDPVtx[startDiff/0x10].ToList()),
+                                        : new VertexHolder($"vtx_{entryOff:X8}", new Vertex[startDiff/0x10].ToList()),
 
 
-                                   new VertexHolder($"vtx_{holderOff:X8}", new RDPVtx[endDiff/0x10].ToList()),
+                                   new VertexHolder($"vtx_{holderOff:X8}", new Vertex[endDiff/0x10].ToList()),
                                 }.FindAll(e => e.GetSize() > 0);
-                                holder = new VertexHolder($"vtx_{(entryOff + Entries[i].GetSize()):X8}", new RDPVtx[holder.Vertices.Count-(endDiff/0x10)].ToList());
+                                holder = new VertexHolder($"vtx_{(entryOff + Entries[i].GetSize()):X8}", new Vertex[holder.Vertices.Count-(endDiff/0x10)].ToList());
 
                                 Entries.RemoveAt(i);
                                 Entries.InsertRange(i, newEntries);
@@ -684,7 +680,7 @@ namespace Z64
         public VertexHolder AddVertices(int vtxCount, string name = null, int off = -1)
         {
             if (off == -1) off = GetSize();
-            var holder = new VertexHolder(name?? $"vtx_{off:X8}", new RDPVtx[vtxCount].ToList());
+            var holder = new VertexHolder(name?? $"vtx_{off:X8}", new Vertex[vtxCount].ToList());
             AddVertexHolder(holder, off);
             return holder;
         }
@@ -824,6 +820,7 @@ namespace Z64
 
             return off;
         }
+
         public void SetData(byte[] data)
         {
             //if (((data.Length + 0xF) & ~0xF) != ((GetSize()+0xF) & ~0xF))

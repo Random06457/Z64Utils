@@ -4,10 +4,19 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RDP
+namespace F3DZEX
 {
-    public static class RDPEnum
+    public static class Enums
     {
+        public enum G_MtxParams
+        {
+            G_MTX_NOPUSH = 0x00,
+            G_MTX_PUSH = 0x01,
+            G_MTX_MUL = 0x00,
+            G_MTX_LOAD = 0x02,
+            G_MTX_MODELVIEW = 0x00,
+            G_MTX_PROJECTION = 0x04,
+        }
         public enum G_TexOnOff
         {
             G_OFF,
@@ -120,6 +129,15 @@ namespace RDP
             G_TEXTURE_GEN = 0x00040000,
             G_TEXTURE_GEN_LINEAR = 0x00080000,
             G_LOD = 0x00100000
+        }
+
+        public static string ParseMtxParam(int v)
+        {
+            G_MtxParams param =(G_MtxParams)v;
+            string push = param.HasFlag(G_MtxParams.G_MTX_PUSH) ? "G_MTX_PUSH" : "G_MTX_NOPUSH";
+            string load = param.HasFlag(G_MtxParams.G_MTX_LOAD) ? "G_MTX_LOAD" : "G_MTX_MUL";
+            string projection = param.HasFlag(G_MtxParams.G_MTX_PROJECTION) ? "G_MTX_PROJECTION" : "G_MTX_MODELVIEW";
+            return $"{push} | {load} | {projection}";
         }
 
         public static string ParseMirrorClamFlag(int v)

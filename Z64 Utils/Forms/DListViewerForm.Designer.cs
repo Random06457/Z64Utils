@@ -32,11 +32,10 @@
             Z64.Forms.ModelViewerControl.Config config1 = new Z64.Forms.ModelViewerControl.Config();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(DListViewerForm));
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
-            this.toolStripButton1 = new System.Windows.Forms.ToolStripButton();
-            this.toolStripButton3 = new System.Windows.Forms.ToolStripButton();
+            this.toolStripRenderCfgBtn = new System.Windows.Forms.ToolStripButton();
+            this.toolStripDisasBtn = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
-            this.toolStripTextBoxEntrypoint = new System.Windows.Forms.ToolStripTextBox();
-            this.toolStripButton2 = new System.Windows.Forms.ToolStripButton();
+            this.toolStripSegmentsBtn = new System.Windows.Forms.ToolStripButton();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusErrorLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -44,6 +43,7 @@
             this.copyToClipboardToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
             this.modelViewer = new Z64.Forms.ModelViewerControl();
+            this.listBox_routines = new System.Windows.Forms.ListBox();
             this.toolStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             this.contextMenuStrip1.SuspendLayout();
@@ -52,59 +52,44 @@
             // toolStrip1
             // 
             this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripButton1,
-            this.toolStripButton3,
+            this.toolStripRenderCfgBtn,
+            this.toolStripDisasBtn,
             this.toolStripSeparator1,
-            this.toolStripTextBoxEntrypoint,
-            this.toolStripButton2});
+            this.toolStripSegmentsBtn});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(883, 25);
+            this.toolStrip1.Size = new System.Drawing.Size(968, 25);
             this.toolStrip1.TabIndex = 8;
             this.toolStrip1.Text = "toolStrip1";
             // 
-            // toolStripButton1
+            // toolStripRenderCfgBtn
             // 
-            this.toolStripButton1.Image = global::Z64.Properties.Resources.settings;
-            this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButton1.Name = "toolStripButton1";
-            this.toolStripButton1.Size = new System.Drawing.Size(109, 22);
-            this.toolStripButton1.Text = "Render Settings";
-            this.toolStripButton1.Click += new System.EventHandler(this.toolStripButton1_Click);
+            this.toolStripRenderCfgBtn.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripRenderCfgBtn.Name = "toolStripRenderCfgBtn";
+            this.toolStripRenderCfgBtn.Size = new System.Drawing.Size(93, 22);
+            this.toolStripRenderCfgBtn.Text = "Render Settings";
+            this.toolStripRenderCfgBtn.Click += new System.EventHandler(this.toolStripRenderCfgBtn_Click);
             // 
-            // toolStripButton3
+            // toolStripDisasBtn
             // 
-            this.toolStripButton3.Image = global::Z64.Properties.Resources.code;
-            this.toolStripButton3.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButton3.Name = "toolStripButton3";
-            this.toolStripButton3.Size = new System.Drawing.Size(92, 22);
-            this.toolStripButton3.Text = "Disassembly";
-            this.toolStripButton3.Click += new System.EventHandler(this.toolStripButton3_Click);
+            this.toolStripDisasBtn.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripDisasBtn.Name = "toolStripDisasBtn";
+            this.toolStripDisasBtn.Size = new System.Drawing.Size(76, 22);
+            this.toolStripDisasBtn.Text = "Disassembly";
+            this.toolStripDisasBtn.Click += new System.EventHandler(this.toolStripDisasBtn_Click);
             // 
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
             this.toolStripSeparator1.Size = new System.Drawing.Size(6, 25);
             // 
-            // toolStripTextBoxEntrypoint
+            // toolStripSegmentsBtn
             // 
-            this.toolStripTextBoxEntrypoint.BackColor = System.Drawing.SystemColors.Window;
-            this.toolStripTextBoxEntrypoint.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.toolStripTextBoxEntrypoint.Name = "toolStripTextBoxEntrypoint";
-            this.toolStripTextBoxEntrypoint.Size = new System.Drawing.Size(67, 25);
-            this.toolStripTextBoxEntrypoint.Text = "00000000";
-            this.toolStripTextBoxEntrypoint.KeyDown += new System.Windows.Forms.KeyEventHandler(this.toolStripTextBoxEntrypoint_KeyDown);
-            this.toolStripTextBoxEntrypoint.Validating += new System.ComponentModel.CancelEventHandler(this.toolStripTextBoxEntrypoint_Validating);
-            this.toolStripTextBoxEntrypoint.Validated += new System.EventHandler(this.StartRender);
-            // 
-            // toolStripButton2
-            // 
-            this.toolStripButton2.Image = global::Z64.Properties.Resources.memory;
-            this.toolStripButton2.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButton2.Name = "toolStripButton2";
-            this.toolStripButton2.Size = new System.Drawing.Size(79, 22);
-            this.toolStripButton2.Text = "Segments";
-            this.toolStripButton2.Click += new System.EventHandler(this.toolStripButton2_Click);
+            this.toolStripSegmentsBtn.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripSegmentsBtn.Name = "toolStripSegmentsBtn";
+            this.toolStripSegmentsBtn.Size = new System.Drawing.Size(63, 22);
+            this.toolStripSegmentsBtn.Text = "Segments";
+            this.toolStripSegmentsBtn.Click += new System.EventHandler(this.toolStripSegmentsBtn_Click);
             // 
             // statusStrip1
             // 
@@ -112,7 +97,7 @@
             this.toolStripStatusErrorLabel});
             this.statusStrip1.Location = new System.Drawing.Point(0, 616);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(883, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(968, 22);
             this.statusStrip1.TabIndex = 9;
             this.statusStrip1.Text = "statusStrip1";
             // 
@@ -157,18 +142,31 @@
             config1.ShowGrid = true;
             this.modelViewer.CurrentConfig = config1;
             this.modelViewer.Location = new System.Drawing.Point(1, 28);
+            this.modelViewer.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.modelViewer.Name = "modelViewer";
             this.modelViewer.RenderCallback = null;
-            this.modelViewer.Size = new System.Drawing.Size(870, 585);
+            this.modelViewer.Size = new System.Drawing.Size(757, 585);
             this.modelViewer.TabIndex = 4;
             this.modelViewer.VSync = false;
             this.modelViewer.MouseClick += new System.Windows.Forms.MouseEventHandler(this.modelViewer_MouseClick);
+            // 
+            // listBox_routines
+            // 
+            this.listBox_routines.Font = new System.Drawing.Font("Consolas", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.listBox_routines.FormattingEnabled = true;
+            this.listBox_routines.Items.AddRange(new object[] {
+            "00000000 [-32768;-32768;-32768]"});
+            this.listBox_routines.Location = new System.Drawing.Point(765, 28);
+            this.listBox_routines.Name = "listBox_routines";
+            this.listBox_routines.Size = new System.Drawing.Size(196, 576);
+            this.listBox_routines.TabIndex = 10;
             // 
             // DListViewerForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(883, 638);
+            this.ClientSize = new System.Drawing.Size(968, 638);
+            this.Controls.Add(this.listBox_routines);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.toolStrip1);
             this.Controls.Add(this.modelViewer);
@@ -191,15 +189,17 @@
         private ModelViewerControl modelViewer;
         private System.Windows.Forms.ToolStrip toolStrip1;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
-        private System.Windows.Forms.ToolStripButton toolStripButton2;
+        private System.Windows.Forms.ToolStripButton toolStripSegmentBtn;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusErrorLabel;
-        private System.Windows.Forms.ToolStripTextBox toolStripTextBoxEntrypoint;
         private System.Windows.Forms.ToolStripButton toolStripButton3;
-        private System.Windows.Forms.ToolStripButton toolStripButton1;
+        private System.Windows.Forms.ToolStripButton toolStripRenderCfgBtn;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
         private System.Windows.Forms.ToolStripMenuItem saveScreenToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem copyToClipboardToolStripMenuItem;
         private System.Windows.Forms.SaveFileDialog saveFileDialog1;
+        private System.Windows.Forms.ListBox listBox_routines;
+        private System.Windows.Forms.ToolStripButton toolStripDisasBtn;
+        private System.Windows.Forms.ToolStripButton toolStripSegmentsBtn;
     }
 }

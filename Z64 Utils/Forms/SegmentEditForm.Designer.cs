@@ -31,16 +31,17 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SegmentEditForm));
             this.comboBox1 = new System.Windows.Forms.ComboBox();
             this.tabControl1 = new System.Windows.Forms.TabControl();
-            this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.tabPage_address = new System.Windows.Forms.TabPage();
             this.addressValue = new System.Windows.Forms.TextBox();
-            this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.tabPage_file = new System.Windows.Forms.TabPage();
             this.button1 = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.okBtn = new System.Windows.Forms.Button();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
+            this.tabPage_empty = new System.Windows.Forms.TabPage();
             this.tabControl1.SuspendLayout();
-            this.tabPage1.SuspendLayout();
-            this.tabPage2.SuspendLayout();
+            this.tabPage_address.SuspendLayout();
+            this.tabPage_file.SuspendLayout();
             this.SuspendLayout();
             // 
             // comboBox1
@@ -48,9 +49,12 @@
             this.comboBox1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboBox1.FormattingEnabled = true;
             this.comboBox1.Items.AddRange(new object[] {
+            "Empty",
             "Address",
-            "DMA File",
-            "File"});
+            "ROM FS",
+            "File",
+            "Ident Matrices",
+            "Null Bytes"});
             this.comboBox1.Location = new System.Drawing.Point(21, 22);
             this.comboBox1.Name = "comboBox1";
             this.comboBox1.Size = new System.Drawing.Size(108, 21);
@@ -59,28 +63,29 @@
             // 
             // tabControl1
             // 
-            this.tabControl1.Controls.Add(this.tabPage1);
-            this.tabControl1.Controls.Add(this.tabPage2);
+            this.tabControl1.Controls.Add(this.tabPage_address);
+            this.tabControl1.Controls.Add(this.tabPage_file);
+            this.tabControl1.Controls.Add(this.tabPage_empty);
             this.tabControl1.Location = new System.Drawing.Point(26, 45);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
             this.tabControl1.Size = new System.Drawing.Size(99, 53);
             this.tabControl1.TabIndex = 1;
             // 
-            // tabPage1
+            // tabPage_address
             // 
-            this.tabPage1.BackColor = System.Drawing.SystemColors.Control;
-            this.tabPage1.Controls.Add(this.addressValue);
-            this.tabPage1.Location = new System.Drawing.Point(4, 22);
-            this.tabPage1.Name = "tabPage1";
-            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(91, 27);
-            this.tabPage1.TabIndex = 0;
-            this.tabPage1.Text = "address";
+            this.tabPage_address.BackColor = System.Drawing.SystemColors.Control;
+            this.tabPage_address.Controls.Add(this.addressValue);
+            this.tabPage_address.Location = new System.Drawing.Point(4, 22);
+            this.tabPage_address.Name = "tabPage_address";
+            this.tabPage_address.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage_address.Size = new System.Drawing.Size(91, 27);
+            this.tabPage_address.TabIndex = 0;
+            this.tabPage_address.Text = "address";
             // 
             // addressValue
             // 
-            this.addressValue.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.addressValue.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.addressValue.ForeColor = System.Drawing.SystemColors.ControlText;
             this.addressValue.Location = new System.Drawing.Point(5, 3);
             this.addressValue.Name = "addressValue";
@@ -89,16 +94,16 @@
             this.addressValue.Text = "00000000";
             this.addressValue.TextChanged += new System.EventHandler(this.addressValue_TextChanged);
             // 
-            // tabPage2
+            // tabPage_file
             // 
-            this.tabPage2.BackColor = System.Drawing.SystemColors.Control;
-            this.tabPage2.Controls.Add(this.button1);
-            this.tabPage2.Location = new System.Drawing.Point(4, 22);
-            this.tabPage2.Name = "tabPage2";
-            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(91, 27);
-            this.tabPage2.TabIndex = 1;
-            this.tabPage2.Text = "file";
+            this.tabPage_file.BackColor = System.Drawing.SystemColors.Control;
+            this.tabPage_file.Controls.Add(this.button1);
+            this.tabPage_file.Location = new System.Drawing.Point(4, 22);
+            this.tabPage_file.Name = "tabPage_file";
+            this.tabPage_file.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage_file.Size = new System.Drawing.Size(91, 27);
+            this.tabPage_file.TabIndex = 1;
+            this.tabPage_file.Text = "file";
             // 
             // button1
             // 
@@ -135,6 +140,15 @@
             // 
             this.openFileDialog1.FileName = "openFileDialog1";
             // 
+            // tabPage_empty
+            // 
+            this.tabPage_empty.Location = new System.Drawing.Point(4, 22);
+            this.tabPage_empty.Name = "tabPage_empty";
+            this.tabPage_empty.Size = new System.Drawing.Size(91, 27);
+            this.tabPage_empty.TabIndex = 2;
+            this.tabPage_empty.Text = "Empty";
+            this.tabPage_empty.UseVisualStyleBackColor = true;
+            // 
             // SegmentEditForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -152,9 +166,9 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Edit Segment";
             this.tabControl1.ResumeLayout(false);
-            this.tabPage1.ResumeLayout(false);
-            this.tabPage1.PerformLayout();
-            this.tabPage2.ResumeLayout(false);
+            this.tabPage_address.ResumeLayout(false);
+            this.tabPage_address.PerformLayout();
+            this.tabPage_file.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -164,12 +178,13 @@
 
         private System.Windows.Forms.ComboBox comboBox1;
         private System.Windows.Forms.TabControl tabControl1;
-        private System.Windows.Forms.TabPage tabPage1;
-        private System.Windows.Forms.TabPage tabPage2;
+        private System.Windows.Forms.TabPage tabPage_address;
+        private System.Windows.Forms.TabPage tabPage_file;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TextBox addressValue;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Button okBtn;
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
+        private System.Windows.Forms.TabPage tabPage_empty;
     }
 }
