@@ -738,7 +738,7 @@ namespace Z64
         public MtxHolder AddMtx(int mtxCount, string name = null, int off = -1)
         {
             if (off == -1) off = GetSize();
-            var holder = new MtxHolder(name ?? $"mtx_{off:X8}", new byte[mtxCount * 0x40]);
+            var holder = new MtxHolder(name ?? $"mtx_{off:X8}", new byte[mtxCount * MtxHolder.MTX_SIZE]);
             return (MtxHolder)AddHolder(holder, off);
         }
         public SkeletonLimbHolder AddSkeletonLimb(string name = null, int off = -1, int skel_off = -1)
