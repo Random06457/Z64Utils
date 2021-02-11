@@ -170,6 +170,30 @@ namespace Z64.Forms
                             pic_texture.Image = tex.GetBitmap();
                         break;
                     }
+                case Z64Object.EntryType.Mtx:
+                    {
+                        tabControl1.SelectedTab = tabPage_text;
+                        var matrices = (Z64Object.MtxHolder)holder;
+                        StringWriter sw = new StringWriter();
+                        for (int n = 0; n < matrices.Matrices.Count; n++)
+                        {
+                            sw.WriteLine($" ┌                                                ┐ ");
+                            for (int i = 0; i < 4; i++)
+                            {
+                                var values = "";
+                                for (int j = 0; j < 4; j++)
+                                {
+                                    values += $"0x{matrices.Matrices[n][i * 4 + j]:X08}";
+                                    if (j != 3)
+                                        values += $"  ";
+                                }
+                                sw.WriteLine($" │ {values} │ ");
+                            }
+                            sw.WriteLine($" └                                                ┘ ");
+                        }
+                        textBox_holderInfo.Text = sw.ToString();
+                        break;
+                    }
                 case Z64Object.EntryType.SkeletonHeader:
                     {
                         showInDisplayViewerToolStripMenuItem.Visible = true;

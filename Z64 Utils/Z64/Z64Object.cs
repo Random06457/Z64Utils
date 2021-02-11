@@ -34,6 +34,7 @@ namespace Z64
             DList,
             Vertex,
             Texture,
+            Mtx,
             AnimationHeader,
             FrameData,
             JointIndices,
@@ -162,6 +163,56 @@ namespace Z64
                 Texture = data;
             }
             public override int GetSize() => Texture.Length;
+        }
+        public class MtxHolder : ObjectHolder
+        {
+            public const int MTX_SIZE = 0x40;
+
+            public List<int[]> Matrices;
+
+            public MtxHolder(string name, byte[] data) : base(name)
+            {
+                SetData(data);
+            }
+
+            public override EntryType GetEntryType() => EntryType.Mtx;
+            public override byte[] GetData()
+            {
+                using (var ms = new MemoryStream())
+                {
+                    BinaryStream bw = new BinaryStream(ms, ByteConverter.Big);
+                    foreach (int[] mtx in Matrices)
+                    {
+                        for (int i = 0; i < mtx.Length; i++)
+                        {
+                            bw.Write(mtx[i]);
+                        }
+                    }
+                    return ms.ToArray().Take((int)ms.Length).ToArray();
+                }
+            }
+            public override void SetData(byte[] data)
+            {
+                
+                int nMatrices = data.Length / MTX_SIZE;
+                if (data.Length % MTX_SIZE != 0)
+                    throw new Z64ObjectException($"Invalid data size (0x{data.Length:X}, should be a multiple of 0x{MTX_SIZE:X})");
+
+                Matrices = new List<int[]>(nMatrices);
+
+                using (MemoryStream ms = new MemoryStream(data))
+                {
+                    BinaryStream br = new BinaryStream(ms, ByteConverter.Big);
+                    for (int i = 0; i < nMatrices; i++)
+                        Matrices.Add(new int[16] {
+                            br.ReadInt32(), br.ReadInt32(), br.ReadInt32(), br.ReadInt32(),
+                            br.ReadInt32(), br.ReadInt32(), br.ReadInt32(), br.ReadInt32(),
+                            br.ReadInt32(), br.ReadInt32(), br.ReadInt32(), br.ReadInt32(),
+                            br.ReadInt32(), br.ReadInt32(), br.ReadInt32(), br.ReadInt32(),
+                        });
+                }
+            }
+            public override int GetSize() => Matrices.Count * MTX_SIZE;
         }
         public class SkeletonLimbHolder : ObjectHolder
         {
@@ -684,6 +735,12 @@ namespace Z64
             AddVertexHolder(holder, off);
             return holder;
         }
+        public MtxHolder AddMtx(int mtxCount, string name = null, int off = -1)
+        {
+            if (off == -1) off = GetSize();
+            var holder = new MtxHolder(name ?? $"mtx_{off:X8}", new byte[mtxCount * 0x40]);
+            return (MtxHolder)AddHolder(holder, off);
+        }
         public SkeletonLimbHolder AddSkeletonLimb(string name = null, int off = -1, int skel_off = -1)
         {
             if (off == -1) off = GetSize();
@@ -761,6 +818,9 @@ namespace Z64
                         break;
                     case EntryType.Vertex:
                         entry.Name = "vtx_" + entryOff.ToString("X8");
+                        break;
+                    case EntryType.Mtx:
+                        entry.Name = "mtx_" + entryOff.ToString("X8");
                         break;
                     default:
                         entry.Name = "unk_" + entryOff.ToString("X8");
@@ -968,6 +1028,7 @@ namespace Z64
                             });
                             break;
                         }
+                    case EntryType.Mtx:
                     case EntryType.SkeletonHeader:
                     case EntryType.FlexSkeletonHeader:
                     case EntryType.SkeletonLimb:
