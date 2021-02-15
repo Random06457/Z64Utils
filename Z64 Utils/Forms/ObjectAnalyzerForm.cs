@@ -12,6 +12,7 @@ using System.Windows.Forms;
 using RDP;
 using Be.Windows.Forms;
 using Common;
+using Z64.Common;
 
 namespace Z64.Forms
 {
@@ -183,7 +184,7 @@ namespace Z64.Forms
                                 var values = "";
                                 for (int j = 0; j < 4; j++)
                                 {
-                                    values += $"0x{matrices.Matrices[n][i * 4 + j]:X08}";
+                                    values += $"0x{ArrayUtil.ReadUint32BE(matrices.Matrices[n].GetBuffer(), 4*(4 * i + j)):X08}";
                                     if (j != 3)
                                         values += $"  ";
                                 }

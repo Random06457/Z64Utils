@@ -166,9 +166,7 @@ namespace Z64
         }
         public class MtxHolder : ObjectHolder
         {
-            public const int MTX_SIZE = 0x40;
-
-            public List<int[]> Matrices;
+            public List<Mtx> Matrices;
 
             public MtxHolder(string name, byte[] data) : base(name)
             {
@@ -181,38 +179,29 @@ namespace Z64
                 using (var ms = new MemoryStream())
                 {
                     BinaryStream bw = new BinaryStream(ms, ByteConverter.Big);
-                    foreach (int[] mtx in Matrices)
+                    foreach (Mtx mtx in Matrices)
                     {
-                        for (int i = 0; i < mtx.Length; i++)
-                        {
-                            bw.Write(mtx[i]);
-                        }
+                        bw.Write(mtx.GetBuffer());
                     }
                     return ms.ToArray().Take((int)ms.Length).ToArray();
                 }
             }
             public override void SetData(byte[] data)
             {
+                if (data.Length % Mtx.SIZE != 0)
+                    throw new Z64ObjectException($"Invalid data size (0x{data.Length:X}, should be a multiple of 0x{Mtx.SIZE:X})");
+
+                int nMatrices = data.Length / Mtx.SIZE;
+                Matrices = new List<Mtx>(nMatrices);
                 
-                int nMatrices = data.Length / MTX_SIZE;
-                if (data.Length % MTX_SIZE != 0)
-                    throw new Z64ObjectException($"Invalid data size (0x{data.Length:X}, should be a multiple of 0x{MTX_SIZE:X})");
-
-                Matrices = new List<int[]>(nMatrices);
-
-                using (MemoryStream ms = new MemoryStream(data))
+                for (int i = 0; i < nMatrices; i++)
                 {
-                    BinaryStream br = new BinaryStream(ms, ByteConverter.Big);
-                    for (int i = 0; i < nMatrices; i++)
-                        Matrices.Add(new int[16] {
-                            br.ReadInt32(), br.ReadInt32(), br.ReadInt32(), br.ReadInt32(),
-                            br.ReadInt32(), br.ReadInt32(), br.ReadInt32(), br.ReadInt32(),
-                            br.ReadInt32(), br.ReadInt32(), br.ReadInt32(), br.ReadInt32(),
-                            br.ReadInt32(), br.ReadInt32(), br.ReadInt32(), br.ReadInt32(),
-                        });
+                    byte[] mtxData = new byte[Mtx.SIZE];
+                    Buffer.BlockCopy(data, i * Mtx.SIZE, mtxData, 0, Mtx.SIZE);
+                    Matrices.Add(new Mtx(mtxData));
                 }
             }
-            public override int GetSize() => Matrices.Count * MTX_SIZE;
+            public override int GetSize() => Matrices.Count * Mtx.SIZE;
         }
         public class SkeletonLimbHolder : ObjectHolder
         {
@@ -738,7 +727,7 @@ namespace Z64
         public MtxHolder AddMtx(int mtxCount, string name = null, int off = -1)
         {
             if (off == -1) off = GetSize();
-            var holder = new MtxHolder(name ?? $"mtx_{off:X8}", new byte[mtxCount * MtxHolder.MTX_SIZE]);
+            var holder = new MtxHolder(name ?? $"mtx_{off:X8}", new byte[mtxCount * Mtx.SIZE]);
             return (MtxHolder)AddHolder(holder, off);
         }
         public SkeletonLimbHolder AddSkeletonLimb(string name = null, int off = -1, int skel_off = -1)
@@ -1117,6 +1106,11 @@ namespace Z64
                         {
                             var holder = iter.ToObject<JsonArrayHolder>();
                             obj.AddFrameData(holder.Count);
+                            break;
+                        }
+                    case EntryType.Mtx:
+                        {
+                            obj.AddMtx(1);
                             break;
                         }
                     default: throw new Z64ObjectException($"Invalid entry type ({type})");
