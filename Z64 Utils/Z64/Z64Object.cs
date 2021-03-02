@@ -181,7 +181,7 @@ namespace Z64
                     BinaryStream bw = new BinaryStream(ms, ByteConverter.Big);
                     foreach (Mtx mtx in Matrices)
                     {
-                        bw.Write(mtx.GetBuffer());
+                        mtx.Write(bw);
                     }
                     return ms.ToArray().Take((int)ms.Length).ToArray();
                 }
@@ -191,14 +191,16 @@ namespace Z64
                 if (data.Length % Mtx.SIZE != 0)
                     throw new Z64ObjectException($"Invalid data size (0x{data.Length:X}, should be a multiple of 0x{Mtx.SIZE:X})");
 
-                int nMatrices = data.Length / Mtx.SIZE;
-                Matrices = new List<Mtx>(nMatrices);
-                
-                for (int i = 0; i < nMatrices; i++)
+                int count = data.Length / Mtx.SIZE;
+
+                Matrices = new List<Mtx>(count);
+                using (MemoryStream ms = new MemoryStream(data))
                 {
-                    byte[] mtxData = new byte[Mtx.SIZE];
-                    Buffer.BlockCopy(data, i * Mtx.SIZE, mtxData, 0, Mtx.SIZE);
-                    Matrices.Add(new Mtx(mtxData));
+                    BinaryStream br = new BinaryStream(ms);
+                    br.ByteConverter = ByteConverter.Big;
+
+                    for (int i = 0; i < count; i++)
+                        Matrices.Add(new Mtx(br));
                 }
             }
             public override int GetSize() => Matrices.Count * Mtx.SIZE;
