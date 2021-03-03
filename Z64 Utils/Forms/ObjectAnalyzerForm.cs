@@ -12,6 +12,7 @@ using System.Windows.Forms;
 using RDP;
 using Be.Windows.Forms;
 using Common;
+using Z64.Common;
 
 namespace Z64.Forms
 {
@@ -168,6 +169,30 @@ namespace Z64.Forms
                         var tex = (Z64Object.TextureHolder)holder;
                         if ((tex.Format != N64.N64TexFormat.CI4 && tex.Format != N64.N64TexFormat.CI8) || tex.Tlut != null)
                             pic_texture.Image = tex.GetBitmap();
+                        break;
+                    }
+                case Z64Object.EntryType.Mtx:
+                    {
+                        tabControl1.SelectedTab = tabPage_text;
+                        var matrices = (Z64Object.MtxHolder)holder;
+                        StringWriter sw = new StringWriter();
+                        for (int n = 0; n < matrices.Matrices.Count; n++)
+                        {
+                            sw.WriteLine($" ┌                                                ┐ ");
+                            for (int i = 0; i < 4; i++)
+                            {
+                                var values = "";
+                                for (int j = 0; j < 4; j++)
+                                {
+                                    values += $"0x{ArrayUtil.ReadUint32BE(matrices.Matrices[n].GetBuffer(), 4*(4 * i + j)):X08}";
+                                    if (j != 3)
+                                        values += $"  ";
+                                }
+                                sw.WriteLine($" │ {values} │ ");
+                            }
+                            sw.WriteLine($" └                                                ┘ ");
+                        }
+                        textBox_holderInfo.Text = sw.ToString();
                         break;
                     }
                 case Z64Object.EntryType.SkeletonHeader:

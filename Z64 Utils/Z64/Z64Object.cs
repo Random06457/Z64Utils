@@ -34,6 +34,7 @@ namespace Z64
             DList,
             Vertex,
             Texture,
+            Mtx,
             AnimationHeader,
             FrameData,
             JointIndices,
@@ -162,6 +163,47 @@ namespace Z64
                 Texture = data;
             }
             public override int GetSize() => Texture.Length;
+        }
+        public class MtxHolder : ObjectHolder
+        {
+            public List<Mtx> Matrices;
+
+            public MtxHolder(string name, byte[] data) : base(name)
+            {
+                SetData(data);
+            }
+
+            public override EntryType GetEntryType() => EntryType.Mtx;
+            public override byte[] GetData()
+            {
+                using (var ms = new MemoryStream())
+                {
+                    BinaryStream bw = new BinaryStream(ms, ByteConverter.Big);
+                    foreach (Mtx mtx in Matrices)
+                    {
+                        mtx.Write(bw);
+                    }
+                    return ms.ToArray().Take((int)ms.Length).ToArray();
+                }
+            }
+            public override void SetData(byte[] data)
+            {
+                if (data.Length % Mtx.SIZE != 0)
+                    throw new Z64ObjectException($"Invalid data size (0x{data.Length:X}, should be a multiple of 0x{Mtx.SIZE:X})");
+
+                int count = data.Length / Mtx.SIZE;
+
+                Matrices = new List<Mtx>(count);
+                using (MemoryStream ms = new MemoryStream(data))
+                {
+                    BinaryStream br = new BinaryStream(ms);
+                    br.ByteConverter = ByteConverter.Big;
+
+                    for (int i = 0; i < count; i++)
+                        Matrices.Add(new Mtx(br));
+                }
+            }
+            public override int GetSize() => Matrices.Count * Mtx.SIZE;
         }
         public class SkeletonLimbHolder : ObjectHolder
         {
@@ -684,6 +726,12 @@ namespace Z64
             AddVertexHolder(holder, off);
             return holder;
         }
+        public MtxHolder AddMtx(int mtxCount, string name = null, int off = -1)
+        {
+            if (off == -1) off = GetSize();
+            var holder = new MtxHolder(name ?? $"mtx_{off:X8}", new byte[mtxCount * Mtx.SIZE]);
+            return (MtxHolder)AddHolder(holder, off);
+        }
         public SkeletonLimbHolder AddSkeletonLimb(string name = null, int off = -1, int skel_off = -1)
         {
             if (off == -1) off = GetSize();
@@ -761,6 +809,9 @@ namespace Z64
                         break;
                     case EntryType.Vertex:
                         entry.Name = "vtx_" + entryOff.ToString("X8");
+                        break;
+                    case EntryType.Mtx:
+                        entry.Name = "mtx_" + entryOff.ToString("X8");
                         break;
                     default:
                         entry.Name = "unk_" + entryOff.ToString("X8");
@@ -968,6 +1019,7 @@ namespace Z64
                             });
                             break;
                         }
+                    case EntryType.Mtx:
                     case EntryType.SkeletonHeader:
                     case EntryType.FlexSkeletonHeader:
                     case EntryType.SkeletonLimb:
@@ -1056,6 +1108,11 @@ namespace Z64
                         {
                             var holder = iter.ToObject<JsonArrayHolder>();
                             obj.AddFrameData(holder.Count);
+                            break;
+                        }
+                    case EntryType.Mtx:
+                        {
+                            obj.AddMtx(1);
                             break;
                         }
                     default: throw new Z64ObjectException($"Invalid entry type ({type})");

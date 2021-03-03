@@ -513,6 +513,16 @@ namespace Z64
                                 exit = true;
                                 break;
                             }
+                        case OpCodeID.G_MTX:
+                            {
+                                var gmtx = F3DZEX.Command.DecodeCommand<F3DZEX.Command.GMtx>(data, i);
+                                var addr = new SegmentedAddress(gmtx.mtxaddr);
+                                if (addr.Segmented && addr.SegmentId == segmentId)
+                                {
+                                    obj.AddMtx(1, off: (int)addr.SegmentOff);
+                                }
+                                break;
+                            }
                         case OpCodeID.G_VTX:
                             {
                                 var gvtx = F3DZEX.Command.DecodeCommand<F3DZEX.Command.GVtx>(data, i);
