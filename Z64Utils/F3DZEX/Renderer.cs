@@ -205,7 +205,6 @@ namespace F3DZEX
                     {
                         var cmd = info.Convert<Command.GVtx>();
 
-                        cmd.vaddr += (uint)cmd.vbidx * 0x10;
                         for (int i = 0; i < cmd.numv; i++, cmd.vaddr += 0x10)
                             _vertices[cmd.vbidx + i] = new Vertex(Memory.ReadBytes(cmd.vaddr, 0x10));
 
