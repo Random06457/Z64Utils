@@ -14,6 +14,7 @@ using Z64;
 using RDP;
 
 using DList = System.Collections.Generic.List<System.Tuple<uint, F3DZEX.Command.CommandInfo>>;
+using System.Diagnostics;
 
 namespace F3DZEX.Render
 {
@@ -282,7 +283,6 @@ namespace F3DZEX.Render
             // color/normal
             _rdpVtxAttrs.LayoutAddFloat(4, VertexAttribPointerType.UnsignedByte, true);
 
-
             /* Init simple vertex attributes */
             /*_colorVtxAttrs = new VertexAttribs();
             // position
@@ -299,7 +299,7 @@ namespace F3DZEX.Render
         {
             if (_reqDecodeTex)
             {
-                Console.WriteLine($"Decoding texture... {TexDecodeCount}");
+                Debug.WriteLine($"Decoding texture... {TexDecodeCount++}");
 
                 GL.BindTexture(TextureTarget.Texture2D, _curTexID);
                 _renderTex = N64Texture.Decode(_curTexW * _curTexH, _renderTexFmt, _renderTexSiz, _loadTex, _curTLUT);
@@ -325,33 +325,6 @@ namespace F3DZEX.Render
                         var cmd = info.Convert<Command.GVtx>();
 
                         byte[] data = Memory.ReadBytes(cmd.vaddr, Vertex.SIZE * cmd.numv);
-                        
-                        // BOM swap
-                        for (int i = 0; i < data.Length;)
-                        {
-                            // X
-                            (data[i + 0], data[i + 1]) = (data[i + 1], data[i + 0]);
-                            i += 2;
-                            // Y
-                            (data[i + 0], data[i + 1]) = (data[i + 1], data[i + 0]);
-                            i += 2;
-                            // Z
-                            (data[i + 0], data[i + 1]) = (data[i + 1], data[i + 0]);
-                            i += 2;
-
-                            // flag
-                            (data[i + 0], data[i + 1]) = (data[i + 1], data[i + 0]);
-                            i += 2;
-
-                            // tex X
-                            (data[i + 0], data[i + 1]) = (data[i + 1], data[i + 0]);
-                            i += 2;
-                            // tex Y
-                            (data[i + 0], data[i + 1]) = (data[i + 1], data[i + 0]);
-                            i += 2;
-                            // color
-                            i += 4;
-                        }
 
                         System.Buffer.BlockCopy(data, 0, _vtxBuffer, cmd.vbidx * Vertex.SIZE, data.Length);
 

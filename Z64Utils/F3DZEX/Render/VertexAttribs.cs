@@ -143,13 +143,30 @@ namespace F3DZEX.Render
             _built = true;
         }
 
-        // todo : endian swap
         public void SetData(byte[] buffer, bool bigEndian = false, BufferUsageHint hint = BufferUsageHint.StaticDraw)
         {
             if (!_built)
                 BuldLayout();
 
             // endian swap
+            if (bigEndian)
+            {
+                int off = 0;
+                while (off < buffer.Length)
+                {
+                    foreach (var attr in _attribs)
+                    {
+                        int fieldSize = attr.GetSize() / attr.count;
+
+                        for (int i = 0; i < attr.count; i++)
+                        {
+                            for (int j = 0; j < fieldSize/2; j++)
+                                (buffer[off + j], buffer[off + fieldSize - j - 1]) = (buffer[off + fieldSize - j - 1], buffer[off + j]);
+                            off += fieldSize;
+                        }
+                    }
+                }
+            }
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vbo);
             GL.BufferData(BufferTarget.ArrayBuffer, buffer.Length, buffer, hint);

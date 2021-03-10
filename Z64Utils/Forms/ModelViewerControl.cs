@@ -93,7 +93,8 @@ namespace Z64.Forms
 
                 _oldAnglePos = e.Location;
             }
-            Render();
+            if (e.Button != MouseButtons.None)
+                Render();
         }
         protected override void OnPaint(PaintEventArgs e)
         {
