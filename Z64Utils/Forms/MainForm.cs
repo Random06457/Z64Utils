@@ -154,7 +154,6 @@ namespace Z64.Forms
                         {
                             Text = $"Z64 Utils - {Path.GetFileName(openFileDialog1.FileName)} [ver. {_game.Version} ({_game.BuildID})]";
 
-
                             _fileItemsText = new string[_game.GetFileCount()];
                             for (int i = 0; i < _game.GetFileCount(); i++)
                             {
@@ -165,6 +164,7 @@ namespace Z64.Forms
                                 _fileItemsText[i] = ($"{_game.GetFileName(file.VRomStart).ToLower()} {file.VRomStart:x8} {file.VRomEnd:x8}");
                             }
 
+                            _lastSearch = null;
                             UpdateFileList();
                         }
                         UpdateControls();

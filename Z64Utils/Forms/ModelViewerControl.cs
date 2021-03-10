@@ -11,6 +11,7 @@ using System.Windows.Forms;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Platform;
 using OpenTK;
+using F3DZEX.Render;
 
 namespace Z64.Forms
 {
@@ -18,21 +19,30 @@ namespace Z64.Forms
     {
         public class Config
         {
+            //public float GridScale { get; set; } = 10;
             public float GridScale { get; set; } = 5000;
             public bool ShowGrid { get; set; } = true;
             public bool ShowAxis { get; set; } = true;
             public bool DiffuseLight { get; set; } = false;
         }
 
+        public Matrix4 Projection => _projectionMtx;
+        public Matrix4 View => _viewMtx;
+
         Vector3 _camPos;
         Vector3 _angle;
         Point _oldPos = Point.Empty;
         Point _oldAnglePos = Point.Empty;
-        Action _render;
+        Action<Matrix4, Matrix4> _render;
         bool _init = false;
+        //ShaderHandler _shader;
+        int _vao;
+        int _vbo;
+        Matrix4 _projectionMtx;
+        Matrix4 _viewMtx;
 
         public Config CurrentConfig { get; set; } = new Config();
-        public Action RenderCallback { get => _render; set { _render = value; Render(); } }
+        public Action<Matrix4, Matrix4> RenderCallback { get => _render; set { _render = value; Render(); } }
 
         public ModelViewerControl()
         {
@@ -44,6 +54,9 @@ namespace Z64.Forms
             base.OnLoad(e);
             _init = true;
             _camPos = new Vector3(0, 0, -CurrentConfig.GridScale);
+
+            //_shader = new ShaderHandler("Shaders/simpleVert.shader", "Shaders/simpleFrag.shader");
+            //SetupVertices();
         }
         protected override void OnMouseWheel(MouseEventArgs e)
         {
@@ -106,44 +119,20 @@ namespace Z64.Forms
                 Console.WriteLine(ex.Message);
             }
 
-            GL.Enable(EnableCap.DepthTest);
-            //GL.DepthMask(false);
-            //glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND)
-            //GL.TexEnv(TextureEnvTarget.TextureEnv, TextureEnvParameter.TextureEnvMode, (int)EnableCap.Blend);
-            GL.Enable(EnableCap.Blend);
-            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-            GL.Enable(EnableCap.Texture2D);
-            if (CurrentConfig.DiffuseLight)
-            {
-                GL.Enable(EnableCap.Lighting);
-                GL.Enable(EnableCap.ColorMaterial);
-                GL.Light(LightName.Light0, LightParameter.Diffuse, new float[] { 1.0f, 1.0f, 1.0f });
-                GL.Enable(EnableCap.Light0);
-            }
-            else
-            {
-                GL.Disable(EnableCap.Lighting);
-                GL.Disable(EnableCap.ColorMaterial);
-                GL.Disable(EnableCap.Light0);
-            }
 
             if (Height == 0)
                 ClientSize = new Size(Width, 1);
 
             GL.Viewport(0, 0, Width, Height);
 
-            float aspectRatio = Width / (float)Height;
-            Matrix4 prespective = Matrix4.CreatePerspectiveFieldOfView(MathHelper.PiOver4, aspectRatio, 1, 500000);
-            GL.MatrixMode(MatrixMode.Projection);
-            GL.LoadMatrix(ref prespective);
+            //_shader.Use();
 
-            GL.Translate(_camPos.X, _camPos.Y, _camPos.Z);
-            GL.Rotate(_angle.X, 1.0f, 0.0f, 0.0f);
-            GL.Rotate(_angle.Y, 0.0f, 1.0f, 0.0f);
+            HandleCamera();
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             GL.ClearColor(BackColor);
 
+            /*
             if (CurrentConfig.ShowGrid)
                 RenderGrid();
 
@@ -154,56 +143,24 @@ namespace Z64.Forms
 
             if (CurrentConfig.ShowAxis)
                 RenderAxis();
+            */
+
+            //testDraw();
+            RenderCallback?.Invoke(_projectionMtx, _viewMtx);
 
             SwapBuffers();
         }
-        void RenderGrid()
+
+        void HandleCamera()
         {
-            GL.LineWidth(1.0f);
-            GL.Begin(PrimitiveType.Lines);
+            float aspectRatio = Width / (float)Height;
+            _projectionMtx = Matrix4.CreatePerspectiveFieldOfView(MathHelper.PiOver4, aspectRatio, 1, 500000);
 
-            GL.Color4(0.0f, 0.0f, 0.0f, 0.5f);
-
-            int lineCount = 6;
-
-            for (float x = -CurrentConfig.GridScale; x < CurrentConfig.GridScale + 1; x += CurrentConfig.GridScale / lineCount)
-            {
-                GL.Vertex3(x, 0, -CurrentConfig.GridScale);
-                GL.Vertex3(x, 0, CurrentConfig.GridScale);
-            }
-            for (float z = -CurrentConfig.GridScale; z < CurrentConfig.GridScale + 1; z += CurrentConfig.GridScale / lineCount)
-            {
-                GL.Vertex3(-CurrentConfig.GridScale, 0, z);
-                GL.Vertex3(CurrentConfig.GridScale, 0, z);
-            }
-
-            //GL.Color3(Color.Transparent);
-            GL.End();
+            _viewMtx = Matrix4.Identity;
+            _viewMtx *= Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angle.Y));
+            _viewMtx *= Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_angle.X));
+            _viewMtx *= Matrix4.CreateTranslation(_camPos.X, _camPos.Y, _camPos.Z);
         }
-
-        void RenderAxis()
-        {
-            GL.BindTexture(TextureTarget.Texture2D, 0);
-            GL.LineWidth(2.0f);
-            GL.Begin(PrimitiveType.Lines);
-            //X
-            GL.Color3(Color.Red);
-            GL.Vertex3(0, 0, 0);
-            GL.Vertex3(CurrentConfig.GridScale / 10, 0, 0);
-            //Y
-            GL.Color3(Color.Green);
-            GL.Vertex3(0, 0, 0);
-            GL.Vertex3(0, CurrentConfig.GridScale / 10, 0);
-            //Z
-            GL.Color3(Color.Blue);
-            GL.Vertex3(0, 0, 0);
-            GL.Vertex3(0, 0, CurrentConfig.GridScale / 10);
-
-            GL.Color3(Color.Transparent);
-            GL.End();
-            GL.LineWidth(1.0f);
-        }
-
 
         public Bitmap CaptureScreen()
         {

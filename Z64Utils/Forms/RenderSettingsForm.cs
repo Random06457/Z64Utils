@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using F3DZEX;
+using F3DZEX.Render;
 
 namespace Z64.Forms
 {

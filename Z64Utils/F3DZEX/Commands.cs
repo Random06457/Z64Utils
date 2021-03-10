@@ -129,20 +129,20 @@ namespace F3DZEX
         [Cmd(OpCodeID.G_TRI1)]
         public struct GTri1
         {
-            public int v0 { get; set; }
-            public int v1 { get; set; }
-            public int v2 { get; set; }
+            public byte v0 { get; set; }
+            public byte v1 { get; set; }
+            public byte v2 { get; set; }
         }
 
         [Cmd(OpCodeID.G_TRI2)]
         public struct GTri2
         {
-            public int v00 { get; set; }
-            public int v01 { get; set; }
-            public int v02 { get; set; }
-            public int v10 { get; set; }
-            public int v11 { get; set; }
-            public int v12 { get; set; }
+            public byte v00 { get; set; }
+            public byte v01 { get; set; }
+            public byte v02 { get; set; }
+            public byte v10 { get; set; }
+            public byte v11 { get; set; }
+            public byte v12 { get; set; }
         }
 
         [Cmd(OpCodeID.G_TEXRECT)]

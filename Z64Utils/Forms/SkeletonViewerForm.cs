@@ -21,11 +21,11 @@ namespace Z64.Forms
     public partial class SkeletonViewerForm : MicrosoftFontForm
     {
         Z64Game _game;
-        F3DZEX.Renderer _renderer;
+        F3DZEX.Render.Renderer _renderer;
         SegmentEditorForm _segForm;
         DisasmForm _disasForm;
         RenderSettingsForm _settingsForm;
-        F3DZEX.Renderer.Config _rendererCfg;
+        F3DZEX.Render.Renderer.Config _rendererCfg;
         ModelViewerControl.Config _controlCfg;
         
         SkeletonHolder _skel;
@@ -40,13 +40,13 @@ namespace Z64.Forms
         public SkeletonViewerForm(Z64Game game)
         {
             _game = game;
-            _rendererCfg = new F3DZEX.Renderer.Config();
+            _rendererCfg = new F3DZEX.Render.Renderer.Config();
             _controlCfg = new ModelViewerControl.Config();
 
             InitializeComponent();
             Toolkit.Init();
 
-            _renderer = new F3DZEX.Renderer(game, _rendererCfg);
+            _renderer = new F3DZEX.Render.Renderer(game, _rendererCfg);
             modelViewer.CurrentConfig = _controlCfg;
             modelViewer.RenderCallback = RenderCallback;
 
@@ -55,15 +55,12 @@ namespace Z64.Forms
 
         void RenderLimb(int limbIdx, bool overlay = false)
         {
-            GL.PushMatrix();
+            _renderer.PushMatrix();
 
 
             if (_curAnim != null)
             {
-                
-                GL.GetFloat(GetPName.ModelviewMatrix, out Matrix4 curMtx);
-                curMtx = CalcMatrix(curMtx, limbIdx);
-                GL.LoadMatrix(ref curMtx);
+                _renderer.LoadMatrix(CalcMatrix(_renderer.TopMatrix(), limbIdx));
 
                 if (overlay)
                 {
@@ -82,6 +79,12 @@ namespace Z64.Forms
                 }
                 else
                 {
+                    var node = treeView_hierarchy.SelectedNode;
+                    _renderer.SendHighlightColor(
+                        (node?.Tag?.Equals(_limbs[limbIdx]) ?? false)
+                        ? Color.Red
+                        : Color.Transparent);
+
                     if (_limbDlists[limbIdx] != null)
                         _renderer.RenderDList(_limbDlists[limbIdx]);
                 }
@@ -92,14 +95,15 @@ namespace Z64.Forms
             if (_limbs[limbIdx].Child != 0xFF)
                 RenderLimb(_limbs[limbIdx].Child, overlay);
 
-            GL.PopMatrix();
+            _renderer.PopMatrix();
 
             if (_limbs[limbIdx].Sibling != 0xFF)
                 RenderLimb(_limbs[limbIdx].Sibling, overlay);
         }
 
-        void RenderCallback()
+        void RenderCallback(Matrix4 proj, Matrix4 view)
         {
+            _renderer.RenderStart(proj, view);
             RenderLimb(0);
             /*
             GL.PointSize(10.0f);
@@ -242,13 +246,6 @@ namespace Z64.Forms
             short rotY = GetFrameData(_curJoints[limbIdx + 1].Y);
             short rotZ = GetFrameData(_curJoints[limbIdx + 1].Z);
 
-            /*
-            GL.Translate(pos);
-            GL.Rotate(S16ToDeg(rotZ), 0, 0, 1);
-            GL.Rotate(S16ToDeg(rotY), 0, 1, 0);
-            GL.Rotate(S16ToDeg(rotX), 1, 0, 0);
-            GL.GetFloat(GetPName.ModelviewMatrix, out src);
-            */
 
             src = Matrix4.CreateTranslation(pos) * src;
             src = Matrix4.CreateRotationZ(S16ToRad(rotZ)) * src;
@@ -366,11 +363,50 @@ namespace Z64.Forms
             }
         }
 
-        private void trackBar_anim_Scroll(object sender, EventArgs e)
+        private void trackBar_anim_ValueChanged(object sender, EventArgs e)
         {
             label_anim.Text = $"{trackBar_anim.Value}/{trackBar_anim.Maximum}";
             UpdateMatrixBuf();
             NewRender();
         }
+
+        private void button_playbackAnim_Click(object sender, EventArgs e)
+        {
+            timer1.Start();
+            button_playbackAnim.Enabled = false;
+            button_playAnim.Enabled = button_pauseAnim.Enabled = true;
+        }
+
+        private void button_playAnim_Click(object sender, EventArgs e)
+        {
+            timer1.Start();
+            button_playAnim.Enabled = false;
+            button_playbackAnim.Enabled = button_pauseAnim.Enabled = true;
+        }
+
+        private void button_pauseAnim_Click(object sender, EventArgs e)
+        {
+            timer1.Stop();
+            button_pauseAnim.Enabled = false;
+            button_playAnim.Enabled = button_playbackAnim.Enabled = true;
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            if (button_playbackAnim.Enabled)
+            {
+                trackBar_anim.Value = trackBar_anim.Value < trackBar_anim.Maximum
+                    ? trackBar_anim.Value + 1
+                    : 0;
+            }
+            else
+            {
+                trackBar_anim.Value = trackBar_anim.Value > 0
+                    ? trackBar_anim.Value - 1
+                    : trackBar_anim.Maximum;
+            }
+        }
+
+        
     }
 }

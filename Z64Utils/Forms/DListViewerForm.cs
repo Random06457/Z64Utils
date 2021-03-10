@@ -39,7 +39,7 @@ namespace Z64.Forms
                 Z = z;
                 DList = null;
             }
-            public RenderRoutine(F3DZEX.Renderer renderer, uint addr, int x = 0, int y = 0, int z = 0) : this(addr, x, y, z)
+            public RenderRoutine(F3DZEX.Render.Renderer renderer, uint addr, int x = 0, int y = 0, int z = 0) : this(addr, x, y, z)
             {
                 DList = renderer.GetFullDlist(addr);
             }
@@ -50,11 +50,11 @@ namespace Z64.Forms
         public static DListViewerForm Instance { get; set; }
 
         Z64Game _game;
-        F3DZEX.Renderer _renderer;
+        F3DZEX.Render.Renderer _renderer;
         SegmentEditorForm _segForm;
         DisasmForm _disasForm;
         RenderSettingsForm _settingsForm;
-        F3DZEX.Renderer.Config _rendererCfg;
+        F3DZEX.Render.Renderer.Config _rendererCfg;
         ModelViewerControl.Config _controlCfg;
 
         List<RenderRoutine> _routines;
@@ -63,13 +63,13 @@ namespace Z64.Forms
         private DListViewerForm(Z64Game game)
         {
             _game = game;
-            _rendererCfg = new F3DZEX.Renderer.Config();
+            _rendererCfg = new F3DZEX.Render.Renderer.Config();
             _controlCfg = new ModelViewerControl.Config();
 
             InitializeComponent();
             Toolkit.Init();
 
-            _renderer = new F3DZEX.Renderer(game, _rendererCfg);
+            _renderer = new F3DZEX.Render.Renderer(game, _rendererCfg);
             modelViewer.CurrentConfig = _controlCfg;
             modelViewer.RenderCallback = RenderCallback;
 
@@ -85,14 +85,22 @@ namespace Z64.Forms
                 routine.DList = _renderer.GetFullDlist(routine.Address);
         }
 
-        void RenderCallback()
+        void RenderCallback(Matrix4 proj, Matrix4 view)
         {
+            /*
             foreach (RenderRoutine routine in _routines)
             {
                 GL.PushMatrix();
                 GL.Translate(routine.X, routine.Y, routine.Z);
                 _renderer.RenderDList(routine.DList);
                 GL.PopMatrix();
+            }
+            */
+
+            _renderer.RenderStart(proj, view);
+            foreach (var routine in _routines)
+            {
+                _renderer.RenderDList(routine.DList);
             }
 
             toolStripStatusErrorLabel.Text = _renderer.RenderFailed()

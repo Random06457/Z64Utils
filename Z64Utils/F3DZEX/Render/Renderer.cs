@@ -15,7 +15,7 @@ using RDP;
 
 using DList = System.Collections.Generic.List<System.Tuple<uint, F3DZEX.Command.CommandInfo>>;
 
-namespace F3DZEX
+namespace F3DZEX.Render
 {
     public class Renderer
     {
@@ -30,8 +30,6 @@ namespace F3DZEX
         public Config CurrentConfig { get; set; }
         public Memory Memory { get; private set; }
 
-        Vertex[] _vertices = new Vertex[32];
-        Vector4[] _vtxCoords = new Vector4[32]; // temp
         int _curTexID;
         Enums.G_IM_SIZ _loadTexSiz;
         Enums.G_IM_FMT _renderTexFmt;
@@ -46,8 +44,13 @@ namespace F3DZEX
         bool _mirrorH;
         bool _reqDecodeTex = false;
 
-        bool _texInitialized;
-
+        bool _initialized;
+        byte[] _vtxBuffer = new byte[32 * Vertex.SIZE];
+        ShaderHandler _rdpVtxShader;
+        ShaderHandler _colorVtxShader;
+        VertexAttribs _rdpVtxAttrs;
+        VertexAttribs _colorVtxAttrs;
+        Stack<Matrix4> _mtxStack = new Stack<Matrix4>();
 
 
         public bool RenderFailed() => ErrorMsg != null;
@@ -60,6 +63,8 @@ namespace F3DZEX
         {
             Memory = mem;
             CurrentConfig = cfg;
+
+            _mtxStack.Push(Matrix4.Identity);
         }
         
         public void ClearErrors() => ErrorMsg = null;
@@ -130,14 +135,109 @@ namespace F3DZEX
         }
 
 
-        public void RenderDList(DList dlist)
+
+        public Matrix4 TopMatrix()
         {
-            if (!_texInitialized)
-                InitTex();
+            return _mtxStack.Peek();
+        }
+        public void PushMatrix()
+        {
+            _mtxStack.Push(_mtxStack.Peek());
+        }
+        public void PushMatrix(Matrix4 mtx)
+        {
+            _mtxStack.Push(mtx);
+            SendModelMatrix();
+        }
+        public Matrix4 PopMatrix()
+        {
+            var ret = _mtxStack.Pop();
+            SendModelMatrix();
+            return ret;
+        }
+        public void LoadMatrix(Matrix4 mtx)
+        {
+            _mtxStack.Pop();
+            PushMatrix(mtx);
+        }
+
+        public void SendHighlightColor(Color color) => _rdpVtxShader.Send("u_HighlightColor", color);
+
+        private void SendPrimColor(Color color) => _rdpVtxShader.Send("u_PrimColor", color);
+        private void SendTexture() => _rdpVtxShader.Send("u_Tex", 0);
+        private void SendTextureEnabled(bool enabled) => _rdpVtxShader.Send("u_TexEnabled", enabled);
+        private void SendModelMatrix() => _rdpVtxShader.Send("u_Model", _mtxStack.Peek());
+        private void SendProjViewMatrices(Matrix4 proj, Matrix4 view)
+        {
+            _rdpVtxShader.Send("u_Projection", proj);
+            _rdpVtxShader.Send("u_View", view);
+        }
+
+        private void CheckGLErros()
+        {
+            var err = GL.GetError();
+            if (err != ErrorCode.NoError)
+                throw new Exception($"GL.GetError() -> {err}");
+        }
+
+
+        public void RenderStart(Matrix4 proj, Matrix4 view)
+        {
+            if (!_initialized)
+                Init();
 
             if (RenderFailed())
                 return;
 
+            _rdpVtxShader.Use();
+
+            _mtxStack = new Stack<Matrix4>();
+            PushMatrix(Matrix4.Identity);
+
+            SendProjViewMatrices(proj, view);
+            SendHighlightColor(Color.Transparent);
+
+            SendTextureEnabled(CurrentConfig.RenderTextures);
+
+
+            GL.Enable(EnableCap.DepthTest);
+            //GL.DepthMask(false);
+            //glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND)
+            //GL.TexEnv(TextureEnvTarget.TextureEnv, TextureEnvParameter.TextureEnvMode, (int)EnableCap.Blend);
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+            GL.Enable(EnableCap.Texture2D);
+            if (false/*CurrentConfig.DiffuseLight*/)
+            {
+                GL.Enable(EnableCap.Lighting);
+                GL.Enable(EnableCap.ColorMaterial);
+                GL.Light(LightName.Light0, LightParameter.Diffuse, new float[] { 1.0f, 1.0f, 1.0f });
+                GL.Enable(EnableCap.Light0);
+            }
+            else
+            {
+                GL.Disable(EnableCap.Lighting);
+                GL.Disable(EnableCap.ColorMaterial);
+                GL.Disable(EnableCap.Light0);
+            }
+
+            //RenderHelper.RenderAxis(5000);
+            //RenderHelper.RenderGrid(5000);
+            CheckGLErros();
+        }
+        private void GLWrapper(Action callback)
+        {
+            callback();
+            CheckGLErros();
+        }
+
+        public void RenderDList(DList dlist)
+        {
+            if (!_initialized)
+                Init();
+
+            if (RenderFailed())
+                return;
 
             uint addr = 0xFFFFFFFF;
             try
@@ -155,35 +255,52 @@ namespace F3DZEX
             }
         }
 
-        private void InitTex()
+        private void Init()
         {
+            /* Init Texture */
             GL.Hint(HintTarget.PerspectiveCorrectionHint, HintMode.Nicest);
 
             GL.GenTextures(1, out _curTexID);
             GL.BindTexture(TextureTarget.Texture2D, _curTexID);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-            
-            _texInitialized = true;
+
+
+            /* Init Shaders */
+            _rdpVtxShader = new ShaderHandler("Shaders/rdpVtx.vert", "Shaders/rdpVtx.frag");
+            //_colorVtxShader = new ShaderHandler("Shaders/coloredVtx.vert", "Shaders/color.frag");
+
+
+            /* Init RDP Vertex attributes */
+            _rdpVtxAttrs = new VertexAttribs();
+            // position
+            _rdpVtxAttrs.LayoutAddFloat(3, VertexAttribPointerType.Short, false);
+            //flag
+            _rdpVtxAttrs.LayoutAddInt(1, VertexAttribIntegerType.UnsignedShort);
+            // tex coords
+            _rdpVtxAttrs.LayoutAddInt(2, VertexAttribIntegerType.Short);
+            // color/normal
+            _rdpVtxAttrs.LayoutAddFloat(4, VertexAttribPointerType.UnsignedByte, true);
+
+
+            /* Init simple vertex attributes */
+            /*_colorVtxAttrs = new VertexAttribs();
+            // position
+            _colorVtxAttrs.LayoutAddFloat(3, VertexAttribPointerType.Float, false);
+            // color
+            _colorVtxAttrs.LayoutAddFloat(4, VertexAttribPointerType.UnsignedByte, true);
+*/
+            CheckGLErros();
+            _initialized = true;
         }
 
-        private void RenderVtx(int idx)
-        {
-            Vertex vtx = _vertices[idx];
-            Vector4 vec4 = _vtxCoords[idx];
-            //GL.Color4(R, G, B, A);
-            GL.Normal3(vtx.R, vtx.G, vtx.B);
-            float x = (float)(vtx.TexX >> 5) / _curTexW;
-            float y = (float)(vtx.TexY >> 5) / _curTexH;
-            GL.TexCoord2(x, y);
-            GL.Vertex3(vec4.X, vec4.Y, vec4.Z);
-        }
-
+        static int TexDecodeCount = 0;
         private void DecodeTexIfRequired()
         {
             if (_reqDecodeTex)
             {
-                GL.Color3(Color.Transparent);
+                Console.WriteLine($"Decoding texture... {TexDecodeCount}");
+
                 GL.BindTexture(TextureTarget.Texture2D, _curTexID);
                 _renderTex = N64Texture.Decode(_curTexW * _curTexH, _renderTexFmt, _renderTexSiz, _loadTex, _curTLUT);
                 GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, _curTexW, _curTexH, 0, PixelFormat.Rgba, PixelType.UnsignedByte, _renderTex);
@@ -199,100 +316,89 @@ namespace F3DZEX
                     {
                         var cmd = info.Convert<Command.GSetPrimColor>();
 
-                        GL.Color4(cmd.R, cmd.G, cmd.B, cmd.A);
-                    } break;
+                        SendPrimColor(Color.FromArgb(cmd.A, cmd.R, cmd.G, cmd.B));
+                    }
+                    break;
+
                 case Command.OpCodeID.G_VTX:
                     {
                         var cmd = info.Convert<Command.GVtx>();
 
-                        for (int i = 0; i < cmd.numv; i++, cmd.vaddr += 0x10)
-                            _vertices[cmd.vbidx + i] = new Vertex(Memory.ReadBytes(cmd.vaddr, 0x10));
-
-                        GL.GetFloat(GetPName.ModelviewMatrix, out Matrix4 curMtx);
-                        for (int i = 0; i < cmd.numv; i++)
+                        byte[] data = Memory.ReadBytes(cmd.vaddr, Vertex.SIZE * cmd.numv);
+                        
+                        // BOM swap
+                        for (int i = 0; i < data.Length;)
                         {
-                            var vtx = _vertices[cmd.vbidx + i];
-                            _vtxCoords[cmd.vbidx + i] = new Vector4(vtx.X, vtx.Y, vtx.Z, 1) * curMtx;
+                            // X
+                            (data[i + 0], data[i + 1]) = (data[i + 1], data[i + 0]);
+                            i += 2;
+                            // Y
+                            (data[i + 0], data[i + 1]) = (data[i + 1], data[i + 0]);
+                            i += 2;
+                            // Z
+                            (data[i + 0], data[i + 1]) = (data[i + 1], data[i + 0]);
+                            i += 2;
+
+                            // flag
+                            (data[i + 0], data[i + 1]) = (data[i + 1], data[i + 0]);
+                            i += 2;
+
+                            // tex X
+                            (data[i + 0], data[i + 1]) = (data[i + 1], data[i + 0]);
+                            i += 2;
+                            // tex Y
+                            (data[i + 0], data[i + 1]) = (data[i + 1], data[i + 0]);
+                            i += 2;
+                            // color
+                            i += 4;
                         }
+
+                        System.Buffer.BlockCopy(data, 0, _vtxBuffer, cmd.vbidx * Vertex.SIZE, data.Length);
+
+                        _rdpVtxAttrs.SetData(data, true, BufferUsageHint.DynamicDraw);
+
                     } break;
                 case Command.OpCodeID.G_TRI1:
                     {
-                        GL.GetFloat(GetPName.ModelviewMatrix, out Matrix4 curMtx);
-                        GL.LoadIdentity();
-
                         var cmd = info.Convert<Command.GTri1>();
+                        
                         if (CurrentConfig.RenderTextures)
                         {
                             DecodeTexIfRequired();
+                            SendTexture();
 
-                            GL.Begin(PrimitiveType.Triangles);
-                            RenderVtx(cmd.v0);
-                            RenderVtx(cmd.v1);
-                            RenderVtx(cmd.v2);
-                            GL.End();
+                            byte[] indices = new byte[] { cmd.v0, cmd.v1, cmd.v2 };
+                            _rdpVtxAttrs.Draw(PrimitiveType.Triangles, indices);
                         }
                         else
                         {
-                            GL.Color3(0, 0, 0);
-                            GL.Begin(PrimitiveType.Lines);
-                            RenderVtx(cmd.v0);
-                            RenderVtx(cmd.v1);
-                            RenderVtx(cmd.v1);
-                            RenderVtx(cmd.v2);
-                            RenderVtx(cmd.v2);
-                            RenderVtx(cmd.v0);
-
-                            GL.End();
+                            byte[] indices = new byte[] { cmd.v0, cmd.v1, cmd.v2, cmd.v0 };
+                            _rdpVtxAttrs.Draw(PrimitiveType.LineStrip, indices);
                         }
-
-                        GL.LoadMatrix(ref curMtx);
                     }
                     break;
                 case Command.OpCodeID.G_TRI2:
                     {
-                        GL.GetFloat(GetPName.ModelviewMatrix, out Matrix4 curMtx);
-                        GL.LoadIdentity();
-
                         var cmd = info.Convert<Command.GTri2>();
+
                         if (CurrentConfig.RenderTextures)
                         {
                             DecodeTexIfRequired();
+                            SendTexture();
 
-                            GL.Begin(PrimitiveType.Triangles);
+                            byte[] indices = new byte[] { cmd.v00, cmd.v01, cmd.v02, cmd.v10, cmd.v11, cmd.v12 };
+                            _rdpVtxAttrs.Draw(PrimitiveType.Triangles, indices);
 
-                            RenderVtx(cmd.v00);
-                            RenderVtx(cmd.v01);
-                            RenderVtx(cmd.v02);
-                            RenderVtx(cmd.v10);
-                            RenderVtx(cmd.v11);
-                            RenderVtx(cmd.v12);
-
-                            GL.End();
                         }
                         else
                         {
-                            GL.Color3(0, 0, 0);
-                            GL.Begin(PrimitiveType.Lines);
-
-                            RenderVtx(cmd.v00);
-                            RenderVtx(cmd.v01);
-                            RenderVtx(cmd.v01);
-                            RenderVtx(cmd.v02);
-                            RenderVtx(cmd.v02);
-                            RenderVtx(cmd.v00);
-
-                            RenderVtx(cmd.v10);
-                            RenderVtx(cmd.v11);
-                            RenderVtx(cmd.v11);
-                            RenderVtx(cmd.v12);
-                            RenderVtx(cmd.v12);
-                            RenderVtx(cmd.v10);
-
-                            GL.End();
+                            byte[] indices = new byte[] { cmd.v00, cmd.v01, cmd.v02, cmd.v00, cmd.v10, cmd.v11, cmd.v12, cmd.v10 };
+                            _rdpVtxAttrs.Draw(PrimitiveType.LineStrip, indices);
                         }
-                        GL.LoadMatrix(ref curMtx);
                     }
                     break;
+
+
                 case Command.OpCodeID.G_SETTILESIZE:
                     {
                         if (!CurrentConfig.RenderTextures)
@@ -333,7 +439,7 @@ namespace F3DZEX
                             return;
 
                         var cmd = info.Convert<Command.GLoadTlut>();
-                        _curTLUT = Memory.ReadBytes(_curImgAddr, (cmd.count+1)*2);
+                        _curTLUT = Memory.ReadBytes(_curImgAddr, (cmd.count + 1) * 2);
                         _reqDecodeTex = true;
                     }
                     break;
@@ -363,7 +469,7 @@ namespace F3DZEX
 
                         wrap = settile.cmT.HasFlag(Enums.ClampMirrorFlag.G_TX_CLAMP)
                             ? TextureWrapMode.ClampToEdge
-                            : (_mirrorV? TextureWrapMode.MirroredRepeat : TextureWrapMode.Repeat);
+                            : (_mirrorV ? TextureWrapMode.MirroredRepeat : TextureWrapMode.Repeat);
                         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)wrap);
 
 
@@ -379,19 +485,26 @@ namespace F3DZEX
                         _reqDecodeTex = true;
                     }
                     break;
-                    /*
-                case Command.OpCodeID.G_DL:
-                    {
-                        var cmd = info.Convert<Command.GDl>();
-                        BranchFrame(cmd.dl, !cmd.branch);
-                        break;
-                    }
-                    */
+
+
+                /*
+            case Command.OpCodeID.G_DL:
+                {
+                    var cmd = info.Convert<Command.GDl>();
+                    BranchFrame(cmd.dl, !cmd.branch);
+                    break;
+                }
+                */
+
+
+
+
                 case Command.OpCodeID.G_POPMTX:
                     {
                         var cmd = info.Convert<Command.GPopMtx>();
                         for (uint i = 0; i < cmd.num; i++)
-                            GL.PopMatrix();
+                            PopMatrix();
+
                         break;
                     }
                 case Command.OpCodeID.G_MTX:
@@ -401,13 +514,14 @@ namespace F3DZEX
                         var mtxf = mtx.ToMatrix4();
 
                         if (cmd.param.HasFlag(Enums.G_MtxParams.G_MTX_PUSH))
-                            GL.PushMatrix();
+                            _mtxStack.Push(mtxf);
 
-                        GL.GetFloat(GetPName.ModelviewMatrix, out Matrix4 curMtx);
+                        // check G_MTX_MUL
                         if (!cmd.param.HasFlag(Enums.G_MtxParams.G_MTX_LOAD))
-                            mtxf = curMtx * mtxf;
+                            //mtxf = curMtx * mtxf;
+                            mtxf *= _mtxStack.Peek();
 
-                        GL.LoadMatrix(ref mtxf);
+                        LoadMatrix(mtxf);
                         break;
                     }
                 default:

@@ -207,9 +207,9 @@ namespace F3DZEX
             { OpCodeID.G_TRI1, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
-                int v0 = br.ReadByte() / 2;
-                int v1 = br.ReadByte() / 2;
-                int v2 = br.ReadByte() / 2;
+                byte v0 = (byte)(br.ReadByte() / 2);
+                byte v1 = (byte)(br.ReadByte() / 2);
+                byte v2 = (byte)(br.ReadByte() / 2);
                 br.ReadUInt32();
 
                 args.Add("v0", v0);
@@ -222,13 +222,13 @@ namespace F3DZEX
             { OpCodeID.G_TRI2, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
-                int v00 = br.ReadByte() / 2;
-                int v01 = br.ReadByte() / 2;
-                int v02 = br.ReadByte() / 2;
+                byte v00 = (byte)(br.ReadByte() / 2);
+                byte v01 = (byte)(br.ReadByte() / 2);
+                byte v02 = (byte)(br.ReadByte() / 2);
                 br.ReadByte();
-                int v10 = br.ReadByte() / 2;
-                int v11 = br.ReadByte() / 2;
-                int v12 = br.ReadByte() / 2;
+                byte v10 = (byte)(br.ReadByte() / 2);
+                byte v11 = (byte)(br.ReadByte() / 2);
+                byte v12 = (byte)(br.ReadByte() / 2);
 
                 args.Add("v00", v00);
                 args.Add("v01", v01);
@@ -977,9 +977,9 @@ namespace F3DZEX
 
             { OpCodeID.G_TRI1, (info, bw) => {
 
-                int v0 = (int)info.Args["v0"];
-                int v1 = (int)info.Args["v1"];
-                int v2 = (int)info.Args["v2"];
+                byte v0 = (byte)info.Args["v0"];
+                byte v1 = (byte)info.Args["v1"];
+                byte v2 = (byte)info.Args["v2"];
 
                 bw.Write((byte)info.ID);
                 bw.Write((byte)(v0*2));
@@ -990,12 +990,12 @@ namespace F3DZEX
 
             { OpCodeID.G_TRI2, (info, bw) => {
 
-                int v00 = (int)info.Args["v00"];
-                int v01 = (int)info.Args["v01"];
-                int v02 = (int)info.Args["v02"];
-                int v10 = (int)info.Args["v10"];
-                int v11 = (int)info.Args["v11"];
-                int v12 = (int)info.Args["v12"];
+                byte v00 = (byte)info.Args["v00"];
+                byte v01 = (byte)info.Args["v01"];
+                byte v02 = (byte)info.Args["v02"];
+                byte v10 = (byte)info.Args["v10"];
+                byte v11 = (byte)info.Args["v11"];
+                byte v12 = (byte)info.Args["v12"];
 
                 bw.Write((byte)info.ID);
                 bw.Write((byte)(v00*2));

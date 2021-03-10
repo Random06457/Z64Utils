@@ -13,7 +13,7 @@ namespace Z64.Forms
     public partial class SegmentEditorForm : MicrosoftFontForm
     {
         public event EventHandler<F3DZEX.Memory.Segment> SegmentsChanged;
-        public SegmentEditorForm(Z64Game game, F3DZEX.Renderer renderer)
+        public SegmentEditorForm(Z64Game game, F3DZEX.Render.Renderer renderer)
         {
             InitializeComponent();
             for (int i = 0; i < 16; i++)
