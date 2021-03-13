@@ -6,38 +6,18 @@ using System.Text;
 
 namespace F3DZEX.Render
 {
-    public class VertexDrawer
+    public abstract class VertexDrawer
     {
-        ShaderHandler _shader;
-        VertexAttribs _attrs;
+        protected ShaderHandler _shader;
+        protected VertexAttribs _attrs;
 
-        public VertexDrawer(ShaderHandler shader, VertexAttribs attrs)
-            => (_shader, _attrs) = (shader, attrs);
-
-        public VertexDrawer(string vertShader, string fragShader, VertexAttribs attrs) :
-            this(new ShaderHandler(vertShader, fragShader), attrs)
-        {
-
-        }
-
-        public void SendProjViewMatrices(Matrix4 proj, Matrix4 view)
-        {
-            _shader.Send("u_Projection", proj);
-            _shader.Send("u_View", view);
-        }
-        public void SendModelMatrix(Matrix4 model)
-        {
-            _shader.Send("u_Model", model);
-        }
-        public void SendTexture(int tex)
-        {
-            _shader.Send("u_Tex", tex);
-        }
-
-        public void SetVertexData(byte[] buffer, bool bigEndian = false, BufferUsageHint hint = BufferUsageHint.StaticDraw)
+        protected void SetVertexData(byte[] buffer, bool bigEndian = false, BufferUsageHint hint = BufferUsageHint.StaticDraw)
             => _attrs.SetData(buffer, bigEndian, hint);
 
-        public void SetVertexData<T>(T[] buffer, int size, BufferUsageHint hint = BufferUsageHint.StaticDraw)
+        protected void SetVertexSubData(byte[] data, int off, bool bigEndian)
+            => _attrs.SetSubData(data, off, bigEndian);
+
+        protected void SetVertexData<T>(T[] buffer, int size, BufferUsageHint hint = BufferUsageHint.StaticDraw)
             where T : struct, IComparable
             => _attrs.SetData(buffer, size, hint);
 
@@ -50,6 +30,11 @@ namespace F3DZEX.Render
         {
             _shader.Use();
             _attrs.Draw(type, indices);
+        }
+        public void Draw(PrimitiveType type)
+        {
+            _shader.Use();
+            _attrs.Draw(type);
         }
     }
 }

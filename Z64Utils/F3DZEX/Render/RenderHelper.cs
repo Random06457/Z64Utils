@@ -8,28 +8,92 @@ namespace F3DZEX.Render
 {
     public static class RenderHelper
     {
-        public static void RenderGrid(int gridScale)
+        public static void DrawGrid(SimpleVertexDrawer drawer)
         {
-            GL.LineWidth(1.0f);
-            GL.Begin(PrimitiveType.Lines);
+            float oldLineWidth = GL.GetFloat(GetPName.LineWidth);
+            GL.LineWidth(1);
 
-            GL.Color4(0.0f, 0.0f, 0.0f, 0.5f);
+            drawer.SendColor(Color.FromArgb(0x7F, 0, 0, 0));
+            drawer.Draw(PrimitiveType.Lines);
 
-            int lineCount = 6;
+            GL.LineWidth(oldLineWidth);
+        }
+        public static float[] GenerateGridVertices(int gridScale, int lineCount, bool cube)
+        {
+            int stride = 3;
+            int times = lineCount * lineCount;
+            if (cube)
+                times *= lineCount;
 
-            for (float x = -gridScale; x < gridScale + 1; x += gridScale / lineCount)
+            float[] vertices = new float[(lineCount * 2 * stride) * times];
+
+            int i = 0;
+            if (cube)
             {
-                GL.Vertex3(x, 0, -gridScale);
-                GL.Vertex3(x, 0, gridScale);
+                // todo: finish
+                for (float z = -gridScale; z < gridScale + 1; z += gridScale / lineCount)
+                for (float x = -gridScale; x < gridScale + 1; x += gridScale / lineCount)
+                {
+                    vertices[i++] = x;
+                    vertices[i++] = -gridScale;
+                    vertices[i++] = z;
+
+                    vertices[i++] = x;
+                    vertices[i++] = gridScale;
+                    vertices[i++] = z;
+                }
             }
-            for (float z = -gridScale; z < gridScale + 1; z += gridScale / lineCount)
+            else
             {
-                GL.Vertex3(-gridScale, 0, z);
-                GL.Vertex3(gridScale, 0, z);
+                // X
+                for (float x = -gridScale; x < gridScale + 1; x += gridScale / lineCount)
+                {
+                    vertices[i++] = x;
+                    i++;
+                    vertices[i++] = -gridScale;
+
+                    vertices[i++] = x;
+                    i++;
+                    vertices[i++] = gridScale;
+                }
+                // Z
+                for (float z = -gridScale; z < gridScale + 1; z += gridScale / lineCount)
+                {
+                    vertices[i++] = -gridScale;
+                    i++;
+                    vertices[i++] = z;
+
+                    vertices[i++] = gridScale;
+                    i++;
+                    vertices[i++] = z;
+                }
             }
 
-            //GL.Color3(Color.Transparent);
-            GL.End();
+            return vertices; ;
+
+        }
+        
+        public static void DrawAxis(ColoredVertexDrawer drawer)
+        {
+            float oldLineWidth = GL.GetFloat(GetPName.LineWidth);
+            GL.LineWidth(2);
+
+            drawer.Draw(PrimitiveType.Lines);
+
+            GL.LineWidth(oldLineWidth);
+        }
+        public static float[] GenerateAxisvertices(int gridScale)
+        {
+            return new float[] { 
+                0, 0, 0,                1, 0, 0, 1,
+                gridScale/10, 0, 0,     1, 0, 0, 1,
+
+                0, 0, 0,                0, 1, 0, 1,
+                0, gridScale/10, 0,     0, 1, 0, 1,
+
+                0, 0, 0,                0, 0, 1, 1,
+                0, 0, gridScale/10,     0, 0, 1, 1,
+            };
         }
 
         public static void RenderAxis(int gridScale)

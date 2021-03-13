@@ -56,7 +56,7 @@ namespace F3DZEX.Render
                     case VertexAttribPointerType.Double:
                         return 8;
                     default:
-                        return -1;
+                        throw new ArgumentException();
                 }
             }
             private static int GetSize(VertexAttribIntegerType type)
@@ -73,7 +73,7 @@ namespace F3DZEX.Render
                     case VertexAttribIntegerType.UnsignedInt:
                         return 4;
                     default:
-                        return -1;
+                        throw new ArgumentException();
                 }
             }
 
@@ -83,6 +83,7 @@ namespace F3DZEX.Render
         int _vbo;
         List<AttribEntry> _attribs;
         bool _built;
+        int _vtxCount;
 
         public VertexAttribs()
         {
@@ -108,7 +109,7 @@ namespace F3DZEX.Render
             return stride;
         }
 
-        private void BuldLayout()
+        private void BuildLayout()
         {
             if (_built)
                 throw new Exception();
@@ -143,43 +144,72 @@ namespace F3DZEX.Render
             _built = true;
         }
 
-        public void SetData(byte[] buffer, bool bigEndian = false, BufferUsageHint hint = BufferUsageHint.StaticDraw)
+
+        private void BomSwap(byte[] buffer)
         {
-            if (!_built)
-                BuldLayout();
-
-            // endian swap
-            if (bigEndian)
+            int off = 0;
+            while (off < buffer.Length)
             {
-                int off = 0;
-                while (off < buffer.Length)
+                foreach (var attr in _attribs)
                 {
-                    foreach (var attr in _attribs)
-                    {
-                        int fieldSize = attr.GetSize() / attr.count;
+                    int fieldSize = attr.GetSize() / attr.count;
 
-                        for (int i = 0; i < attr.count; i++)
-                        {
-                            for (int j = 0; j < fieldSize/2; j++)
-                                (buffer[off + j], buffer[off + fieldSize - j - 1]) = (buffer[off + fieldSize - j - 1], buffer[off + j]);
-                            off += fieldSize;
-                        }
+                    for (int i = 0; i < attr.count; i++)
+                    {
+                        for (int j = 0; j < fieldSize / 2; j++)
+                            (buffer[off + j], buffer[off + fieldSize - j - 1]) = (buffer[off + fieldSize - j - 1], buffer[off + j]);
+                        off += fieldSize;
                     }
                 }
             }
+        }
+        
+        public void SetSubData(byte[] data, int off, bool bigEndian)
+        {
+            if (!_built)
+                BuildLayout();
+
+            if (bigEndian)
+                BomSwap(data);
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vbo);
-            GL.BufferData(BufferTarget.ArrayBuffer, buffer.Length, buffer, hint);
+            GL.BufferSubData(BufferTarget.ArrayBuffer, new IntPtr(off), data.Length, data);
         }
 
-        public void SetData<T>(T[] buffer, int size, BufferUsageHint hint = BufferUsageHint.StaticDraw)
+        public void SetData(byte[] data, bool bigEndian = false, BufferUsageHint hint = BufferUsageHint.StaticDraw)
+        {
+            if (!_built)
+                BuildLayout();
+
+            if (bigEndian)
+                BomSwap(data);
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer, _vbo);
+            GL.BufferData(BufferTarget.ArrayBuffer, data.Length, data, hint);
+
+            _vtxCount = data.Length / GetStride();
+        }
+
+        public void SetSubData<T>(T[] data, int off, int size)
             where T : struct, IComparable
         {
             if (!_built)
-                BuldLayout();
+                BuildLayout();
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vbo);
-            GL.BufferData(BufferTarget.ArrayBuffer, size, buffer, hint);
+            GL.BufferSubData(BufferTarget.ArrayBuffer, new IntPtr(off), size, data);
+        }
+
+        public void SetData<T>(T[] data, int size, BufferUsageHint hint = BufferUsageHint.StaticDraw)
+            where T : struct, IComparable
+        {
+            if (!_built)
+                BuildLayout();
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer, _vbo);
+            GL.BufferData(BufferTarget.ArrayBuffer, size, data, hint);
+
+            _vtxCount = size / GetStride();
         }
 
         public void Draw(PrimitiveType type, uint[] indices)
@@ -198,6 +228,15 @@ namespace F3DZEX.Render
 
             GL.BindVertexArray(_vao);
             GL.DrawElements(type, indices.Length, DrawElementsType.UnsignedByte, indices);
+        }
+
+        public void Draw(PrimitiveType type)
+        {
+            if (!_built)
+                throw new Exception();
+
+            GL.BindVertexArray(_vao);
+            GL.DrawArrays(type, 0, _vtxCount);
         }
 
 

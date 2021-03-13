@@ -16,7 +16,7 @@ namespace F3DZEX
             Vram,
         }
 
-        public struct Segment
+        public class Segment
         {
             public const int COUNT = 16;
 

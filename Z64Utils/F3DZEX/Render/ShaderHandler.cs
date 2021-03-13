@@ -73,13 +73,45 @@ namespace F3DZEX.Render
             GL.UseProgram(_program);
         }
 
-        public void Send(string name, float data) => GL.Uniform1(GL.GetUniformLocation(_program, name), data);
-        public void Send(string name, int data) => GL.Uniform1(GL.GetUniformLocation(_program, name), data);
-        public void Send(string name, float x, float y) => GL.Uniform2(GL.GetUniformLocation(_program, name), x, y);
-        public void Send(string name, float x, float y, float z) => GL.Uniform3(GL.GetUniformLocation(_program, name), x, y, z);
-        public void Send(string name, float x, float y, float z, float w) => GL.Uniform4(GL.GetUniformLocation(_program, name), x, y, z, w);
-        public void Send(string name, Matrix4 mtx) => GL.UniformMatrix4(GL.GetUniformLocation(_program, name), false, ref mtx);
-        public void Send(string name, Color color) => GL.Uniform4(GL.GetUniformLocation(_program, name), color);
-        public void Send(string name, bool x) => GL.Uniform1(GL.GetUniformLocation(_program, name), x ? 1 : 0);
+        public void Send(string name, float data)
+        {
+            Use();
+            GL.Uniform1(GL.GetUniformLocation(_program, name), data);
+        }
+        public void Send(string name, int data)
+        {
+            Use();
+            GL.Uniform1(GL.GetUniformLocation(_program, name), data);
+        }
+        public void Send(string name, float x, float y)
+        {
+            Use();
+            GL.Uniform2(GL.GetUniformLocation(_program, name), x, y);
+        }
+        public void Send(string name, float x, float y, float z)
+        {
+            Use();
+            GL.Uniform3(GL.GetUniformLocation(_program, name), x, y, z);
+        }
+        public void Send(string name, float x, float y, float z, float w)
+        {
+            Use();
+            GL.Uniform4(GL.GetUniformLocation(_program, name), x, y, z, w);
+        }
+        public void Send(string name, Matrix4 mtx)
+        {
+            Use();
+            GL.UniformMatrix4(GL.GetUniformLocation(_program, name), false, ref mtx);
+        }
+        public void Send(string name, Color color)
+        {
+            Use();
+            GL.Uniform4(GL.GetUniformLocation(_program, name), color);
+        }
+        public void Send(string name, bool x)
+        {
+            Use();
+            GL.Uniform1(GL.GetUniformLocation(_program, name), x ? 1 : 0);
+        }
     }
 }

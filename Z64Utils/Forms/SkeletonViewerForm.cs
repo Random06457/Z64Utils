@@ -246,11 +246,11 @@ namespace Z64.Forms
             short rotY = GetFrameData(_curJoints[limbIdx + 1].Y);
             short rotZ = GetFrameData(_curJoints[limbIdx + 1].Z);
 
-
-            src = Matrix4.CreateTranslation(pos) * src;
-            src = Matrix4.CreateRotationZ(S16ToRad(rotZ)) * src;
-            src = Matrix4.CreateRotationY(S16ToRad(rotY)) * src;
-            src = Matrix4.CreateRotationX(S16ToRad(rotX)) * src;
+            src = Matrix4.CreateRotationX(S16ToRad(rotX)) *
+                Matrix4.CreateRotationY(S16ToRad(rotY)) *
+                Matrix4.CreateRotationZ(S16ToRad(rotZ)) *
+                Matrix4.CreateTranslation(pos) *
+                src;
 
             return src;
         }

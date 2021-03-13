@@ -26,7 +26,8 @@ vec2 decodeTexCoords(sampler2D tex, ivec2 coords)
 
 void main()
 {
-    gl_Position = u_Projection * u_View * u_Model * vec4(pos, 1);
+    /* The vertices coordinates are multiplied by the model view matrix during the G_VTX command processing */
+    gl_Position = u_Projection * u_View /* u_Model*/ * vec4(pos, 1);
     v_VtxTexCoords = decodeTexCoords(u_Tex, texCoords);
     v_VtxColor = color;
 

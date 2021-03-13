@@ -47,10 +47,9 @@ namespace F3DZEX.Render
 
         bool _initialized;
         byte[] _vtxBuffer = new byte[32 * Vertex.SIZE];
-        ShaderHandler _rdpVtxShader;
-        ShaderHandler _colorVtxShader;
-        VertexAttribs _rdpVtxAttrs;
-        VertexAttribs _colorVtxAttrs;
+        RdpVertexDrawer _rdpVtxDrawer;
+        SimpleVertexDrawer _gridDrawer;
+        ColoredVertexDrawer _axisDrawer;
         Stack<Matrix4> _mtxStack = new Stack<Matrix4>();
 
 
@@ -69,6 +68,137 @@ namespace F3DZEX.Render
         }
         
         public void ClearErrors() => ErrorMsg = null;
+
+        #region Matrix Stack
+
+        public Matrix4 TopMatrix()
+        {
+            return _mtxStack.Peek();
+        }
+        public void PushMatrix()
+        {
+            _mtxStack.Push(_mtxStack.Peek());
+        }
+        public void PushMatrix(Matrix4 mtx)
+        {
+            _mtxStack.Push(mtx);
+            SendModelMatrix();
+        }
+        public Matrix4 PopMatrix()
+        {
+            var ret = _mtxStack.Pop();
+            SendModelMatrix();
+            return ret;
+        }
+        public void LoadMatrix(Matrix4 mtx)
+        {
+            _mtxStack.Pop();
+            PushMatrix(mtx);
+        }
+        
+        #endregion
+
+        public void SendHighlightColor(Color color) => _rdpVtxDrawer.SendHighlightColor(color);
+        private void SendModelMatrix()
+        {
+            _gridDrawer.SendModelMatrix(_mtxStack.Peek());
+            _axisDrawer.SendModelMatrix(_mtxStack.Peek());
+            
+            /* The vertices coordinates are multiplied by the model matrix during the G_VTX command processing */
+            //_rdpVtxDrawer.SendModelMatrix(_mtxStack.Peek());
+        }
+
+
+        private void CheckGLErros()
+        {
+            var err = GL.GetError();
+            if (err != ErrorCode.NoError)
+                throw new Exception($"GL.GetError() -> {err}");
+        }
+        private void GLWrapper(Action callback)
+        {
+            callback();
+            CheckGLErros();
+        }
+
+
+
+
+        private void Init()
+        {
+            /* Init Texture */
+            GL.Hint(HintTarget.PerspectiveCorrectionHint, HintMode.Nicest);
+
+            GL.GenTextures(1, out _curTexID);
+            GL.BindTexture(TextureTarget.Texture2D, _curTexID);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+
+            /* Init Drawers */
+            _rdpVtxDrawer = new RdpVertexDrawer();
+            _gridDrawer = new SimpleVertexDrawer();
+            _axisDrawer = new ColoredVertexDrawer();
+
+            float[] vertices = RenderHelper.GenerateGridVertices(5000, 6, false);
+            _gridDrawer.SetData(vertices, BufferUsageHint.StaticDraw);
+
+            vertices = RenderHelper.GenerateAxisvertices(5000);
+            _axisDrawer.SetData(vertices, BufferUsageHint.StaticDraw);
+
+            _rdpVtxDrawer.SetData(_vtxBuffer, BufferUsageHint.DynamicDraw);
+
+            CheckGLErros();
+            _initialized = true;
+        }
+
+        public void RenderStart(Matrix4 proj, Matrix4 view)
+        {
+            if (!_initialized)
+                Init();
+
+            if (RenderFailed())
+                return;
+
+            _mtxStack = new Stack<Matrix4>();
+            PushMatrix(Matrix4.Identity);
+
+            _gridDrawer.SendProjViewMatrices(ref proj, ref view);
+            _axisDrawer.SendProjViewMatrices(ref proj, ref view);
+            _rdpVtxDrawer.SendProjViewMatrices(ref proj, ref view);
+
+            SendHighlightColor(Color.Transparent);
+
+            _rdpVtxDrawer.SendTextureEnabled(CurrentConfig.RenderTextures);
+
+
+            GL.Enable(EnableCap.DepthTest);
+            //GL.DepthFunc(DepthFunction.Lequal);
+            //GL.DepthMask(false);
+            //glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND)
+            //GL.TexEnv(TextureEnvTarget.TextureEnv, TextureEnvParameter.TextureEnvMode, (int)EnableCap.Blend);
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+            GL.Enable(EnableCap.Texture2D);
+            if (false/*CurrentConfig.DiffuseLight*/)
+            {
+                GL.Enable(EnableCap.Lighting);
+                GL.Enable(EnableCap.ColorMaterial);
+                GL.Light(LightName.Light0, LightParameter.Diffuse, new float[] { 1.0f, 1.0f, 1.0f });
+                GL.Enable(EnableCap.Light0);
+            }
+            else
+            {
+                GL.Disable(EnableCap.Lighting);
+                GL.Disable(EnableCap.ColorMaterial);
+                GL.Disable(EnableCap.Light0);
+            }
+
+            RenderHelper.DrawGrid(_gridDrawer);
+            RenderHelper.DrawAxis(_axisDrawer);
+
+            CheckGLErros();
+        }
+
 
         public List<Command.CommandInfo> GetDlist(uint vaddr)
         {
@@ -135,103 +265,6 @@ namespace F3DZEX.Render
             }
         }
 
-
-
-        public Matrix4 TopMatrix()
-        {
-            return _mtxStack.Peek();
-        }
-        public void PushMatrix()
-        {
-            _mtxStack.Push(_mtxStack.Peek());
-        }
-        public void PushMatrix(Matrix4 mtx)
-        {
-            _mtxStack.Push(mtx);
-            SendModelMatrix();
-        }
-        public Matrix4 PopMatrix()
-        {
-            var ret = _mtxStack.Pop();
-            SendModelMatrix();
-            return ret;
-        }
-        public void LoadMatrix(Matrix4 mtx)
-        {
-            _mtxStack.Pop();
-            PushMatrix(mtx);
-        }
-
-        public void SendHighlightColor(Color color) => _rdpVtxShader.Send("u_HighlightColor", color);
-
-        private void SendPrimColor(Color color) => _rdpVtxShader.Send("u_PrimColor", color);
-        private void SendTexture() => _rdpVtxShader.Send("u_Tex", 0);
-        private void SendTextureEnabled(bool enabled) => _rdpVtxShader.Send("u_TexEnabled", enabled);
-        private void SendModelMatrix() => _rdpVtxShader.Send("u_Model", _mtxStack.Peek());
-        private void SendProjViewMatrices(Matrix4 proj, Matrix4 view)
-        {
-            _rdpVtxShader.Send("u_Projection", proj);
-            _rdpVtxShader.Send("u_View", view);
-        }
-
-        private void CheckGLErros()
-        {
-            var err = GL.GetError();
-            if (err != ErrorCode.NoError)
-                throw new Exception($"GL.GetError() -> {err}");
-        }
-
-
-        public void RenderStart(Matrix4 proj, Matrix4 view)
-        {
-            if (!_initialized)
-                Init();
-
-            if (RenderFailed())
-                return;
-
-            _rdpVtxShader.Use();
-
-            _mtxStack = new Stack<Matrix4>();
-            PushMatrix(Matrix4.Identity);
-
-            SendProjViewMatrices(proj, view);
-            SendHighlightColor(Color.Transparent);
-
-            SendTextureEnabled(CurrentConfig.RenderTextures);
-
-
-            GL.Enable(EnableCap.DepthTest);
-            //GL.DepthMask(false);
-            //glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND)
-            //GL.TexEnv(TextureEnvTarget.TextureEnv, TextureEnvParameter.TextureEnvMode, (int)EnableCap.Blend);
-            GL.Enable(EnableCap.Blend);
-            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-            GL.Enable(EnableCap.Texture2D);
-            if (false/*CurrentConfig.DiffuseLight*/)
-            {
-                GL.Enable(EnableCap.Lighting);
-                GL.Enable(EnableCap.ColorMaterial);
-                GL.Light(LightName.Light0, LightParameter.Diffuse, new float[] { 1.0f, 1.0f, 1.0f });
-                GL.Enable(EnableCap.Light0);
-            }
-            else
-            {
-                GL.Disable(EnableCap.Lighting);
-                GL.Disable(EnableCap.ColorMaterial);
-                GL.Disable(EnableCap.Light0);
-            }
-
-            //RenderHelper.RenderAxis(5000);
-            //RenderHelper.RenderGrid(5000);
-            CheckGLErros();
-        }
-        private void GLWrapper(Action callback)
-        {
-            callback();
-            CheckGLErros();
-        }
-
         public void RenderDList(DList dlist)
         {
             if (!_initialized)
@@ -256,43 +289,8 @@ namespace F3DZEX.Render
             }
         }
 
-        private void Init()
-        {
-            /* Init Texture */
-            GL.Hint(HintTarget.PerspectiveCorrectionHint, HintMode.Nicest);
-
-            GL.GenTextures(1, out _curTexID);
-            GL.BindTexture(TextureTarget.Texture2D, _curTexID);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
 
 
-            /* Init Shaders */
-            _rdpVtxShader = new ShaderHandler("Shaders/rdpVtx.vert", "Shaders/rdpVtx.frag");
-            //_colorVtxShader = new ShaderHandler("Shaders/coloredVtx.vert", "Shaders/color.frag");
-
-
-            /* Init RDP Vertex attributes */
-            _rdpVtxAttrs = new VertexAttribs();
-            // position
-            _rdpVtxAttrs.LayoutAddFloat(3, VertexAttribPointerType.Short, false);
-            //flag
-            _rdpVtxAttrs.LayoutAddInt(1, VertexAttribIntegerType.UnsignedShort);
-            // tex coords
-            _rdpVtxAttrs.LayoutAddInt(2, VertexAttribIntegerType.Short);
-            // color/normal
-            _rdpVtxAttrs.LayoutAddFloat(4, VertexAttribPointerType.UnsignedByte, true);
-
-            /* Init simple vertex attributes */
-            /*_colorVtxAttrs = new VertexAttribs();
-            // position
-            _colorVtxAttrs.LayoutAddFloat(3, VertexAttribPointerType.Float, false);
-            // color
-            _colorVtxAttrs.LayoutAddFloat(4, VertexAttribPointerType.UnsignedByte, true);
-*/
-            CheckGLErros();
-            _initialized = true;
-        }
 
         static int TexDecodeCount = 0;
         private void DecodeTexIfRequired()
@@ -316,7 +314,7 @@ namespace F3DZEX.Render
                     {
                         var cmd = info.Convert<Command.GSetPrimColor>();
 
-                        SendPrimColor(Color.FromArgb(cmd.A, cmd.R, cmd.G, cmd.B));
+                        _rdpVtxDrawer.SendPrimColor(Color.FromArgb(cmd.A, cmd.R, cmd.G, cmd.B));
                     }
                     break;
 
@@ -324,11 +322,36 @@ namespace F3DZEX.Render
                     {
                         var cmd = info.Convert<Command.GVtx>();
 
+                        /* We have to multiply the vertex coordinates with the model view matrix here */
+
+                        Matrix4 curMtx = _mtxStack.Peek();
+
                         byte[] data = Memory.ReadBytes(cmd.vaddr, Vertex.SIZE * cmd.numv);
 
-                        System.Buffer.BlockCopy(data, 0, _vtxBuffer, cmd.vbidx * Vertex.SIZE, data.Length);
+                        for (int off = 0; off < cmd.numv * Vertex.SIZE; off += Vertex.SIZE)
+                        {
+                            Vector4 pos = new Vector4(
+                                (short)(data[off + 0] << 8 | data[off + 1]),
+                                (short)(data[off + 2] << 8 | data[off + 3]),
+                                (short)(data[off + 4] << 8 | data[off + 5]),
+                                1
+                                ) * curMtx;
 
-                        _rdpVtxAttrs.SetData(data, true, BufferUsageHint.DynamicDraw);
+                            short x = (short)pos.X;
+                            short y = (short)pos.Y;
+                            short z = (short)pos.Z;
+
+                            data[off + 0] = (byte)((x >> 8) & 0xFF);
+                            data[off + 1] = (byte)((x >> 0) & 0xFF);
+
+                            data[off + 2] = (byte)((y >> 8) & 0xFF);
+                            data[off + 3] = (byte)((y >> 0) & 0xFF);
+                            
+                            data[off + 4] = (byte)((z >> 8) & 0xFF);
+                            data[off + 5] = (byte)((z >> 0) & 0xFF);
+                        }
+                        
+                        _rdpVtxDrawer.SetSubData(data, cmd.vbidx * Vertex.SIZE);
 
                     } break;
                 case Command.OpCodeID.G_TRI1:
@@ -338,15 +361,15 @@ namespace F3DZEX.Render
                         if (CurrentConfig.RenderTextures)
                         {
                             DecodeTexIfRequired();
-                            SendTexture();
+                            _rdpVtxDrawer.SendTexture(0);
 
                             byte[] indices = new byte[] { cmd.v0, cmd.v1, cmd.v2 };
-                            _rdpVtxAttrs.Draw(PrimitiveType.Triangles, indices);
+                            _rdpVtxDrawer.Draw(PrimitiveType.Triangles, indices);
                         }
                         else
                         {
                             byte[] indices = new byte[] { cmd.v0, cmd.v1, cmd.v2, cmd.v0 };
-                            _rdpVtxAttrs.Draw(PrimitiveType.LineStrip, indices);
+                            _rdpVtxDrawer.Draw(PrimitiveType.LineStrip, indices);
                         }
                     }
                     break;
@@ -357,16 +380,16 @@ namespace F3DZEX.Render
                         if (CurrentConfig.RenderTextures)
                         {
                             DecodeTexIfRequired();
-                            SendTexture();
+                            _rdpVtxDrawer.SendTexture(0);
 
                             byte[] indices = new byte[] { cmd.v00, cmd.v01, cmd.v02, cmd.v10, cmd.v11, cmd.v12 };
-                            _rdpVtxAttrs.Draw(PrimitiveType.Triangles, indices);
+                            _rdpVtxDrawer.Draw(PrimitiveType.Triangles, indices);
 
                         }
                         else
                         {
                             byte[] indices = new byte[] { cmd.v00, cmd.v01, cmd.v02, cmd.v00, cmd.v10, cmd.v11, cmd.v12, cmd.v10 };
-                            _rdpVtxAttrs.Draw(PrimitiveType.LineStrip, indices);
+                            _rdpVtxDrawer.Draw(PrimitiveType.LineStrip, indices);
                         }
                     }
                     break;
