@@ -17,15 +17,6 @@ namespace Z64.Forms
 {
     public partial class ModelViewerControl : GLControl
     {
-        public class Config
-        {
-            //public float GridScale { get; set; } = 10;
-            public float GridScale { get; set; } = 5000;
-            public bool ShowGrid { get; set; } = true;
-            public bool ShowAxis { get; set; } = true;
-            public bool DiffuseLight { get; set; } = false;
-        }
-
         public Matrix4 Projection => _projectionMtx;
         public Matrix4 View => _viewMtx;
 
@@ -35,13 +26,9 @@ namespace Z64.Forms
         Point _oldAnglePos = Point.Empty;
         Action<Matrix4, Matrix4> _render;
         bool _init = false;
-        //ShaderHandler _shader;
-        int _vao;
-        int _vbo;
         Matrix4 _projectionMtx;
         Matrix4 _viewMtx;
 
-        public Config CurrentConfig { get; set; } = new Config();
         public Action<Matrix4, Matrix4> RenderCallback { get => _render; set { _render = value; Render(); } }
 
         public ModelViewerControl()
@@ -53,10 +40,7 @@ namespace Z64.Forms
         {
             base.OnLoad(e);
             _init = true;
-            _camPos = new Vector3(0, 0, -CurrentConfig.GridScale);
-
-            //_shader = new ShaderHandler("Shaders/simpleVert.shader", "Shaders/simpleFrag.shader");
-            //SetupVertices();
+            _camPos = new Vector3(0, 0, -5000);
         }
         protected override void OnMouseWheel(MouseEventArgs e)
         {
@@ -126,27 +110,11 @@ namespace Z64.Forms
 
             GL.Viewport(0, 0, Width, Height);
 
-            //_shader.Use();
-
             HandleCamera();
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             GL.ClearColor(BackColor);
 
-            /*
-            if (CurrentConfig.ShowGrid)
-                RenderGrid();
-
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.PushMatrix();
-            RenderCallback?.Invoke();
-            GL.PopMatrix();
-
-            if (CurrentConfig.ShowAxis)
-                RenderAxis();
-            */
-
-            //testDraw();
             RenderCallback?.Invoke(_projectionMtx, _viewMtx);
 
             SwapBuffers();

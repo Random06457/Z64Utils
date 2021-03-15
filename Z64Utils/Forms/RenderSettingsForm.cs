@@ -17,26 +17,24 @@ namespace Z64.Forms
         public event EventHandler SettingsChanged;
 
         Renderer.Config _rendererCfg;
-        ModelViewerControl.Config _controlCfg;
 
-        public RenderSettingsForm(Renderer.Config rendererCfg, ModelViewerControl.Config controlCfg)
+        public RenderSettingsForm(Renderer.Config rendererCfg)
         {
             InitializeComponent();
             _rendererCfg = rendererCfg;
-            _controlCfg = controlCfg;
 
             checkBox_renderTextures.Checked = _rendererCfg.RenderTextures;
-            value_gridScale.Value = (decimal)_controlCfg.GridScale;
-            checkBox_showAxis.Checked = _controlCfg.ShowAxis;
-            checkBox_showGrid.Checked = _controlCfg.ShowGrid;
+            value_gridScale.Value = (decimal)_rendererCfg.GridScale;
+            checkBox_showAxis.Checked = _rendererCfg.ShowAxis;
+            checkBox_showGrid.Checked = _rendererCfg.ShowGrid;
         }
 
         private void UpdateSettings(object sender, EventArgs e)
         {
             _rendererCfg.RenderTextures = checkBox_renderTextures.Checked;
-            _controlCfg.GridScale = (float)value_gridScale.Value;
-            _controlCfg.ShowAxis = checkBox_showAxis.Checked;
-            _controlCfg.ShowGrid = checkBox_showGrid.Checked;
+            _rendererCfg.GridScale = (float)value_gridScale.Value;
+            _rendererCfg.ShowAxis = checkBox_showAxis.Checked;
+            _rendererCfg.ShowGrid = checkBox_showGrid.Checked;
 
             SettingsChanged?.Invoke(this, EventArgs.Empty);
         }

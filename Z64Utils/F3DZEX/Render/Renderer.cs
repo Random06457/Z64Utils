@@ -23,6 +23,10 @@ namespace F3DZEX.Render
         public class Config
         {
             public bool RenderTextures { get; set; } = true;
+            public float GridScale { get; set; } = 5000;
+            public bool ShowGrid { get; set; } = true;
+            public bool ShowAxis { get; set; } = true;
+            public bool DiffuseLight { get; set; } = false;
         }
 
 
@@ -31,13 +35,12 @@ namespace F3DZEX.Render
         public Config CurrentConfig { get; set; }
         public Memory Memory { get; private set; }
 
-        int _curTexID;
         Enums.G_IM_SIZ _loadTexSiz;
         Enums.G_IM_FMT _renderTexFmt;
         Enums.G_IM_SIZ _renderTexSiz;
         uint _curImgAddr;
-        byte[] _loadTex;
-        byte[] _renderTex;
+        byte[] _loadTexData;
+        byte[] _renderTexData;
         byte[] _curTLUT;
         int _curTexW;
         int _curTexH;
@@ -50,6 +53,7 @@ namespace F3DZEX.Render
         RdpVertexDrawer _rdpVtxDrawer;
         SimpleVertexDrawer _gridDrawer;
         ColoredVertexDrawer _axisDrawer;
+        TextureHandler _curTex;
         Stack<Matrix4> _mtxStack = new Stack<Matrix4>();
 
 
@@ -129,20 +133,17 @@ namespace F3DZEX.Render
             /* Init Texture */
             GL.Hint(HintTarget.PerspectiveCorrectionHint, HintMode.Nicest);
 
-            GL.GenTextures(1, out _curTexID);
-            GL.BindTexture(TextureTarget.Texture2D, _curTexID);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+            _curTex = new TextureHandler();
 
             /* Init Drawers */
             _rdpVtxDrawer = new RdpVertexDrawer();
             _gridDrawer = new SimpleVertexDrawer();
             _axisDrawer = new ColoredVertexDrawer();
 
-            float[] vertices = RenderHelper.GenerateGridVertices(5000, 6, false);
+            float[] vertices = RenderHelper.GenerateGridVertices(CurrentConfig.GridScale, 6, false);
             _gridDrawer.SetData(vertices, BufferUsageHint.StaticDraw);
 
-            vertices = RenderHelper.GenerateAxisvertices(5000);
+            vertices = RenderHelper.GenerateAxisvertices(CurrentConfig.GridScale);
             _axisDrawer.SetData(vertices, BufferUsageHint.StaticDraw);
 
             _rdpVtxDrawer.SetData(_vtxBuffer, BufferUsageHint.DynamicDraw);
@@ -193,8 +194,11 @@ namespace F3DZEX.Render
                 GL.Disable(EnableCap.Light0);
             }
 
-            RenderHelper.DrawGrid(_gridDrawer);
-            RenderHelper.DrawAxis(_axisDrawer);
+            if (CurrentConfig.ShowGrid)
+                RenderHelper.DrawGrid(_gridDrawer);
+
+            if (CurrentConfig.ShowAxis)
+                RenderHelper.DrawAxis(_axisDrawer);
 
             CheckGLErros();
         }
@@ -299,9 +303,8 @@ namespace F3DZEX.Render
             {
                 Debug.WriteLine($"Decoding texture... {TexDecodeCount++}");
 
-                GL.BindTexture(TextureTarget.Texture2D, _curTexID);
-                _renderTex = N64Texture.Decode(_curTexW * _curTexH, _renderTexFmt, _renderTexSiz, _loadTex, _curTLUT);
-                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, _curTexW, _curTexH, 0, PixelFormat.Rgba, PixelType.UnsignedByte, _renderTex);
+                _renderTexData = N64Texture.Decode(_curTexW * _curTexH, _renderTexFmt, _renderTexSiz, _loadTexData, _curTLUT);                
+                _curTex.SetDataRGBA(_renderTexData, _curTexW, _curTexH);
                 _reqDecodeTex = false;
             }
         }
@@ -405,7 +408,7 @@ namespace F3DZEX.Render
                         int w = (int)(cmd.lrs.Float() + 1 - cmd.uls.Float());
                         int h = (int)(cmd.lrt.Float() + 1 - cmd.ult.Float());
 
-                        if (N64Texture.GetTexSize(w * h, _renderTexSiz) != _loadTex.Length)
+                        if (N64Texture.GetTexSize(w * h, _renderTexSiz) != _loadTexData.Length)
                             return; // ??? (see object_en_warp_uzu)
 
                         _curTexW = w;
@@ -425,7 +428,7 @@ namespace F3DZEX.Render
                             throw new Exception("??");
                         int texels = cmd.texels + 1;
 
-                        _loadTex = Memory.ReadBytes(_curImgAddr, N64Texture.GetTexSize(texels, _loadTexSiz)); //w*h*bpp
+                        _loadTexData = Memory.ReadBytes(_curImgAddr, N64Texture.GetTexSize(texels, _loadTexSiz)); //w*h*bpp
                         _reqDecodeTex = true;
                     }
                     break;
@@ -453,21 +456,20 @@ namespace F3DZEX.Render
 
                         var settile = info.Convert<Command.GSetTile>();
 
-                        GL.BindTexture(TextureTarget.Texture2D, _curTexID);
 
                         _mirrorV = settile.cmT.HasFlag(Enums.ClampMirrorFlag.G_TX_MIRROR);
                         _mirrorH = settile.cmS.HasFlag(Enums.ClampMirrorFlag.G_TX_MIRROR);
 
-                        var wrap = settile.cmS.HasFlag(Enums.ClampMirrorFlag.G_TX_CLAMP)
+                        var wrapS = settile.cmS.HasFlag(Enums.ClampMirrorFlag.G_TX_CLAMP)
                             ? TextureWrapMode.ClampToEdge
                             : (_mirrorH ? TextureWrapMode.MirroredRepeat : TextureWrapMode.Repeat);
-                        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)wrap);
 
-                        wrap = settile.cmT.HasFlag(Enums.ClampMirrorFlag.G_TX_CLAMP)
+                        var wrapT = settile.cmT.HasFlag(Enums.ClampMirrorFlag.G_TX_CLAMP)
                             ? TextureWrapMode.ClampToEdge
                             : (_mirrorV ? TextureWrapMode.MirroredRepeat : TextureWrapMode.Repeat);
-                        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)wrap);
 
+  
+                        _curTex.SetTextureWrap((int)wrapS, (int)wrapT);
 
                         if (settile.tile == Enums.G_TX_tile.G_TX_LOADTILE)
                         {

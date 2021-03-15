@@ -26,7 +26,6 @@ namespace Z64.Forms
         DisasmForm _disasForm;
         RenderSettingsForm _settingsForm;
         F3DZEX.Render.Renderer.Config _rendererCfg;
-        ModelViewerControl.Config _controlCfg;
         
         SkeletonHolder _skel;
         List<AnimationHolder> _anims;
@@ -41,13 +40,11 @@ namespace Z64.Forms
         {
             _game = game;
             _rendererCfg = new F3DZEX.Render.Renderer.Config();
-            _controlCfg = new ModelViewerControl.Config();
 
             InitializeComponent();
             Toolkit.Init();
 
             _renderer = new F3DZEX.Render.Renderer(game, _rendererCfg);
-            modelViewer.CurrentConfig = _controlCfg;
             modelViewer.RenderCallback = RenderCallback;
 
             RenderModelViewer();
@@ -305,7 +302,7 @@ namespace Z64.Forms
             }
             else
             {
-                _settingsForm = new RenderSettingsForm(_rendererCfg, _controlCfg);
+                _settingsForm = new RenderSettingsForm(_rendererCfg);
                 _settingsForm.FormClosed += (sender, e) => { _settingsForm = null; };
                 _settingsForm.SettingsChanged += RenderModelViewer;
                 _settingsForm.Show();

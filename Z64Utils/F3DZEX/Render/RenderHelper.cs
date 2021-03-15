@@ -18,7 +18,7 @@ namespace F3DZEX.Render
 
             GL.LineWidth(oldLineWidth);
         }
-        public static float[] GenerateGridVertices(int gridScale, int lineCount, bool cube)
+        public static float[] GenerateGridVertices(float gridScale, int lineCount, bool cube)
         {
             int stride = 3;
             int times = lineCount * lineCount;
@@ -82,7 +82,7 @@ namespace F3DZEX.Render
 
             GL.LineWidth(oldLineWidth);
         }
-        public static float[] GenerateAxisvertices(int gridScale)
+        public static float[] GenerateAxisvertices(float gridScale)
         {
             return new float[] { 
                 0, 0, 0,                1, 0, 0, 1,
@@ -94,29 +94,6 @@ namespace F3DZEX.Render
                 0, 0, 0,                0, 0, 1, 1,
                 0, 0, gridScale/10,     0, 0, 1, 1,
             };
-        }
-
-        public static void RenderAxis(int gridScale)
-        {
-            GL.BindTexture(TextureTarget.Texture2D, 0);
-            GL.LineWidth(2.0f);
-            GL.Begin(PrimitiveType.Lines);
-            //X
-            GL.Color3(Color.Red);
-            GL.Vertex3(0, 0, 0);
-            GL.Vertex3(gridScale / 10, 0, 0);
-            //Y
-            GL.Color3(Color.Green);
-            GL.Vertex3(0, 0, 0);
-            GL.Vertex3(0, gridScale / 10, 0);
-            //Z
-            GL.Color3(Color.Blue);
-            GL.Vertex3(0, 0, 0);
-            GL.Vertex3(0, 0, gridScale / 10);
-
-            GL.Color3(Color.Transparent);
-            GL.End();
-            GL.LineWidth(1.0f);
         }
     }
 }

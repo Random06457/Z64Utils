@@ -29,7 +29,6 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            Z64.Forms.ModelViewerControl.Config config1 = new Z64.Forms.ModelViewerControl.Config();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(DListViewerForm));
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.toolStripRenderCfgBtn = new System.Windows.Forms.ToolStripButton();
@@ -136,11 +135,6 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.modelViewer.BackColor = System.Drawing.Color.DodgerBlue;
-            config1.DiffuseLight = false;
-            config1.GridScale = 5000F;
-            config1.ShowAxis = true;
-            config1.ShowGrid = true;
-            this.modelViewer.CurrentConfig = config1;
             this.modelViewer.Location = new System.Drawing.Point(1, 28);
             this.modelViewer.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.modelViewer.Name = "modelViewer";

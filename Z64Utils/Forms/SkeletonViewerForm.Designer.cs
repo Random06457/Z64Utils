@@ -30,7 +30,6 @@ namespace Z64.Forms
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            Z64.Forms.ModelViewerControl.Config config1 = new Z64.Forms.ModelViewerControl.Config();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SkeletonViewerForm));
             this.modelViewer = new Z64.Forms.ModelViewerControl();
             this.treeView_hierarchy = new System.Windows.Forms.TreeView();
@@ -61,11 +60,6 @@ namespace Z64.Forms
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.modelViewer.BackColor = System.Drawing.Color.DodgerBlue;
-            config1.DiffuseLight = false;
-            config1.GridScale = 5000F;
-            config1.ShowAxis = true;
-            config1.ShowGrid = true;
-            this.modelViewer.CurrentConfig = config1;
             this.modelViewer.Location = new System.Drawing.Point(7, 28);
             this.modelViewer.Margin = new System.Windows.Forms.Padding(6, 3, 6, 3);
             this.modelViewer.Name = "modelViewer";
