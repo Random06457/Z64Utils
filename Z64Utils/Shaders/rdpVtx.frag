@@ -2,6 +2,7 @@
 
 in vec2 v_VtxTexCoords;
 in vec4 v_VtxColor;
+flat in int v_VtxId;
 
 uniform vec3 u_DirLight;
 uniform sampler2D u_Tex;
@@ -22,4 +23,14 @@ void main()
 	/* highlight */
 	gl_FragColor = mix(gl_FragColor, u_HighlightColor, vec4(u_HighlightColor.a));
 	//gl_FragColor = vec4(1, 0, 0, 1);
+
+	/* Debug Vertex ID */
+	/*
+	if (v_VtxId % 3 == 0)
+		gl_FragColor = vec4(1, 0, 0, 1);
+	else if (v_VtxId % 3 == 1)
+		gl_FragColor = vec4(0, 1, 0, 1);
+	else
+		gl_FragColor = vec4(0, 0, 1, 1);
+	*/
 }

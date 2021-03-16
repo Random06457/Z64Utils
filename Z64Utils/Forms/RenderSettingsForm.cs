@@ -18,24 +18,22 @@ namespace Z64.Forms
 
         Renderer.Config _rendererCfg;
 
-        public RenderSettingsForm(Renderer.Config rendererCfg)
+        public RenderSettingsForm(Renderer.Config cfg)
         {
             InitializeComponent();
-            _rendererCfg = rendererCfg;
 
-            checkBox_renderTextures.Checked = _rendererCfg.RenderTextures;
-            value_gridScale.Value = (decimal)_rendererCfg.GridScale;
-            checkBox_showAxis.Checked = _rendererCfg.ShowAxis;
-            checkBox_showGrid.Checked = _rendererCfg.ShowGrid;
+            _rendererCfg = cfg;
+
+            propertyGrid1.SelectedObject = _rendererCfg;
         }
 
         private void UpdateSettings(object sender, EventArgs e)
         {
-            _rendererCfg.RenderTextures = checkBox_renderTextures.Checked;
-            _rendererCfg.GridScale = (float)value_gridScale.Value;
-            _rendererCfg.ShowAxis = checkBox_showAxis.Checked;
-            _rendererCfg.ShowGrid = checkBox_showGrid.Checked;
+            SettingsChanged?.Invoke(this, EventArgs.Empty);
+        }
 
+        private void propertyGrid1_PropertyValueChanged(object s, PropertyValueChangedEventArgs e)
+        {
             SettingsChanged?.Invoke(this, EventArgs.Empty);
         }
     }

@@ -37,5 +37,9 @@ namespace F3DZEX.Render
         {
             _attrs.SetData(data, data.Length * sizeof(float), hint);
         }
+        public void SetSubData(float[] data, int off = 0)
+        {
+            _attrs.SetSubData(data, off, data.Length * sizeof(float));
+        }
     }
 }

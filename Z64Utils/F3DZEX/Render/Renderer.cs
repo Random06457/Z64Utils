@@ -22,11 +22,22 @@ namespace F3DZEX.Render
     {
         public class Config
         {
+            public event EventHandler OnGridScaleChanged;
+
+            private float _gridScale = 5000;
+
+
             public bool RenderTextures { get; set; } = true;
-            public float GridScale { get; set; } = 5000;
+            public float GridScale {
+                get => _gridScale;
+                set {
+                    _gridScale = value;
+                    OnGridScaleChanged?.Invoke(this, new EventArgs());
+                }
+            }
             public bool ShowGrid { get; set; } = true;
             public bool ShowAxis { get; set; } = true;
-            public bool DiffuseLight { get; set; } = false;
+            //public bool DiffuseLight { get; set; } = false;
         }
 
 
@@ -147,6 +158,12 @@ namespace F3DZEX.Render
             _axisDrawer.SetData(vertices, BufferUsageHint.StaticDraw);
 
             _rdpVtxDrawer.SetData(_vtxBuffer, BufferUsageHint.DynamicDraw);
+
+            CurrentConfig.OnGridScaleChanged += (o, e) =>
+            {
+                float[] vertices = RenderHelper.GenerateGridVertices(CurrentConfig.GridScale, 6, false);
+                _gridDrawer.SetSubData(vertices, 0);
+            };
 
             CheckGLErros();
             _initialized = true;
@@ -292,7 +309,6 @@ namespace F3DZEX.Render
                 ErrorMsg = ex.Message;
             }
         }
-
 
 
 
@@ -455,7 +471,6 @@ namespace F3DZEX.Render
                             return;
 
                         var settile = info.Convert<Command.GSetTile>();
-
 
                         _mirrorV = settile.cmT.HasFlag(Enums.ClampMirrorFlag.G_TX_MIRROR);
                         _mirrorH = settile.cmS.HasFlag(Enums.ClampMirrorFlag.G_TX_MIRROR);

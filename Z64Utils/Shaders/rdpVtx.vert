@@ -12,6 +12,7 @@ uniform sampler2D u_Tex;
 
 out vec2 v_VtxTexCoords;
 out vec4 v_VtxColor;
+flat out int v_VtxId;
 
 float S105ToFloat(int fp)
 {
@@ -26,6 +27,8 @@ vec2 decodeTexCoords(sampler2D tex, ivec2 coords)
 
 void main()
 {
+    v_VtxId = gl_VertexID;
+
     /* The vertices coordinates are multiplied by the model view matrix during the G_VTX command processing */
     gl_Position = u_Projection * u_View /* u_Model*/ * vec4(pos, 1);
     v_VtxTexCoords = decodeTexCoords(u_Tex, texCoords);

@@ -137,6 +137,7 @@ namespace Z64.Forms
             this.toolStripSegmentsBtn.Name = "toolStripSegmentsBtn";
             this.toolStripSegmentsBtn.Size = new System.Drawing.Size(63, 22);
             this.toolStripSegmentsBtn.Text = "Segments";
+            this.toolStripSegmentsBtn.Click += ToolStripSegmentsBtn_Click;
             // 
             // toolStrip2
             // 
