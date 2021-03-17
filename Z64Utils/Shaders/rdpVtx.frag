@@ -33,4 +33,14 @@ void main()
 	else
 		gl_FragColor = vec4(0, 0, 1, 1);
 	*/
+
+	/* Debug Depth */
+	/*
+	float z = gl_FragCoord.z;
+	z -= 0.999;
+	z *= 1000;
+	z -= 0.4;
+    gl_FragColor *= vec4(vec3(z), 1.0);
+	*/
+	
 }
