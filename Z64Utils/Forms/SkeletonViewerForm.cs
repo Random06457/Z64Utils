@@ -102,6 +102,7 @@ namespace Z64.Forms
         {
             _renderer.RenderStart(proj, view);
             RenderLimb(0);
+            
             /*
             GL.PointSize(10.0f);
             GL.LineWidth(2.0f);

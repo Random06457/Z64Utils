@@ -147,6 +147,7 @@ namespace F3DZEX.Render
 
         private void BomSwap(byte[] buffer)
         {
+            /*
             int off = 0;
             while (off < buffer.Length)
             {
@@ -162,6 +163,7 @@ namespace F3DZEX.Render
                     }
                 }
             }
+            */
         }
         
         public void SetSubData(byte[] data, int off, bool bigEndian)
@@ -169,8 +171,10 @@ namespace F3DZEX.Render
             if (!_built)
                 BuildLayout();
 
+            /*
             if (bigEndian)
                 BomSwap(data);
+            */
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vbo);
             GL.BufferSubData(BufferTarget.ArrayBuffer, new IntPtr(off), data.Length, data);
@@ -180,9 +184,10 @@ namespace F3DZEX.Render
         {
             if (!_built)
                 BuildLayout();
-
+            /*
             if (bigEndian)
                 BomSwap(data);
+            */
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vbo);
             GL.BufferData(BufferTarget.ArrayBuffer, data.Length, data, hint);

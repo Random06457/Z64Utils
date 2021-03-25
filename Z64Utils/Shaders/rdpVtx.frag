@@ -12,10 +12,22 @@ uniform bool u_TexEnabled;
 
 void main()
 {
+
 	/* texture */
-	gl_FragColor = u_TexEnabled
-		? texture(u_Tex, v_VtxTexCoords)
-		: vec4(0, 0, 0, 1);
+	if (u_TexEnabled)
+	{
+		vec4 color = texture(u_Tex, v_VtxTexCoords);
+		
+		/* lazy alpha check */
+		if (color.a < 0.1)
+			discard;
+		
+		gl_FragColor = color;
+	}
+	else
+	{
+		gl_FragColor = vec4(0, 0, 0, 1);
+	}
 	
 	/* blending */
 	// FragColor *= v_VtxColor;
@@ -42,5 +54,4 @@ void main()
 	z -= 0.4;
     gl_FragColor *= vec4(vec3(z), 1.0);
 	*/
-	
 }

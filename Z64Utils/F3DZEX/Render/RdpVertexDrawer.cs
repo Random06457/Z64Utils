@@ -14,7 +14,8 @@ namespace F3DZEX.Render
             _shader = new ShaderHandler("Shaders/rdpVtx.vert", "Shaders/rdpVtx.frag");
             _attrs = new VertexAttribs();
             // position
-            _attrs.LayoutAddFloat(3, VertexAttribPointerType.Short, false);
+            //_attrs.LayoutAddFloat(3, VertexAttribPointerType.Short, false);
+            _attrs.LayoutAddInt(3, VertexAttribIntegerType.UnsignedShort);
             //flag
             _attrs.LayoutAddInt(1, VertexAttribIntegerType.UnsignedShort);
             // tex coords

@@ -64,6 +64,7 @@ namespace F3DZEX.Render
         RdpVertexDrawer _rdpVtxDrawer;
         SimpleVertexDrawer _gridDrawer;
         ColoredVertexDrawer _axisDrawer;
+        TextDrawer _textDrawer;
         TextureHandler _curTex;
         Stack<Matrix4> _mtxStack = new Stack<Matrix4>();
 
@@ -150,6 +151,7 @@ namespace F3DZEX.Render
             _rdpVtxDrawer = new RdpVertexDrawer();
             _gridDrawer = new SimpleVertexDrawer();
             _axisDrawer = new ColoredVertexDrawer();
+            _textDrawer = new TextDrawer();
 
             float[] vertices = RenderHelper.GenerateGridVertices(CurrentConfig.GridScale, 6, false);
             _gridDrawer.SetData(vertices, BufferUsageHint.StaticDraw);
@@ -180,9 +182,12 @@ namespace F3DZEX.Render
             _mtxStack = new Stack<Matrix4>();
             PushMatrix(Matrix4.Identity);
 
+            
             _gridDrawer.SendProjViewMatrices(ref proj, ref view);
             _axisDrawer.SendProjViewMatrices(ref proj, ref view);
             _rdpVtxDrawer.SendProjViewMatrices(ref proj, ref view);
+            Matrix4 id = Matrix4.Identity;
+            _textDrawer.SendProjViewMatrices(ref id, ref id);
 
             SendHighlightColor(Color.Transparent);
 
@@ -216,6 +221,13 @@ namespace F3DZEX.Render
 
             if (CurrentConfig.ShowAxis)
                 RenderHelper.DrawAxis(_axisDrawer);
+
+            _textDrawer.DrawString(
+                //$"Extensions: {GL.GetString(StringName.Extensions)}\n" + 
+                $"Shading Language Version: {GL.GetString(StringName.ShadingLanguageVersion)}\n" + 
+                $"Version: {GL.GetString(StringName.Version)}\n" + 
+                $"Renderer: {GL.GetString(StringName.Renderer)}\n" +
+                $"Vendor: {GL.GetString(StringName.Vendor)}");
 
             CheckGLErros();
         }
@@ -407,8 +419,12 @@ namespace F3DZEX.Render
                         }
                         else
                         {
-                            byte[] indices = new byte[] { cmd.v00, cmd.v01, cmd.v02, cmd.v00, cmd.v10, cmd.v11, cmd.v12, cmd.v10 };
-                            _rdpVtxDrawer.Draw(PrimitiveType.LineStrip, indices);
+                            //byte[] indices = new byte[] { cmd.v00, cmd.v01, cmd.v02, cmd.v00, cmd.v10, cmd.v11, cmd.v12, cmd.v10 };
+                            //_rdpVtxDrawer.Draw(PrimitiveType.LineStrip, indices);
+                            byte[] indices = new byte[] { cmd.v00, cmd.v01, cmd.v02 };
+                            _rdpVtxDrawer.Draw(PrimitiveType.LineLoop, indices);
+                            indices = new byte[] { cmd.v10, cmd.v11, cmd.v12 };
+                            _rdpVtxDrawer.Draw(PrimitiveType.LineLoop, indices);
                         }
                     }
                     break;
