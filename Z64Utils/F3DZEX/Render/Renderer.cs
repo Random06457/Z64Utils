@@ -38,6 +38,7 @@ namespace F3DZEX.Render
             public bool ShowGrid { get; set; } = true;
             public bool ShowAxis { get; set; } = true;
             //public bool DiffuseLight { get; set; } = false;
+            public bool ShowGLInfo { get; set; } = false;
         }
 
 
@@ -222,12 +223,15 @@ namespace F3DZEX.Render
             if (CurrentConfig.ShowAxis)
                 RenderHelper.DrawAxis(_axisDrawer);
 
-            _textDrawer.DrawString(
-                //$"Extensions: {GL.GetString(StringName.Extensions)}\n" + 
-                $"Shading Language Version: {GL.GetString(StringName.ShadingLanguageVersion)}\n" + 
-                $"Version: {GL.GetString(StringName.Version)}\n" + 
-                $"Renderer: {GL.GetString(StringName.Renderer)}\n" +
-                $"Vendor: {GL.GetString(StringName.Vendor)}");
+            if (CurrentConfig.ShowGLInfo)
+            {
+                _textDrawer.DrawString(
+                    //$"Extensions: {GL.GetString(StringName.Extensions)}\n" + 
+                    $"Shading Language Version: {GL.GetString(StringName.ShadingLanguageVersion)}\n" +
+                    $"Version: {GL.GetString(StringName.Version)}\n" +
+                    $"Renderer: {GL.GetString(StringName.Renderer)}\n" +
+                    $"Vendor: {GL.GetString(StringName.Vendor)}");
+            }
 
             CheckGLErros();
         }

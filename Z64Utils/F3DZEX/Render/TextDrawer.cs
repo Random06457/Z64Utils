@@ -46,10 +46,10 @@ namespace F3DZEX.Render
             _tex = new TextureHandler();
             TextFont = new Font("Arial", 50);
             _lastStr = null;
-            Scale = 0.4f;
+            Scale = 0.35f;
             Color = Color.White;
             TextHSpace = -15;
-            TextVSpace = -5;
+            TextVSpace = -7;
         }
 
         public float GetTextWidth(string text)
@@ -82,23 +82,6 @@ namespace F3DZEX.Render
                 }
 
                 return ret;
-
-
-                /*CharacterRange[] charRanges = new CharacterRange[text.Length];
-                for (int i = 0; i < text.Length-1; i++)
-                    charRanges[i] = new CharacterRange(i, 1);
-*/
-                /*
-                CharacterRange[] charRanges = new CharacterRange[] { new CharacterRange(0, text.Length) };
-
-                StringFormat strFmt = new StringFormat();
-                strFmt.FormatFlags = StringFormatFlags.NoClip;
-                strFmt.SetMeasurableCharacterRanges(charRanges);
-
-                var region = g.MeasureCharacterRanges(text, TextFont, new RectangleF(0, 0, 100, 100), strFmt);
-                List<RectangleF> ret = new List<RectangleF>();
-                region.ToList().ForEach(r => ret.Add(r.GetBounds(g)));
-                return ret;*/
             }
         }
 
@@ -118,7 +101,6 @@ namespace F3DZEX.Render
             using (var g = Graphics.FromImage(bmp))
                 for (int i = 0; i < alphabet.Length; i++)
                     g.DrawString(alphabet[i].ToString(), _font, new SolidBrush(Color.White), _charSpaces[i].X, 0);
-                //g.DrawString(alphabet, _font, new SolidBrush(Color.White), new PointF(0, 0));
 
             _texData = new byte[bmp.Width * bmp.Height * 4];
             var bmpData = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
@@ -214,7 +196,7 @@ namespace F3DZEX.Render
 
             Vector3 pos = new Vector3(Position);
             pos.X -= 1;
-            pos.Y += 1 - ((float)_texHeight / 2 / view.W);
+            pos.Y += 1 - (_texHeight / (view.W * 2));
 
             return Matrix4.CreateScale(Scale / view.Z, Scale / view.W, 1) * Matrix4.CreateTranslation(pos);
         }
@@ -223,7 +205,6 @@ namespace F3DZEX.Render
         {
             _vtxDrawer.SendColor(color);
         }
-
 
         public void SendProjViewMatrices(ref Matrix4 proj, ref Matrix4 view)
         {

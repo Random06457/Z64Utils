@@ -267,6 +267,7 @@
             // 
             // openObjectToolStripMenuItem
             // 
+            this.openObjectToolStripMenuItem.Image = global::Z64.Properties.Resources.cube;
             this.openObjectToolStripMenuItem.Name = "openObjectToolStripMenuItem";
             this.openObjectToolStripMenuItem.Size = new System.Drawing.Size(200, 22);
             this.openObjectToolStripMenuItem.Text = "Open DList Viewer";
@@ -282,6 +283,7 @@
             // 
             // ROMRAMConversionsToolStripMenuItem
             // 
+            this.ROMRAMConversionsToolStripMenuItem.Image = global::Z64.Properties.Resources.conversion;
             this.ROMRAMConversionsToolStripMenuItem.Name = "ROMRAMConversionsToolStripMenuItem";
             this.ROMRAMConversionsToolStripMenuItem.Size = new System.Drawing.Size(200, 22);
             this.ROMRAMConversionsToolStripMenuItem.Text = "ROM/RAM Conversions";
@@ -289,6 +291,7 @@
             // 
             // textureViewerToolStripMenuItem
             // 
+            this.textureViewerToolStripMenuItem.Image = global::Z64.Properties.Resources.texture;
             this.textureViewerToolStripMenuItem.Name = "textureViewerToolStripMenuItem";
             this.textureViewerToolStripMenuItem.Size = new System.Drawing.Size(200, 22);
             this.textureViewerToolStripMenuItem.Text = "Texture Viewer";
