@@ -23,6 +23,7 @@ namespace F3DZEX.Render
     public class ShaderHandler
     {
         private int _program;
+        private Dictionary<string, int> _uniformLocations;
 
         private class TempResUsage<T> : IDisposable
         {
@@ -54,6 +55,8 @@ namespace F3DZEX.Render
             shaders.Add(CompileShader(fragPath, ShaderType.FragmentShader));
 
             LinkShaders(shaders.ToArray());
+
+            _uniformLocations = new Dictionary<string, int>();
         }
 
         private int CompileShader(string path, ShaderType type)
@@ -107,45 +110,56 @@ namespace F3DZEX.Render
             return ret;
         }
 
+        private int GetUniformLocation(string name)
+        {
+            if (!_uniformLocations.TryGetValue(name, out int location))
+            {
+                location = GL.GetUniformLocation(_program, name);
+                _uniformLocations.Add(name, location);
+            }
+
+            return location;
+        }
+
         public void Send(string name, float data)
         {
             using (TempUse())
-                GL.Uniform1(GL.GetUniformLocation(_program, name), data);
+                GL.Uniform1(GetUniformLocation(name), data);
         }
         public void Send(string name, int data)
         {
             using (TempUse())
-                GL.Uniform1(GL.GetUniformLocation(_program, name), data);
+                GL.Uniform1(GetUniformLocation(name), data);
         }
         public void Send(string name, float x, float y)
         {
             using (TempUse())
-                GL.Uniform2(GL.GetUniformLocation(_program, name), x, y);
+                GL.Uniform2(GetUniformLocation(name), x, y);
         }
         public void Send(string name, float x, float y, float z)
         {
             using (TempUse())
-                GL.Uniform3(GL.GetUniformLocation(_program, name), x, y, z);
+                GL.Uniform3(GetUniformLocation(name), x, y, z);
         }
         public void Send(string name, float x, float y, float z, float w)
         {
             using (TempUse())
-                GL.Uniform4(GL.GetUniformLocation(_program, name), x, y, z, w);
+                GL.Uniform4(GetUniformLocation(name), x, y, z, w);
         }
         public void Send(string name, Matrix4 mtx)
         {
             using (TempUse())
-                GL.UniformMatrix4(GL.GetUniformLocation(_program, name), false, ref mtx);
+                GL.UniformMatrix4(GetUniformLocation(name), false, ref mtx);
         }
         public void Send(string name, Color color)
         {
             using (TempUse())
-                GL.Uniform4(GL.GetUniformLocation(_program, name), color);
+                GL.Uniform4(GetUniformLocation(name), color);
         }
         public void Send(string name, bool x)
         {
             using (TempUse())
-                GL.Uniform1(GL.GetUniformLocation(_program, name), x ? 1 : 0);
+                GL.Uniform1(GetUniformLocation(name), x ? 1 : 0);
         }
     }
 }

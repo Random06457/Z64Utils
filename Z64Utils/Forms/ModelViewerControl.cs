@@ -97,7 +97,8 @@ namespace Z64.Forms
             if (!_init || RenderCallback == null ||Width == 0) return;
             try
             {
-                MakeCurrent();
+                if (!Context.IsCurrent)
+                    MakeCurrent();
             }
             catch (Exception ex)
             {
