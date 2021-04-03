@@ -101,6 +101,10 @@ namespace F3DZEX.Render
         {
             _nrmShader.Send("u_NrmColor", color);
         }
+        public void SendLightingEnabled(bool enabled)
+        {
+            _shader.Send("u_LigthingEnabled", enabled);
+        }
         #endregion
 
 

@@ -13,6 +13,7 @@ uniform vec4 u_HighlightColor;
 uniform bool u_HighlightEnabled;
 uniform vec4 u_WireFrameColor;
 uniform int u_ModelRenderMode;
+uniform bool u_LigthingEnabled;
 
 out vec4 FragColor;
 
@@ -32,11 +33,45 @@ vec4 addHighlight(vec4 color)
 		: color;
 }
 
-vec4 addShading(vec4 color, vec3 light, float ambiantLight)
+float getDiffuse(vec3 light)
 {
-	float brightness = max(0, dot(light, v_VtxNormal)) + ambiantLight;
+	return max(0, dot(normalize(light), normalize(v_VtxNormal)));
+}
 
-	return vec4(color.xyz * brightness, color.a);
+vec4 addLighting(vec4 color)
+{
+	if (!u_LigthingEnabled)
+		return color;
+
+	float ambient = 0.5;
+	float diffuse = getDiffuse(LigthFacing);
+
+	return vec4(color.xyz * (diffuse + ambient), color.a);
+}
+
+vec4 addBlending(vec4 color)
+{
+	// todo
+	return color;
+}
+
+vec4 debugDepth(vec4 color)
+{
+	float z = gl_FragCoord.z;
+	z -= 0.999;
+	z *= 1000;
+	z -= 0.4;
+    return color * vec4(vec3(z), 1.0);
+}
+
+vec4 debugVertexId()
+{
+	if (v_VtxId % 3 == 0)
+		return  vec4(1, 0, 0, 1);
+	else if (v_VtxId % 3 == 1)
+		return vec4(0, 1, 0, 1);
+	else
+		return vec4(0, 0, 1, 1);
 }
 
 void main()
@@ -48,7 +83,7 @@ void main()
 	else if (u_ModelRenderMode == MODE_SURFACE)
 	{
 		FragColor = vec4(1);
-		//FragColor = addShading(FragColor, LigthFacing, 0.3);
+		FragColor = addLighting(FragColor);
 	}
 	else if (u_ModelRenderMode == MODE_TEXTURED)
 	{
@@ -59,35 +94,19 @@ void main()
 		if (FragColor.a < 0.1)
 			discard;
 			
-		//FragColor = addShading(FragColor, LigthFacing, 0.3);
+		FragColor = addBlending(FragColor);
+		FragColor = addLighting(FragColor);
 	}
 	else if (u_ModelRenderMode == MODE_NORMAL)
 	{
 		FragColor = v_VtxColor;
 	}
-	
-	/* blending */
-	// FragColor *= v_VtxColor;
+	else // invalid mode
+	{
+		FragColor = vec4(1, 0, 0, 1);	
+	}
 
 	/* highlight */
 	FragColor = addHighlight(FragColor);
 
-	/* Debug Vertex ID */
-	/*
-	if (v_VtxId % 3 == 0)
-		FragColor = vec4(1, 0, 0, 1);
-	else if (v_VtxId % 3 == 1)
-		FragColor = vec4(0, 1, 0, 1);
-	else
-		FragColor = vec4(0, 0, 1, 1);
-	*/
-
-	/* Debug Depth */
-	/*
-	float z = gl_FragCoord.z;
-	z -= 0.999;
-	z *= 1000;
-	z -= 0.4;
-    FragColor *= vec4(vec3(z), 1.0);
-	*/
 }

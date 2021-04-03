@@ -37,8 +37,12 @@ namespace F3DZEX.Render
             public bool ShowGrid { get; set; } = true;
             public bool ShowAxis { get; set; } = true;
             public bool ShowGLInfo { get; set; } = false;
-            public bool DrawNormals { get; set; } = true;
             public RdpVertexDrawer.ModelRenderMode RenderMode { get; set; } = RdpVertexDrawer.ModelRenderMode.Wireframe;
+            public bool EnabledLighting { get; set; } = true;
+            public bool DrawNormals { get; set; } = true;
+            public Color NormalColor { get; set; } = Color.Yellow;
+            public Color HighlightColor { get; set; } = Color.Red;
+            public Color WireframeColor { get; set; } = Color.Black;
         }
 
 
@@ -191,13 +195,12 @@ namespace F3DZEX.Render
             Matrix4 id = Matrix4.Identity;
             _textDrawer.SendProjViewMatrices(ref id, ref id);
 
-            _rdpVtxDrawer.SendHighlightColor(Color.Red);
+            _rdpVtxDrawer.SendHighlightColor(CurrentConfig.HighlightColor);
             _rdpVtxDrawer.SendHighlightEnabled(false);
-            
-
             _rdpVtxDrawer.SetModelRenderMode(CurrentConfig.RenderMode);
-            _rdpVtxDrawer.SendNormalColor(Color.Yellow);
-            _rdpVtxDrawer.SendWireFrameColor(Color.Black);
+            _rdpVtxDrawer.SendNormalColor(CurrentConfig.NormalColor);
+            _rdpVtxDrawer.SendWireFrameColor(CurrentConfig.WireframeColor);
+            _rdpVtxDrawer.SendLightingEnabled(CurrentConfig.EnabledLighting);
             
 
 
