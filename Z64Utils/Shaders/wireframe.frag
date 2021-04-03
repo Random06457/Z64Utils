@@ -4,6 +4,8 @@ uniform vec4 u_HighlightColor;
 uniform bool u_HighlightEnabled;
 uniform vec4 u_WireFrameColor;
 
+out vec4 FragColor;
+
 
 vec4 addHighlight(vec4 color)
 {
@@ -14,8 +16,8 @@ vec4 addHighlight(vec4 color)
 
 void main()
 {
-	gl_FragColor = u_WireFrameColor;
+	FragColor = u_WireFrameColor;
 	
-	gl_FragColor = addHighlight(gl_FragColor);
+	FragColor = addHighlight(FragColor);
 
 }

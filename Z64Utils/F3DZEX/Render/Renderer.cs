@@ -38,7 +38,7 @@ namespace F3DZEX.Render
             public bool ShowAxis { get; set; } = true;
             public bool ShowGLInfo { get; set; } = false;
             public bool DrawNormals { get; set; } = true;
-            public RdpVertexDrawer.ModelRenderMode RenderMode { get; set; } = RdpVertexDrawer.ModelRenderMode.Normal;
+            public RdpVertexDrawer.ModelRenderMode RenderMode { get; set; } = RdpVertexDrawer.ModelRenderMode.Wireframe;
         }
 
 

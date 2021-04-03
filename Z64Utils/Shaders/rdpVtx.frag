@@ -14,6 +14,8 @@ uniform bool u_HighlightEnabled;
 uniform vec4 u_WireFrameColor;
 uniform int u_ModelRenderMode;
 
+out vec4 FragColor;
+
 #define MODE_WIREFRAME		0
 #define MODE_TEXTURED		1
 #define MODE_SURFACE		2
@@ -41,43 +43,43 @@ void main()
 {
 	if (u_ModelRenderMode == MODE_WIREFRAME)
 	{
-		gl_FragColor = u_WireFrameColor;
+		FragColor = u_WireFrameColor;
 	}
 	else if (u_ModelRenderMode == MODE_SURFACE)
 	{
-		gl_FragColor = vec4(1);
-		//gl_FragColor = addShading(gl_FragColor, LigthFacing, 0.3);
+		FragColor = vec4(1);
+		//FragColor = addShading(FragColor, LigthFacing, 0.3);
 	}
 	else if (u_ModelRenderMode == MODE_TEXTURED)
 	{
 		/* texture */
-		gl_FragColor = texture(u_Tex, v_VtxTexCoords);
+		FragColor = texture(u_Tex, v_VtxTexCoords);
 		
 		/* lazy alpha check */
-		if (gl_FragColor.a < 0.1)
+		if (FragColor.a < 0.1)
 			discard;
 			
-		//gl_FragColor = addShading(gl_FragColor, LigthFacing, 0.3);
+		//FragColor = addShading(FragColor, LigthFacing, 0.3);
 	}
 	else if (u_ModelRenderMode == MODE_NORMAL)
 	{
-		gl_FragColor = v_VtxColor;
+		FragColor = v_VtxColor;
 	}
 	
 	/* blending */
 	// FragColor *= v_VtxColor;
 
 	/* highlight */
-	gl_FragColor = addHighlight(gl_FragColor);
+	FragColor = addHighlight(FragColor);
 
 	/* Debug Vertex ID */
 	/*
 	if (v_VtxId % 3 == 0)
-		gl_FragColor = vec4(1, 0, 0, 1);
+		FragColor = vec4(1, 0, 0, 1);
 	else if (v_VtxId % 3 == 1)
-		gl_FragColor = vec4(0, 1, 0, 1);
+		FragColor = vec4(0, 1, 0, 1);
 	else
-		gl_FragColor = vec4(0, 0, 1, 1);
+		FragColor = vec4(0, 0, 1, 1);
 	*/
 
 	/* Debug Depth */
@@ -86,6 +88,6 @@ void main()
 	z -= 0.999;
 	z *= 1000;
 	z -= 0.4;
-    gl_FragColor *= vec4(vec3(z), 1.0);
+    FragColor *= vec4(vec3(z), 1.0);
 	*/
 }

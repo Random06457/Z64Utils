@@ -12,8 +12,7 @@ uniform vec4 u_NrmColor;
 
 void main()
 {
-	//v_VtxColor = u_NrmColor;
-	v_VtxColor = vec4(1, 0, 0, 1);
+	v_VtxColor = u_NrmColor;
 
 	for (int i = 0; i < 3; i++)
 	{
