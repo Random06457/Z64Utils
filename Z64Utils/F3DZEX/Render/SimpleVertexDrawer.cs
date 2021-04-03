@@ -11,7 +11,7 @@ namespace F3DZEX.Render
     {
         public SimpleVertexDrawer()
         {
-            _shader = new ShaderHandler("Shaders/simpleVtx.vert", "Shaders/color.frag");
+            _shader = new ShaderHandler("Shaders/simpleVtx.vert", "Shaders/coloredVtx.frag");
             _attrs = new VertexAttribs();
 
             _attrs.LayoutAddFloat(3, VertexAttribPointerType.Float, false);

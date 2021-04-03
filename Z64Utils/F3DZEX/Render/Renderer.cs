@@ -27,7 +27,6 @@ namespace F3DZEX.Render
             private float _gridScale = 5000;
 
 
-            public bool RenderTextures { get; set; } = true;
             public float GridScale {
                 get => _gridScale;
                 set {
@@ -37,8 +36,9 @@ namespace F3DZEX.Render
             }
             public bool ShowGrid { get; set; } = true;
             public bool ShowAxis { get; set; } = true;
-            //public bool DiffuseLight { get; set; } = false;
             public bool ShowGLInfo { get; set; } = false;
+            public bool DrawNormals { get; set; } = true;
+            public RdpVertexDrawer.ModelRenderMode RenderMode { get; set; } = RdpVertexDrawer.ModelRenderMode.Normal;
         }
 
 
@@ -61,7 +61,6 @@ namespace F3DZEX.Render
         bool _reqDecodeTex = false;
 
         bool _initialized;
-        byte[] _vtxBuffer = new byte[32 * Vertex.SIZE];
         RdpVertexDrawer _rdpVtxDrawer;
         SimpleVertexDrawer _gridDrawer;
         ColoredVertexDrawer _axisDrawer;
@@ -115,7 +114,6 @@ namespace F3DZEX.Render
         
         #endregion
 
-        public void SendHighlightColor(Color color) => _rdpVtxDrawer.SendHighlightColor(color);
         private void SendModelMatrix()
         {
             _gridDrawer.SendModelMatrix(_mtxStack.Peek());
@@ -138,7 +136,10 @@ namespace F3DZEX.Render
             CheckGLErros();
         }
 
-
+        public void SetHightlightEnabled(bool enabled)
+        {
+            _rdpVtxDrawer.SendHighlightEnabled(enabled);
+        }
 
 
         private void Init()
@@ -160,7 +161,7 @@ namespace F3DZEX.Render
             vertices = RenderHelper.GenerateAxisvertices(CurrentConfig.GridScale);
             _axisDrawer.SetData(vertices, BufferUsageHint.StaticDraw);
 
-            _rdpVtxDrawer.SetData(_vtxBuffer, BufferUsageHint.DynamicDraw);
+            _rdpVtxDrawer.SetData(new byte[32 * (Vertex.SIZE + 4*4*4)], BufferUsageHint.DynamicDraw);
 
             CurrentConfig.OnGridScaleChanged += (o, e) =>
             {
@@ -190,9 +191,14 @@ namespace F3DZEX.Render
             Matrix4 id = Matrix4.Identity;
             _textDrawer.SendProjViewMatrices(ref id, ref id);
 
-            SendHighlightColor(Color.Transparent);
+            _rdpVtxDrawer.SendHighlightColor(Color.Red);
+            _rdpVtxDrawer.SendHighlightEnabled(false);
+            
 
-            _rdpVtxDrawer.SendTextureEnabled(CurrentConfig.RenderTextures);
+            _rdpVtxDrawer.SetModelRenderMode(CurrentConfig.RenderMode);
+            _rdpVtxDrawer.SendNormalColor(Color.Yellow);
+            _rdpVtxDrawer.SendWireFrameColor(Color.Black);
+            
 
 
             GL.Enable(EnableCap.DepthTest);
@@ -203,19 +209,6 @@ namespace F3DZEX.Render
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             GL.Enable(EnableCap.Texture2D);
-            if (false/*CurrentConfig.DiffuseLight*/)
-            {
-                GL.Enable(EnableCap.Lighting);
-                GL.Enable(EnableCap.ColorMaterial);
-                GL.Light(LightName.Light0, LightParameter.Diffuse, new float[] { 1.0f, 1.0f, 1.0f });
-                GL.Enable(EnableCap.Light0);
-            }
-            else
-            {
-                GL.Disable(EnableCap.Lighting);
-                GL.Disable(EnableCap.ColorMaterial);
-                GL.Disable(EnableCap.Light0);
-            }
 
             if (CurrentConfig.ShowGrid)
                 RenderHelper.DrawGrid(_gridDrawer);
@@ -361,6 +354,25 @@ namespace F3DZEX.Render
 
                         Matrix4 curMtx = _mtxStack.Peek();
 
+
+                        using (MemoryStream ms = new MemoryStream())
+                        {
+                            BinaryWriter bw = new BinaryWriter(ms);
+                            for (int i = 0; i < cmd.numv; i++)
+                            {
+                                byte[] data = Memory.ReadBytes(cmd.vaddr + (uint)(Vertex.SIZE * i), Vertex.SIZE);
+                                bw.Write(data);
+
+                                for (int y = 0; y < 4; y++)
+                                    for (int x = 0; x < 4; x++)
+                                        bw.Write(curMtx[y, x]);
+                            }
+
+                            _rdpVtxDrawer.SetSubData(ms.ToArray(), cmd.vbidx * (Vertex.SIZE + 4 * 4 * 4));
+                        }
+
+
+                        /*
                         byte[] data = Memory.ReadBytes(cmd.vaddr, Vertex.SIZE * cmd.numv);
 
                         for (int off = 0; off < cmd.numv * Vertex.SIZE; off += Vertex.SIZE)
@@ -385,40 +397,52 @@ namespace F3DZEX.Render
                             data[off + 4] = (byte)((z >> 8) & 0xFF);
                             data[off + 5] = (byte)((z >> 0) & 0xFF);
                         }
-                        
-                        _rdpVtxDrawer.SetSubData(data, cmd.vbidx * Vertex.SIZE);
 
-                    } break;
+                        _rdpVtxDrawer.SetSubData(data, cmd.vbidx * Vertex.SIZE);*/
+
+
+
+                    }
+                    break;
                 case Command.OpCodeID.G_TRI1:
                     {
                         var cmd = info.Convert<Command.GTri1>();
                         
-                        if (CurrentConfig.RenderTextures)
+                        if (CurrentConfig.RenderMode == RdpVertexDrawer.ModelRenderMode.Textured)
+                        {
+                            DecodeTexIfRequired();
+                            _rdpVtxDrawer.SendTexture(0);
+                        }
+
+                        byte[] indices = new byte[] { cmd.v0, cmd.v1, cmd.v2 };
+                        _rdpVtxDrawer.Draw(PrimitiveType.Triangles, indices, CurrentConfig.DrawNormals);
+
+                        /*if (CurrentConfig.RenderTextures && !CurrentConfig.WireFrame)
                         {
                             DecodeTexIfRequired();
                             _rdpVtxDrawer.SendTexture(0);
 
                             byte[] indices = new byte[] { cmd.v0, cmd.v1, cmd.v2 };
-                            _rdpVtxDrawer.Draw(PrimitiveType.Triangles, indices);
+                            _rdpVtxDrawer.Draw(PrimitiveType.Triangles, indices, CurrentConfig.DrawNormals);
                         }
                         else
                         {
                             byte[] indices = new byte[] { cmd.v0, cmd.v1, cmd.v2, cmd.v0 };
-                            _rdpVtxDrawer.Draw(PrimitiveType.LineStrip, indices);
-                        }
+                            _rdpVtxDrawer.Draw(PrimitiveType.LineStrip, indices, CurrentConfig.DrawNormals);
+                        }*/
                     }
                     break;
                 case Command.OpCodeID.G_TRI2:
                     {
                         var cmd = info.Convert<Command.GTri2>();
 
-                        if (CurrentConfig.RenderTextures)
+                        /*if (CurrentConfig.RenderTextures)
                         {
                             DecodeTexIfRequired();
                             _rdpVtxDrawer.SendTexture(0);
 
                             byte[] indices = new byte[] { cmd.v00, cmd.v01, cmd.v02, cmd.v10, cmd.v11, cmd.v12 };
-                            _rdpVtxDrawer.Draw(PrimitiveType.Triangles, indices);
+                            _rdpVtxDrawer.Draw(PrimitiveType.Triangles, indices, CurrentConfig.DrawNormals);
 
                         }
                         else
@@ -426,17 +450,28 @@ namespace F3DZEX.Render
                             //byte[] indices = new byte[] { cmd.v00, cmd.v01, cmd.v02, cmd.v00, cmd.v10, cmd.v11, cmd.v12, cmd.v10 };
                             //_rdpVtxDrawer.Draw(PrimitiveType.LineStrip, indices);
                             byte[] indices = new byte[] { cmd.v00, cmd.v01, cmd.v02 };
-                            _rdpVtxDrawer.Draw(PrimitiveType.LineLoop, indices);
+                            _rdpVtxDrawer.Draw(PrimitiveType.LineLoop, indices, CurrentConfig.DrawNormals);
                             indices = new byte[] { cmd.v10, cmd.v11, cmd.v12 };
-                            _rdpVtxDrawer.Draw(PrimitiveType.LineLoop, indices);
+                            _rdpVtxDrawer.Draw(PrimitiveType.LineLoop, indices, CurrentConfig.DrawNormals);
+                        }*/
+
+                        if (CurrentConfig.RenderMode == RdpVertexDrawer.ModelRenderMode.Textured)
+                        {
+                            DecodeTexIfRequired();
+                            _rdpVtxDrawer.SendTexture(0);
                         }
+
+                        byte[] indices = new byte[] { cmd.v00, cmd.v01, cmd.v02, cmd.v10, cmd.v11, cmd.v12 };
+                        _rdpVtxDrawer.Draw(PrimitiveType.Triangles, indices, CurrentConfig.DrawNormals);
+
+
                     }
                     break;
 
 
                 case Command.OpCodeID.G_SETTILESIZE:
                     {
-                        if (!CurrentConfig.RenderTextures)
+                        if (CurrentConfig.RenderMode != RdpVertexDrawer.ModelRenderMode.Textured)
                             return;
 
                         var cmd = info.Convert<Command.GLoadTile>();
@@ -455,7 +490,7 @@ namespace F3DZEX.Render
                     break;
                 case Command.OpCodeID.G_LOADBLOCK:
                     {
-                        if (!CurrentConfig.RenderTextures)
+                        if (CurrentConfig.RenderMode != RdpVertexDrawer.ModelRenderMode.Textured)
                             return;
 
                         var cmd = info.Convert<Command.GLoadBlock>();
@@ -470,7 +505,7 @@ namespace F3DZEX.Render
                     break;
                 case Command.OpCodeID.G_LOADTLUT:
                     {
-                        if (!CurrentConfig.RenderTextures)
+                        if (CurrentConfig.RenderMode != RdpVertexDrawer.ModelRenderMode.Textured)
                             return;
 
                         var cmd = info.Convert<Command.GLoadTlut>();
@@ -487,7 +522,7 @@ namespace F3DZEX.Render
                     break;
                 case Command.OpCodeID.G_SETTILE:
                     {
-                        if (!CurrentConfig.RenderTextures)
+                        if (CurrentConfig.RenderMode != RdpVertexDrawer.ModelRenderMode.Textured)
                             return;
 
                         var settile = info.Convert<Command.GSetTile>();

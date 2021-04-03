@@ -10,7 +10,7 @@ namespace F3DZEX.Render
     {
         public ColoredVertexDrawer()
         {
-            _shader = new ShaderHandler("Shaders/coloredVtx.vert", "Shaders/color.frag");
+            _shader = new ShaderHandler("Shaders/coloredVtx.vert", "Shaders/coloredVtx.frag");
             _attrs = new VertexAttribs();
             // pos
             _attrs.LayoutAddFloat(3, VertexAttribPointerType.Float, false);

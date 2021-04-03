@@ -21,17 +21,17 @@ namespace F3DZEX.Render
             where T : struct, IComparable
             => _attrs.SetData(buffer, size, hint);
 
-        public void Draw(PrimitiveType type, byte[] indices)
+        public virtual void Draw(PrimitiveType type, byte[] indices)
         {
             _shader.Use();
             _attrs.Draw(type, indices);
         }
-        public void Draw(PrimitiveType type, uint[] indices)
+        public virtual void Draw(PrimitiveType type, uint[] indices)
         {
             _shader.Use();
             _attrs.Draw(type, indices);
         }
-        public void Draw(PrimitiveType type)
+        public virtual void Draw(PrimitiveType type)
         {
             _shader.Use();
             _attrs.Draw(type);

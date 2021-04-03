@@ -77,10 +77,7 @@ namespace Z64.Forms
                 else
                 {
                     var node = treeView_hierarchy.SelectedNode;
-                    _renderer.SendHighlightColor(
-                        (node?.Tag?.Equals(_limbs[limbIdx]) ?? false)
-                        ? Color.Red
-                        : Color.Transparent);
+                    _renderer.SetHightlightEnabled(node?.Tag?.Equals(_limbs[limbIdx]) ?? false);
 
                     if (_limbDlists[limbIdx] != null)
                         _renderer.RenderDList(_limbDlists[limbIdx]);

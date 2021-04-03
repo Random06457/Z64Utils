@@ -1,18 +1,20 @@
 ﻿#version 330 core
 
-layout(location = 0) in ivec3 pos;
-layout(location = 1) in int flag;
-layout(location = 2) in ivec2 texCoords;
-layout(location = 3) in vec4 color;
+layout(location = 0) in ivec3 rdpVtxPos;
+layout(location = 1) in int rdpVtxFlag;
+layout(location = 2) in ivec2 rdpVtxTexCoords;
+layout(location = 3) in vec4 rdpVtxColor;
+layout(location = 4) in mat4 rdpMatrix;
+
+out vec2 v_VtxTexCoords;
+out vec3 v_VtxNormal;
+out vec4 v_VtxColor;
+flat out int v_VtxId;
 
 uniform mat4 u_View;
 uniform mat4 u_Model;
 uniform mat4 u_Projection;
 uniform sampler2D u_Tex;
-
-out vec2 v_VtxTexCoords;
-out vec4 v_VtxColor;
-flat out int v_VtxId;
 
 float S105ToFloat(int fp)
 {
@@ -33,12 +35,31 @@ vec2 decodeTexCoords(sampler2D tex, ivec2 coords)
 
 vec2 getTexCoords()
 {
-    return decodeTexCoords(u_Tex, ivec2(bomSwap16(texCoords.x), bomSwap16(texCoords.y)));
+    return decodeTexCoords(u_Tex, ivec2(bomSwap16(rdpVtxTexCoords.x), bomSwap16(rdpVtxTexCoords.y)));
 }
 
 vec3 getPos()
 {
-    return vec3(float(bomSwap16(pos.x)), float(bomSwap16(pos.y)), float(bomSwap16(pos.z)));
+    return vec3(float(bomSwap16(rdpVtxPos.x)), float(bomSwap16(rdpVtxPos.y)), float(bomSwap16(rdpVtxPos.z)));
+}
+
+
+vec3 decodeNormal(vec4 color)
+{
+    return vec3(color);
+}
+
+float SByteToByte(float x)
+{
+    if (x >= 0)
+        return x / 2;
+    else
+        return 0.5 + (x + 1) / 2;
+}
+
+vec4 decodeColor(vec4 color)
+{
+    return vec4(SByteToByte(color.r), SByteToByte(color.g), SByteToByte(color.b), SByteToByte(color.a));
 }
 
 
@@ -46,8 +67,15 @@ void main()
 {
     v_VtxId = gl_VertexID;
 
-    /* The vertices coordinates are multiplied by the model view matrix during the G_VTX command processing */
-    gl_Position = u_Projection * u_View /* u_Model*/ * vec4(getPos(), 1);
+    vec3 pos = getPos();
+    vec3 normal = decodeNormal(rdpVtxColor);
+    
     v_VtxTexCoords = getTexCoords();
-    v_VtxColor = color;
+    v_VtxColor = decodeColor(rdpVtxColor);
+
+    mat4 matrix = u_Projection * u_View * rdpMatrix /* u_Model*/;
+    mat3 normalMatrix = mat3(transpose(inverse(u_View * rdpMatrix)));
+
+    gl_Position = matrix * vec4(pos, 1);
+    v_VtxNormal = normalize(normalMatrix * normal);// (normalMatrix * vec4(normal, 1)).xyz;
 }
