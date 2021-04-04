@@ -13,7 +13,6 @@ using static Z64.Z64Object;
 using System.IO;
 using Syroot.BinaryData;
 using System.Diagnostics;
-using DList = System.Collections.Generic.List<System.Tuple<uint, F3DZEX.Command.CommandInfo>>;
 using Common;
 using System.Threading;
 
@@ -42,7 +41,7 @@ namespace Z64.Forms
         SkeletonHolder _skel;
         List<AnimationHolder> _anims;
         List<SkeletonLimbHolder> _limbs;
-        List<DList> _limbDlists;
+        List<F3DZEX.Dlist> _limbDlists;
 
         AnimationHolder _curAnim;
         short[] _frameData;
@@ -65,7 +64,7 @@ namespace Z64.Forms
             RenderModelViewer();
 
             FormClosing += (s, e) => {
-                if (!_formClosing)
+                if (_timer.Enabled && !_formClosing)
                 {
                     _formClosing = true;
                     e.Cancel = true;
@@ -133,7 +132,20 @@ namespace Z64.Forms
             */
         }
 
-        private void NewRender(object sender = null, EventArgs e = null)
+        private void TreeView_hierarchy_AfterSelect(object sender, EventArgs e)
+        {
+            var tag = treeView_hierarchy.SelectedNode?.Tag ?? null;
+            if (tag != null && tag is SkeletonLimbHolder)
+            {
+                var dlist = _limbDlists[_limbs.IndexOf((SkeletonLimbHolder)tag)];
+                _disasForm?.UpdateDlist(dlist);
+            }
+
+            NewRender();
+        }
+
+
+        private void NewRender()
         {
             _renderer.ClearErrors();
 
@@ -171,8 +183,8 @@ namespace Z64.Forms
 
         void UpdateLimbsDlists()
         {
-            _limbDlists = new List<DList>();
-            _limbs.ForEach(l => _limbDlists.Add(l.DListSeg.VAddr != 0 ? _renderer.GetFullDlist(l.DListSeg.VAddr) : null));
+            _limbDlists = new List<F3DZEX.Dlist>();
+            _limbs.ForEach(l => _limbDlists.Add(l.DListSeg.VAddr != 0 ? _renderer.GetDlist(l.DListSeg.VAddr) : null));
         }
 
         // Updates skeleton -> limbs / limbs dlists -> matrices
@@ -332,6 +344,28 @@ namespace Z64.Forms
             }
         }
 
+        private void ToolStripDisassemblyBtn_Click(object sender, System.EventArgs e)
+        {
+            if (_disasForm != null)
+            {
+                _disasForm.Activate();
+            }
+            else
+            {
+                _disasForm = new DisasmForm(defaultText: "No limb selected");
+
+                _disasForm.FormClosed += (sender, e) => _disasForm = null;
+                _disasForm.Show();
+            }
+
+            var tag = treeView_hierarchy.SelectedNode?.Tag ?? null;
+            if (tag != null && tag is SkeletonLimbHolder)
+            {
+                var dlist = _limbDlists[_limbs.IndexOf((SkeletonLimbHolder)tag)];
+                _disasForm.UpdateDlist(dlist);
+            }
+        }
+
         private void SkeletonViewerForm_FormClosed(object sender, FormClosedEventArgs e)
         {
             _disasForm?.Close();
@@ -446,6 +480,6 @@ namespace Z64.Forms
                 button_playAnim.BackgroundImage = Properties.Resources.pause_icon;
                 button_playbackAnim.BackgroundImage = Properties.Resources.playback_icon;
             }
-        }      
+        }
     }
 }

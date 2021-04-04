@@ -141,7 +141,7 @@
             this.modelViewer.RenderCallback = null;
             this.modelViewer.Size = new System.Drawing.Size(757, 585);
             this.modelViewer.TabIndex = 4;
-            this.modelViewer.VSync = false;
+            this.modelViewer.VSync = true;
             this.modelViewer.MouseClick += new System.Windows.Forms.MouseEventHandler(this.modelViewer_MouseClick);
             // 
             // listBox_routines
@@ -154,16 +154,17 @@
             this.listBox_routines.Name = "listBox_routines";
             this.listBox_routines.Size = new System.Drawing.Size(196, 576);
             this.listBox_routines.TabIndex = 10;
+            this.listBox_routines.SelectedIndexChanged += new System.EventHandler(this.listBox_routines_SelectedIndexChanged);
             // 
             // DListViewerForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(968, 638);
+            this.Controls.Add(this.modelViewer);
             this.Controls.Add(this.listBox_routines);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.toolStrip1);
-            this.Controls.Add(this.modelViewer);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "DListViewerForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;

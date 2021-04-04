@@ -7,7 +7,6 @@ using System.IO;
 using Common;
 using RDP;
 using static F3DZEX.Enums;
-using DList = System.Collections.Generic.List<System.Tuple<uint, F3DZEX.Command.CommandInfo>>;
 
 namespace F3DZEX
 {
@@ -124,7 +123,7 @@ namespace F3DZEX
                 new OtherModeMacro("PipelineMode", (int)G_MDSFT_H.G_MDSFT_PIPELINE, 1, "G_PM_1PRIMITIVE", 1<<23, "G_PM_NPRIMITIVE", 0),
             };
 
-        public string Name;
+            public string Name;
             int shift;
             int len;
             public List<Tuple<string, int>> values;
@@ -176,13 +175,14 @@ namespace F3DZEX
         uint _wordHi;
 
         Config _cfg;
-        uint? _vaddr;
-        DList _dlist = new DList();
+        Dlist _dlist = new Dlist();
 
-
+        /*
         public Disassembler(byte[] ucode, uint vaddr, Config cfg = null) : this(Command.DecodeDList(ucode), vaddr, cfg)
         {
         }
+        */
+        /*
         public Disassembler(List<Command.CommandInfo> dlist, uint vaddr, Config cfg = null)
         {
             _cfg = cfg ?? StaticConfig;
@@ -193,10 +193,10 @@ namespace F3DZEX
                 addr += (uint)e.GetSize();
             });
         }
-        public Disassembler(DList dlist, Config cfg = null)
+        */
+        public Disassembler(Dlist dlist, Config cfg = null)
         {
             _cfg = cfg ?? StaticConfig;
-            _vaddr = null;
             _dlist = dlist;
         }
 
@@ -206,38 +206,45 @@ namespace F3DZEX
             _wordLo = _wordHi = 0;
 
             int off = 0;
-            for (int i = 0; i < _dlist.Count; i++)
+            int i = 0;
+            int toSkip = 0;
+            foreach (var cmd in _dlist)
             {
-                var ins = _dlist[i].Item2;
-
-                uint addr = (_cfg.RelativeAddress) ? (uint)off : _vaddr != null ? _dlist[i].Item1 : (uint)(_vaddr + off);
-                string prefix = (_cfg.ShowAddress ? $"{addr:X8}: " : "");
-
-                string dis = DisassembleInstruction(ins);
-                if (_cfg.DisasMultiCmdMacro)
+                if (toSkip > 0)
                 {
-                    string macroDis = FindMultiCmdMacro(i, out int cmdCount);
-                    if (cmdCount > 0)
+                    toSkip--;
+                }
+                else
+                {
+                    uint addr = (_cfg.RelativeAddress) ? (uint)off : cmd.addr;
+                    string prefix = (_cfg.ShowAddress ? $"{addr:X8}: " : "");
+
+                    string dis = DisassembleInstruction(cmd.cmd);
+                    if (_cfg.DisasMultiCmdMacro)
                     {
-                        dis = macroDis;
-                        i += cmdCount-1;
-                        off += (cmdCount*8)-8;
-                        lines.Add($"/* Multi Command Macro Found ({cmdCount} instructions) */");
+                        string macroDis = FindMultiCmdMacro(i, out int cmdCount);
+                        if (cmdCount > 0)
+                        {
+                            dis = macroDis;
+                            toSkip = cmdCount-1;
+                            lines.Add($"/* Multi Command Macro Found ({cmdCount} instructions) */");
+                        }
                     }
+
+                    if (!_cfg.Static)
+                    {
+                        dis = dis.Remove(1, 1);
+                        dis = dis.Insert(dis.IndexOf('(')+1, "gfx++, ");
+                        dis = dis.Replace("(gfx++, )", "(gfx++)");
+                    }
+                    dis += _cfg.Static ? "," : ";";
+
+
+                    lines.Add(prefix + dis);
                 }
 
-                if (!_cfg.Static)
-                {
-                    dis = dis.Remove(1, 1);
-                    dis = dis.Insert(dis.IndexOf('(')+1, "gfx++, ");
-                    dis = dis.Replace("(gfx++, )", "(gfx++)");
-                }
-                dis += _cfg.Static ? "," : ";";
-
-
-                lines.Add(prefix + dis);
-
-                off += ins.GetSize();
+                i++;
+                off += cmd.cmd.GetSize();
             }
             return lines;
         }
@@ -264,12 +271,12 @@ namespace F3DZEX
             (dis, idx) =>
             {
                 int cmdCount = 6;
-                if (idx + cmdCount >= dis._dlist.Count)
+                if (idx + cmdCount >= dis._dlist.CommandCount())
                     return new Tuple<int, string>(0, null);
                 //copy the instructions
                 List<Command.CommandInfo> cmds = new List<Command.CommandInfo>();
                 for (int i = 0; i < cmdCount; i++)
-                    cmds.Add(dis._dlist[idx+i].Item2);
+                    cmds.Add(dis._dlist.AtIndex(idx+i).cmd);
 
                 uint dram = 0;
                 int tmemaddr = 0;
@@ -306,12 +313,12 @@ namespace F3DZEX
             (dis, idx) =>
             {
                 int cmdCount = 7;
-                if (idx + cmdCount >= dis._dlist.Count)
+                if (idx + cmdCount >= dis._dlist.CommandCount())
                     return new Tuple<int, string>(0, null);
                 //copy the instructions
                 List<Command.CommandInfo> cmds = new List<Command.CommandInfo>();
                 for (int i = 0; i < cmdCount; i++)
-                    cmds.Add(dis._dlist[idx+i].Item2);
+                    cmds.Add(dis._dlist.AtIndex(idx+i).cmd);
 
                 uint timg;
                 G_IM_FMT fmt;

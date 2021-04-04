@@ -12,8 +12,6 @@ using N64;
 using Syroot.BinaryData;
 using Z64;
 using RDP;
-
-using DList = System.Collections.Generic.List<System.Tuple<uint, F3DZEX.Command.CommandInfo>>;
 using System.Diagnostics;
 
 namespace F3DZEX.Render
@@ -37,9 +35,9 @@ namespace F3DZEX.Render
             public bool ShowGrid { get; set; } = true;
             public bool ShowAxis { get; set; } = true;
             public bool ShowGLInfo { get; set; } = false;
-            public RdpVertexDrawer.ModelRenderMode RenderMode { get; set; } = RdpVertexDrawer.ModelRenderMode.Wireframe;
+            public RdpVertexDrawer.ModelRenderMode RenderMode { get; set; } = RdpVertexDrawer.ModelRenderMode.Textured;
             public bool EnabledLighting { get; set; } = true;
-            public bool DrawNormals { get; set; } = true;
+            public bool DrawNormals { get; set; } = false;
             public Color NormalColor { get; set; } = Color.Yellow;
             public Color HighlightColor { get; set; } = Color.Red;
             public Color WireframeColor { get; set; } = Color.Black;
@@ -232,19 +230,11 @@ namespace F3DZEX.Render
             CheckGLErros();
         }
 
-
-        public List<Command.CommandInfo> GetDlist(uint vaddr)
+        public Dlist GetDlist(uint vaddr)
         {
             try
             {
-                for (int off = 0; ; off += 8)
-                {
-                    byte[] ins = Memory.ReadBytes(vaddr + (uint)off, 8);
-                    if (ins[0] == (byte)Command.OpCodeID.G_ENDDL)
-                    {
-                        return Command.DecodeDList(Memory.ReadBytes(vaddr, off + 8), 0);
-                    }
-                }
+                return new Dlist(Memory, vaddr);
             }
             catch
             {
@@ -252,53 +242,7 @@ namespace F3DZEX.Render
             }
         }
 
-        public DList GetFullDlist(uint vaddr)
-        {
-            DList ret = new DList();
-            Stack<uint> stack = new Stack<uint>();
-
-            var a = GetDlist(vaddr);
-            uint addr1 = 0;
-            a.ForEach(e => { ret.Add(new Tuple<uint, Command.CommandInfo>(addr1, e)); addr1 += (uint)e.GetSize(); });
-            return ret;
-
-            try
-            {
-                for (int off = 0; ; off += 8)
-                {
-                    Command.OpCodeID id = (Command.OpCodeID)Memory.ReadBytes(vaddr + (uint)off, 1)[0];
-
-                    if (id == Command.OpCodeID.G_DL)
-                    {
-                        var dlist = Command.DecodeDList(Memory.ReadBytes(vaddr, off + 8), 0);
-                        uint addr = vaddr;
-                        dlist.ForEach(e => { ret.Add(new Tuple<uint, Command.CommandInfo>(addr, e)); addr += (uint)e.GetSize(); });
-                        stack.Push(vaddr + (uint)off);
-                        off = 0;
-                    }
-                    if (id == Command.OpCodeID.G_ENDDL)
-                    {
-                        var dlist = Command.DecodeDList(Memory.ReadBytes(vaddr, off + 8), 0);
-                        uint addr = vaddr;
-                        dlist.ForEach(e => { ret.Add(new Tuple<uint, Command.CommandInfo>(addr, e)); addr += (uint)e.GetSize(); });
-                        off = 0;
-                        if (stack.Count > 0)
-                        {
-                            vaddr = stack.Last();
-                            stack.Pop();
-                        }
-                        else return ret;
-
-                    }
-                }
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        public void RenderDList(DList dlist)
+        public void RenderDList(Dlist dlist)
         {
             if (!_initialized)
                 Init();
@@ -311,8 +255,9 @@ namespace F3DZEX.Render
             {
                 foreach (var entry in dlist)
                 {
-                    addr = entry.Item1;
-                    ProcessInstruction(entry.Item2);
+                    
+                    addr = entry.addr;
+                    ProcessInstruction(entry.cmd);
                 }
             }
             catch (Exception ex)

@@ -17,8 +17,6 @@ using Syroot.BinaryData;
 using Z64;
 using Common;
 
-using DList = System.Collections.Generic.List<System.Tuple<uint, F3DZEX.Command.CommandInfo>>;
-
 namespace Z64.Forms
 {
     public partial class DListViewerForm : MicrosoftFontForm
@@ -29,7 +27,7 @@ namespace Z64.Forms
             public int X;
             public int Y;
             public int Z;
-            public DList DList;
+            public F3DZEX.Dlist Dlist;
 
             public RenderRoutine(uint addr, int x = 0, int y = 0, int z = 0)
             {
@@ -37,11 +35,11 @@ namespace Z64.Forms
                 X = x;
                 Y = y;
                 Z = z;
-                DList = null;
+                Dlist = null;
             }
             public RenderRoutine(F3DZEX.Render.Renderer renderer, uint addr, int x = 0, int y = 0, int z = 0) : this(addr, x, y, z)
             {
-                DList = renderer.GetFullDlist(addr);
+                Dlist = renderer.GetDlist(addr);
             }
 
             public override string ToString() => $"{Address:X8} [{X};{Y};{Z}]";
@@ -79,25 +77,15 @@ namespace Z64.Forms
         {
             _renderer.ClearErrors();
             foreach (RenderRoutine routine in _routines)
-                routine.DList = _renderer.GetFullDlist(routine.Address);
+                routine.Dlist = _renderer.GetDlist(routine.Address);
         }
 
         void RenderCallback(Matrix4 proj, Matrix4 view)
         {
-            /*
-            foreach (RenderRoutine routine in _routines)
-            {
-                GL.PushMatrix();
-                GL.Translate(routine.X, routine.Y, routine.Z);
-                _renderer.RenderDList(routine.DList);
-                GL.PopMatrix();
-            }
-            */
-
             _renderer.RenderStart(proj, view);
             foreach (var routine in _routines)
             {
-                _renderer.RenderDList(routine.DList);
+                _renderer.RenderDList(routine.Dlist);
             }
 
             toolStripStatusErrorLabel.Text = _renderer.RenderFailed()
@@ -109,17 +97,6 @@ namespace Z64.Forms
             _renderer.ClearErrors();
 
             toolStripStatusErrorLabel.Text = "";
-
-            // TODO: on listbox item changed
-            /*
-            if (_renderer.Routines.Count > 0)
-            {
-                uint addr = _renderer.Routines.First().Entrypoint;
-                _disasForm?.Update(addr, _renderer.GetDlist(addr));
-            }
-            else
-                _disasForm?.Update(0, new List<F3DZEX.Command.CommandInfo>());
-            */
 
             modelViewer.Render();
         }
@@ -217,13 +194,14 @@ namespace Z64.Forms
             }
             else
             {
-                _disasForm = new DisasmForm(new List<F3DZEX.Command.CommandInfo>());
+                _disasForm = new DisasmForm(defaultText: "No Dlist selected");
 
-                if (listBox_routines.SelectedIndex != -1)
-                    _disasForm.Update(_routines[listBox_routines.SelectedIndex].DList);
                 _disasForm.FormClosed += (sender, e) => _disasForm = null;
                 _disasForm.Show();
             }
+
+            if (listBox_routines.SelectedIndex != -1)
+                _disasForm.UpdateDlist(_routines[listBox_routines.SelectedIndex].Dlist);
         }
 
 
@@ -273,6 +251,18 @@ namespace Z64.Forms
             {
                 contextMenuStrip1.Show(modelViewer.PointToScreen(e.Location));
             }
+        }
+
+        private void listBox_routines_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            int idx = listBox_routines.SelectedIndex;
+            if (idx >= 0 && idx < _routines.Count)
+                _disasForm?.UpdateDlist(_routines[idx].Dlist);
+        }
+
+        private void modelViewer_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }

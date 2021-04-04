@@ -73,7 +73,7 @@ namespace Z64.Forms
             this.treeView_hierarchy.Name = "treeView_hierarchy";
             this.treeView_hierarchy.Size = new System.Drawing.Size(176, 264);
             this.treeView_hierarchy.TabIndex = 1;
-            this.treeView_hierarchy.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.NewRender);
+            this.treeView_hierarchy.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.TreeView_hierarchy_AfterSelect);
             // 
             // label1
             // 
@@ -122,6 +122,7 @@ namespace Z64.Forms
             this.toolStripDisassemblyBtn.Name = "toolStripDisassemblyBtn";
             this.toolStripDisassemblyBtn.Size = new System.Drawing.Size(76, 22);
             this.toolStripDisassemblyBtn.Text = "Disassembly";
+            this.toolStripDisassemblyBtn.Click += new System.EventHandler(this.ToolStripDisassemblyBtn_Click);
             // 
             // toolStripSeparator1
             // 
@@ -134,7 +135,6 @@ namespace Z64.Forms
             this.toolStripSegmentsBtn.Name = "toolStripSegmentsBtn";
             this.toolStripSegmentsBtn.Size = new System.Drawing.Size(63, 22);
             this.toolStripSegmentsBtn.Text = "Segments";
-            this.toolStripSegmentsBtn.Click += ToolStripSegmentsBtn_Click;
             // 
             // toolStrip2
             // 
@@ -188,7 +188,7 @@ namespace Z64.Forms
             // button_playAnim
             // 
             this.button_playAnim.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.button_playAnim.BackgroundImage = global::Z64.Properties.Resources.play_icon;
+            this.button_playAnim.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("button_playAnim.BackgroundImage")));
             this.button_playAnim.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.button_playAnim.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             this.button_playAnim.Location = new System.Drawing.Point(44, 553);
