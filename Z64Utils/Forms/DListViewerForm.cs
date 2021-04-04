@@ -68,6 +68,9 @@ namespace Z64.Forms
             _renderer = new F3DZEX.Render.Renderer(game, _rendererCfg);
             modelViewer.RenderCallback = RenderCallback;
 
+
+            RemoveRoutineMenuItem.Visible = false;
+
             _routines = new List<RenderRoutine>();
             SetupDLists();
             NewRender();
@@ -140,9 +143,9 @@ namespace Z64.Forms
             NewRender();
         }
 
-        public void AddDList(uint vaddr)
+        public void AddDList(uint vaddr, int x = 0, int y = 0, int z = 0)
         {
-            var routine = new RenderRoutine(_renderer, vaddr);
+            var routine = new RenderRoutine(_renderer, vaddr, x, y, z);
             listBox_routines.Items.Add(routine.ToString());
             _routines.Add(routine);
 
@@ -249,7 +252,7 @@ namespace Z64.Forms
         {
             if (e.Button == MouseButtons.Right)
             {
-                contextMenuStrip1.Show(modelViewer.PointToScreen(e.Location));
+                renderContextMenuStrip.Show(modelViewer.PointToScreen(e.Location));
             }
         }
 
@@ -257,12 +260,68 @@ namespace Z64.Forms
         {
             int idx = listBox_routines.SelectedIndex;
             if (idx >= 0 && idx < _routines.Count)
+            {
+                RemoveRoutineMenuItem.Visible = true;
                 _disasForm?.UpdateDlist(_routines[idx].Dlist);
+            }
+            else
+            {
+                RemoveRoutineMenuItem.Visible = false;
+            }
         }
 
-        private void modelViewer_Load(object sender, EventArgs e)
+        private string IsInputValid(string input)
         {
+            string err ="Invalid format, must be \"<address in hex>; <x>; <y>; <z>\"";
 
+            var parts = input.Replace(" ", "").Split(";");
+            if (parts.Length != 1 && parts.Length != 4)
+                return err;
+
+            string addrStr = parts[0];
+            if (addrStr.StartsWith("0x"))
+                addrStr = addrStr.Substring(2);
+
+            if (!SegmentedAddress.TryParse(addrStr, true, out SegmentedAddress addr))
+                return err;
+
+            for (int i = 1; i < parts.Length; i++)
+            {
+                if (!int.TryParse(parts[i], out int res))
+                    return err;
+            }
+
+            return null;
+        }
+
+        private void AddRoutineMenuItem_Click(object sender, System.EventArgs e)
+        {
+            EditValueForm form = new EditValueForm("Add Dlist", "Enter the address and coordinates of the dlist to add.", IsInputValid);
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                var parts = form.Result.Replace(" ", "").Split(";");
+                int x = 0, y = 0, z = 0;
+                var addr = SegmentedAddress.Parse(parts[0], true);
+                if (parts.Length > 1)
+                {
+                    x = int.Parse(parts[1]);
+                    y = int.Parse(parts[2]);
+                    z = int.Parse(parts[3]);
+                }
+
+                AddDList(addr.VAddr, x, y, z);
+            }
+        }
+        
+        private void RemoveRoutineMenuItem_Click(object sender, System.EventArgs e)
+        {
+            int idx = listBox_routines.SelectedIndex;
+            if (idx >= 0 && idx < _routines.Count)
+            {
+                listBox_routines.Items.RemoveAt(idx);
+                _routines.RemoveAt(idx);
+                NewRender();
+            }
         }
     }
 }

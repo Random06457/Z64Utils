@@ -131,13 +131,17 @@ namespace Z64.Forms
                 return;
             }
 
-            showInDisplayViewerToolStripMenuItem.Visible = false;
+            openInDlistViewerMenuItem.Visible = 
+            addToDlistViewerMenuItem.Visible =
+            openSkeletonViewerMenuItem.Visible = false;
 
             switch (holder.GetEntryType())
             {
                 case Z64Object.EntryType.DList:
                     {
-                        showInDisplayViewerToolStripMenuItem.Visible = true;
+                        openInDlistViewerMenuItem.Visible =
+                        addToDlistViewerMenuItem.Visible = true;
+
                         tabControl1.SelectedTab = tabPage_text;
                         UpdateDisassembly();
                         break;
@@ -167,8 +171,17 @@ namespace Z64.Forms
                     {
                         tabControl1.SelectedTab = tabPage_texture;
                         var tex = (Z64Object.TextureHolder)holder;
+
+                        label_textureInfo.Text = $"{tex.Width}x{tex.Height} {tex.Format}";
+
                         if ((tex.Format != N64.N64TexFormat.CI4 && tex.Format != N64.N64TexFormat.CI8) || tex.Tlut != null)
                             pic_texture.Image = tex.GetBitmap();
+
+                        if (tex.Tlut != null)
+                        {
+                            uint tlutAddr = new SegmentedAddress(_segment, _obj.OffsetOf(tex.Tlut)).VAddr;
+                            label_textureInfo.Text += $" (TLUT : 0x{tlutAddr:X8} {tex.Tlut.Width}x{tex.Tlut.Height} {tex.Tlut.Format})";
+                        }
                         break;
                     }
                 case Z64Object.EntryType.Mtx:
@@ -197,7 +210,7 @@ namespace Z64.Forms
                     }
                 case Z64Object.EntryType.SkeletonHeader:
                     {
-                        showInDisplayViewerToolStripMenuItem.Visible = true;
+                        openSkeletonViewerMenuItem.Visible = true;
                         tabControl1.SelectedTab = tabPage_text;
                         var skel = (Z64Object.SkeletonHolder)holder;
                         StringWriter sw = new StringWriter();
@@ -208,7 +221,7 @@ namespace Z64.Forms
                     }
                 case Z64Object.EntryType.FlexSkeletonHeader:
                     {
-                        showInDisplayViewerToolStripMenuItem.Visible = true;
+                        openSkeletonViewerMenuItem.Visible = true;
                         tabControl1.SelectedTab = tabPage_text;
                         var skel = (Z64Object.FlexSkeletonHolder)holder;
 
@@ -318,20 +331,13 @@ namespace Z64.Forms
             UpdateMap();
         }
 
-        private void showInDisplayViewerToolStripMenuItem_Click(object sender, EventArgs e)
+        
+
+        private void openSkeletonViewerMenuItem_Click(object sender, EventArgs e)
         {
             var holder = GetCurrentHolder<Z64Object.ObjectHolder>();
             switch (holder.GetEntryType())
             {
-                case Z64Object.EntryType.DList:
-                    {
-                        DListViewerForm.OpenInstance(_game);
-                        DListViewerForm.Instance.SetSegment(_segment, F3DZEX.Memory.Segment.FromBytes("[Selected Dlist]", _data));
-
-                        var dlist = GetCurrentHolder<Z64Object.DListHolder>();
-                        DListViewerForm.Instance.SetSingleDlist(new SegmentedAddress(_segment, _obj.OffsetOf(dlist)).VAddr);
-                        break;
-                    }
                 case Z64Object.EntryType.FlexSkeletonHeader:
                     {
                         var skel = GetCurrentHolder<Z64Object.FlexSkeletonHolder>();
@@ -346,23 +352,6 @@ namespace Z64.Forms
                         form.SetSegment(_segment, F3DZEX.Memory.Segment.FromBytes("[Current Object]", _data));
                         form.SetSkeleton(skel, anims);
                         form.Show();
-                        /*
-                        DListViewerForm.Instance.ClearRoutines();
-
-                        var skel = GetCurrentHolder<Z64Object.FlexSkeletonHolder>();
-                        byte[] limbsData = new byte[skel.LimbCount * 4];
-                        Buffer.BlockCopy(_data, (int)skel.LimbsSeg.SegmentOff, limbsData, 0, limbsData.Length);
-                        var limbs = new Z64Object.SkeletonLimbsHolder("temp", limbsData);
-
-                        foreach (var limbAddr in limbs.LimbSegments)
-                        {
-                            byte[] limbData = new byte[Z64Object.SkeletonLimbHolder.ENTRY_SIZE];
-                            Buffer.BlockCopy(_data, (int)limbAddr.SegmentOff, limbData, 0, limbData.Length);
-                            var limb = new Z64Object.SkeletonLimbHolder("temp", limbData);
-                            if (limb.DListSeg.VAddr != 0)
-                                DListViewerForm.Instance.AddRoutine(new F3DZEX.Renderer.RenderRoutine(limb.DListSeg.VAddr, limb.JointX, limb.JointY, limb.JointZ));
-                        }
-                        */
                         break;
                     }
                 case Z64Object.EntryType.SkeletonHeader:
@@ -379,27 +368,34 @@ namespace Z64.Forms
                         form.SetSegment(_segment, F3DZEX.Memory.Segment.FromBytes("[Current Object]", _data));
                         form.SetSkeleton(skel, anims);
                         form.Show();
-                        /*
-                        DListViewerForm.Instance.ClearRoutines();
-
-                        var skel = GetCurrentHolder<Z64Object.SkeletonHolder>();
-                        byte[] limbsData = new byte[skel.LimbCount * 4];
-                        Buffer.BlockCopy(_data, (int)skel.LimbsSeg.SegmentOff, limbsData, 0, limbsData.Length);
-                        var limbs = new Z64Object.SkeletonLimbsHolder("temp", limbsData);
-
-                        foreach (var limbAddr in limbs.LimbSegments)
-                        {
-                            byte[] limbData = new byte[Z64Object.SkeletonLimbHolder.ENTRY_SIZE];
-                            Buffer.BlockCopy(_data, (int)limbAddr.SegmentOff, limbData, 0, limbData.Length);
-                            var limb = new Z64Object.SkeletonLimbHolder("temp", limbData);
-                            if (limb.DListSeg.VAddr != 0)
-                                DListViewerForm.Instance.AddRoutine(new F3DZEX.Renderer.RenderRoutine(limb.DListSeg.VAddr, limb.JointX, limb.JointY, limb.JointZ));
-                        }
-                        */
                         break;
                     }
+            }
+        }
 
+        private void addToDisplayViewerMenuItem_Click(object sender, EventArgs e)
+        {
+            var holder = GetCurrentHolder<Z64Object.ObjectHolder>();
+            if (holder.GetEntryType() == Z64Object.EntryType.DList)
+            {
+                DListViewerForm.OpenInstance(_game);
+                DListViewerForm.Instance.SetSegment(_segment, F3DZEX.Memory.Segment.FromBytes("[Selected Dlist]", _data));
 
+                var dlist = GetCurrentHolder<Z64Object.DListHolder>();
+                DListViewerForm.Instance.AddDList(new SegmentedAddress(_segment, _obj.OffsetOf(dlist)).VAddr);
+            }
+        }
+
+        private void openInDisplayViewerMenuItem_Click(object sender, EventArgs e)
+        {
+            var holder = GetCurrentHolder<Z64Object.ObjectHolder>();
+            if (holder.GetEntryType() == Z64Object.EntryType.DList)
+            {
+                DListViewerForm.OpenInstance(_game);
+                DListViewerForm.Instance.SetSegment(_segment, F3DZEX.Memory.Segment.FromBytes("[Selected Dlist]", _data));
+
+                var dlist = GetCurrentHolder<Z64Object.DListHolder>();
+                DListViewerForm.Instance.SetSingleDlist(new SegmentedAddress(_segment, _obj.OffsetOf(dlist)).VAddr);
             }
 
         }

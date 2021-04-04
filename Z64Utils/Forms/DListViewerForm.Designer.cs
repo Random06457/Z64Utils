@@ -37,15 +37,19 @@
             this.toolStripSegmentsBtn = new System.Windows.Forms.ToolStripButton();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusErrorLabel = new System.Windows.Forms.ToolStripStatusLabel();
-            this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.renderContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.saveScreenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.copyToClipboardToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
             this.modelViewer = new Z64.Forms.ModelViewerControl();
             this.listBox_routines = new System.Windows.Forms.ListBox();
+            this.routineContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.AddRoutineMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.RemoveRoutineMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
-            this.contextMenuStrip1.SuspendLayout();
+            this.renderContextMenuStrip.SuspendLayout();
+            this.routineContextMenuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
             // toolStrip1
@@ -107,13 +111,13 @@
             this.toolStripStatusErrorLabel.Size = new System.Drawing.Size(118, 17);
             this.toolStripStatusErrorLabel.Text = "toolStripStatusLabel1";
             // 
-            // contextMenuStrip1
+            // renderContextMenuStrip
             // 
-            this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.renderContextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.saveScreenToolStripMenuItem,
             this.copyToClipboardToolStripMenuItem});
-            this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(218, 48);
+            this.renderContextMenuStrip.Name = "contextMenuStrip1";
+            this.renderContextMenuStrip.Size = new System.Drawing.Size(218, 48);
             // 
             // saveScreenToolStripMenuItem
             // 
@@ -146,15 +150,38 @@
             // 
             // listBox_routines
             // 
+            this.listBox_routines.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.listBox_routines.ContextMenuStrip = this.routineContextMenuStrip;
             this.listBox_routines.Font = new System.Drawing.Font("Consolas", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.listBox_routines.FormattingEnabled = true;
-            this.listBox_routines.Items.AddRange(new object[] {
-            "00000000 [-32768;-32768;-32768]"});
             this.listBox_routines.Location = new System.Drawing.Point(765, 28);
             this.listBox_routines.Name = "listBox_routines";
             this.listBox_routines.Size = new System.Drawing.Size(196, 576);
             this.listBox_routines.TabIndex = 10;
             this.listBox_routines.SelectedIndexChanged += new System.EventHandler(this.listBox_routines_SelectedIndexChanged);
+            // 
+            // routineContextMenuStrip
+            // 
+            this.routineContextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.AddRoutineMenuItem,
+            this.RemoveRoutineMenuItem});
+            this.routineContextMenuStrip.Name = "routineContextMenuStrip";
+            this.routineContextMenuStrip.Size = new System.Drawing.Size(118, 48);
+            // 
+            // AddRoutineMenuItem
+            // 
+            this.AddRoutineMenuItem.Name = "AddRoutineMenuItem";
+            this.AddRoutineMenuItem.Size = new System.Drawing.Size(117, 22);
+            this.AddRoutineMenuItem.Text = "Add";
+            this.AddRoutineMenuItem.Click += new System.EventHandler(this.AddRoutineMenuItem_Click);
+            // 
+            // RemoveRoutineMenuItem
+            // 
+            this.RemoveRoutineMenuItem.Name = "RemoveRoutineMenuItem";
+            this.RemoveRoutineMenuItem.Size = new System.Drawing.Size(117, 22);
+            this.RemoveRoutineMenuItem.Text = "Remove";
+            this.RemoveRoutineMenuItem.Click += new System.EventHandler(this.RemoveRoutineMenuItem_Click);
             // 
             // DListViewerForm
             // 
@@ -174,7 +201,8 @@
             this.toolStrip1.PerformLayout();
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
-            this.contextMenuStrip1.ResumeLayout(false);
+            this.renderContextMenuStrip.ResumeLayout(false);
+            this.routineContextMenuStrip.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -189,12 +217,15 @@
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusErrorLabel;
         private System.Windows.Forms.ToolStripButton toolStripButton3;
         private System.Windows.Forms.ToolStripButton toolStripRenderCfgBtn;
-        private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
+        private System.Windows.Forms.ContextMenuStrip renderContextMenuStrip;
         private System.Windows.Forms.ToolStripMenuItem saveScreenToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem copyToClipboardToolStripMenuItem;
         private System.Windows.Forms.SaveFileDialog saveFileDialog1;
         private System.Windows.Forms.ListBox listBox_routines;
         private System.Windows.Forms.ToolStripButton toolStripDisasBtn;
         private System.Windows.Forms.ToolStripButton toolStripSegmentsBtn;
+        private System.Windows.Forms.ContextMenuStrip routineContextMenuStrip;
+        private System.Windows.Forms.ToolStripMenuItem AddRoutineMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem RemoveRoutineMenuItem;
     }
 }

@@ -97,6 +97,24 @@ namespace RDP
                 SegmentOff = vaddr;
             }
         }
+
+        public static SegmentedAddress Parse(string text, bool acceptPrefix = true)
+        {
+            if (acceptPrefix && text.StartsWith("0x"))
+                text = text.Substring(2);
+
+            if (uint.TryParse(text, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out uint addr))
+                return new SegmentedAddress(addr);
+
+            return null;
+        }
+
+        public static bool TryParse(string text, bool acceptPrefix, out SegmentedAddress addr)
+        {
+            addr = Parse(text, acceptPrefix);
+
+            return addr != null;
+        }
     }
 
     public class Mtx

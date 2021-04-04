@@ -45,6 +45,7 @@
             this.tabPage_text = new System.Windows.Forms.TabPage();
             this.textBox_holderInfo = new System.Windows.Forms.TextBox();
             this.tabPage_texture = new System.Windows.Forms.TabPage();
+            this.label_textureInfo = new System.Windows.Forms.Label();
             this.pic_texture = new Z64.Forms.TextureBox();
             this.tabPage_vtx = new System.Windows.Forms.TabPage();
             this.listView_vtx = new System.Windows.Forms.ListView();
@@ -60,7 +61,9 @@
             this.columnHeader2 = new System.Windows.Forms.ColumnHeader();
             this.columnHeader3 = new System.Windows.Forms.ColumnHeader();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.showInDisplayViewerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.openInDlistViewerMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.addToDlistViewerMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.openSkeletonViewerMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.addToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.deleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
@@ -142,6 +145,7 @@
             // 
             // tabPage_texture
             // 
+            this.tabPage_texture.Controls.Add(this.label_textureInfo);
             this.tabPage_texture.Controls.Add(this.pic_texture);
             this.tabPage_texture.Location = new System.Drawing.Point(4, 22);
             this.tabPage_texture.Name = "tabPage_texture";
@@ -151,6 +155,16 @@
             this.tabPage_texture.Text = "texture";
             this.tabPage_texture.UseVisualStyleBackColor = true;
             // 
+            // label_textureInfo
+            // 
+            this.label_textureInfo.AutoSize = true;
+            this.label_textureInfo.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.label_textureInfo.Location = new System.Drawing.Point(6, 3);
+            this.label_textureInfo.Name = "label_textureInfo";
+            this.label_textureInfo.Size = new System.Drawing.Size(25, 13);
+            this.label_textureInfo.TabIndex = 1;
+            this.label_textureInfo.Text = "...";
+            // 
             // pic_texture
             // 
             this.pic_texture.AlphaTileSize = 10;
@@ -158,9 +172,9 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.pic_texture.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
-            this.pic_texture.Location = new System.Drawing.Point(6, 6);
+            this.pic_texture.Location = new System.Drawing.Point(6, 20);
             this.pic_texture.Name = "pic_texture";
-            this.pic_texture.Size = new System.Drawing.Size(617, 461);
+            this.pic_texture.Size = new System.Drawing.Size(617, 447);
             this.pic_texture.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pic_texture.TabIndex = 0;
             this.pic_texture.TabStop = false;
@@ -294,30 +308,46 @@
             // contextMenuStrip1
             // 
             this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.showInDisplayViewerToolStripMenuItem,
+            this.openInDlistViewerMenuItem,
+            this.addToDlistViewerMenuItem,
+            this.openSkeletonViewerMenuItem,
             this.addToolStripMenuItem,
             this.deleteToolStripMenuItem});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(181, 70);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(203, 114);
             // 
-            // showInDisplayViewerToolStripMenuItem
+            // openInDlistViewerMenuItem
             // 
-            this.showInDisplayViewerToolStripMenuItem.Name = "showInDisplayViewerToolStripMenuItem";
-            this.showInDisplayViewerToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.showInDisplayViewerToolStripMenuItem.Text = "Show In Dlist Viewer";
-            this.showInDisplayViewerToolStripMenuItem.Click += new System.EventHandler(this.showInDisplayViewerToolStripMenuItem_Click);
+            this.openInDlistViewerMenuItem.Name = "openInDlistViewerMenuItem";
+            this.openInDlistViewerMenuItem.Size = new System.Drawing.Size(202, 22);
+            this.openInDlistViewerMenuItem.Text = "Open In Dlist Viewer";
+            this.openInDlistViewerMenuItem.Click += new System.EventHandler(this.openInDisplayViewerMenuItem_Click);
+            // 
+            // addToDlistViewerMenuItem
+            // 
+            this.addToDlistViewerMenuItem.Name = "addToDlistViewerMenuItem";
+            this.addToDlistViewerMenuItem.Size = new System.Drawing.Size(202, 22);
+            this.addToDlistViewerMenuItem.Text = "Add to Dlist Viewer";
+            this.addToDlistViewerMenuItem.Click += new System.EventHandler(this.addToDisplayViewerMenuItem_Click);
+            // 
+            // openSkeletonViewerMenuItem
+            // 
+            this.openSkeletonViewerMenuItem.Name = "openSkeletonViewerMenuItem";
+            this.openSkeletonViewerMenuItem.Size = new System.Drawing.Size(202, 22);
+            this.openSkeletonViewerMenuItem.Text = "Open in Skeleton Viewer";
+            this.openSkeletonViewerMenuItem.Click += new System.EventHandler(this.openSkeletonViewerMenuItem_Click);
             // 
             // addToolStripMenuItem
             // 
             this.addToolStripMenuItem.Name = "addToolStripMenuItem";
-            this.addToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.addToolStripMenuItem.Size = new System.Drawing.Size(202, 22);
             this.addToolStripMenuItem.Text = "Add";
             this.addToolStripMenuItem.Click += new System.EventHandler(this.addToolStripMenuItem_Click);
             // 
             // deleteToolStripMenuItem
             // 
             this.deleteToolStripMenuItem.Name = "deleteToolStripMenuItem";
-            this.deleteToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.deleteToolStripMenuItem.Size = new System.Drawing.Size(202, 22);
             this.deleteToolStripMenuItem.Text = "Delete";
             this.deleteToolStripMenuItem.Click += new System.EventHandler(this.deleteToolStripMenuItem_Click);
             // 
@@ -364,37 +394,37 @@
             // findDlistsToolStripMenuItem
             // 
             this.findDlistsToolStripMenuItem.Name = "findDlistsToolStripMenuItem";
-            this.findDlistsToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+F";
-            this.findDlistsToolStripMenuItem.Size = new System.Drawing.Size(188, 22);
+            this.findDlistsToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Shift+F";
+            this.findDlistsToolStripMenuItem.Size = new System.Drawing.Size(220, 22);
             this.findDlistsToolStripMenuItem.Text = "Find Dlists";
             this.findDlistsToolStripMenuItem.Click += new System.EventHandler(this.findDlistsToolStripMenuItem_Click);
             // 
             // analyzeDlistsToolStripMenuItem
             // 
             this.analyzeDlistsToolStripMenuItem.Name = "analyzeDlistsToolStripMenuItem";
-            this.analyzeDlistsToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+A";
-            this.analyzeDlistsToolStripMenuItem.Size = new System.Drawing.Size(188, 22);
+            this.analyzeDlistsToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Shift+A";
+            this.analyzeDlistsToolStripMenuItem.Size = new System.Drawing.Size(220, 22);
             this.analyzeDlistsToolStripMenuItem.Text = "Analyze Dlists";
             this.analyzeDlistsToolStripMenuItem.Click += new System.EventHandler(this.analyzeDlistsToolStripMenuItem_Click);
             // 
             // importJSONToolStripMenuItem
             // 
             this.importJSONToolStripMenuItem.Name = "importJSONToolStripMenuItem";
-            this.importJSONToolStripMenuItem.Size = new System.Drawing.Size(188, 22);
+            this.importJSONToolStripMenuItem.Size = new System.Drawing.Size(220, 22);
             this.importJSONToolStripMenuItem.Text = "Import JSON";
             this.importJSONToolStripMenuItem.Click += new System.EventHandler(this.importJSONToolStripMenuItem_Click);
             // 
             // exportJSONToolStripMenuItem
             // 
             this.exportJSONToolStripMenuItem.Name = "exportJSONToolStripMenuItem";
-            this.exportJSONToolStripMenuItem.Size = new System.Drawing.Size(188, 22);
+            this.exportJSONToolStripMenuItem.Size = new System.Drawing.Size(220, 22);
             this.exportJSONToolStripMenuItem.Text = "Export JSON";
             this.exportJSONToolStripMenuItem.Click += new System.EventHandler(this.exportJSONToolStripMenuItem_Click);
             // 
             // resetToolStripMenuItem
             // 
             this.resetToolStripMenuItem.Name = "resetToolStripMenuItem";
-            this.resetToolStripMenuItem.Size = new System.Drawing.Size(188, 22);
+            this.resetToolStripMenuItem.Size = new System.Drawing.Size(220, 22);
             this.resetToolStripMenuItem.Text = "Reset";
             this.resetToolStripMenuItem.Click += new System.EventHandler(this.resetToolStripMenuItem_Click);
             // 
@@ -434,6 +464,7 @@
             this.tabPage_text.ResumeLayout(false);
             this.tabPage_text.PerformLayout();
             this.tabPage_texture.ResumeLayout(false);
+            this.tabPage_texture.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pic_texture)).EndInit();
             this.tabPage_vtx.ResumeLayout(false);
             this.tabPage_unknow.ResumeLayout(false);
@@ -463,7 +494,6 @@
         private System.Windows.Forms.TextBox textBox_holderInfo;
         private System.Windows.Forms.ToolStripMenuItem analyzeDlistsToolStripMenuItem;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
-        private System.Windows.Forms.ToolStripMenuItem showInDisplayViewerToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem addToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem deleteToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem resetToolStripMenuItem;
@@ -483,5 +513,9 @@
         private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem exportCToolStripMenuItem;
         private System.Windows.Forms.TabPage tabPage_text;
+        private System.Windows.Forms.ToolStripMenuItem openInDlistViewerMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem addToDlistViewerMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem openSkeletonViewerMenuItem;
+        private System.Windows.Forms.Label label_textureInfo;
     }
 }

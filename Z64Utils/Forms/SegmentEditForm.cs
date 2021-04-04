@@ -112,7 +112,7 @@ namespace Z64.Forms
             switch (comboBox1.SelectedItem)
             {
                 case SRC_ADDR:
-                    uint addr = uint.Parse(addressValue.Text, NumberStyles.HexNumber);
+                    uint addr = SegmentedAddress.Parse(addressValue.Text).VAddr;
                     ResultSegment = Memory.Segment.FromVram($"{addr:X8}", addr);
                     break;
 
@@ -146,7 +146,7 @@ namespace Z64.Forms
 
         private void addressValue_TextChanged(object sender, EventArgs e)
         {
-            okBtn.Enabled = uint.TryParse(addressValue.Text, NumberStyles.HexNumber, new CultureInfo("en-US"), out uint result);
+            okBtn.Enabled = SegmentedAddress.TryParse(addressValue.Text, true, out var _);
         }
     }
 }
