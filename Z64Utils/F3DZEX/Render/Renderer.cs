@@ -329,7 +329,7 @@ namespace F3DZEX.Render
         {
             if (_reqDecodeTex)
             {
-                Debug.WriteLine($"Decoding texture... {TexDecodeCount++}");
+                //Debug.WriteLine($"Decoding texture... {TexDecodeCount++}");
 
                 _renderTexData = N64Texture.Decode(_curTexW * _curTexH, _renderTexFmt, _renderTexSiz, _loadTexData, _curTLUT);                
                 _curTex.SetDataRGBA(_renderTexData, _curTexW, _curTexH);

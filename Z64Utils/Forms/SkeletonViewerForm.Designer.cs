@@ -29,7 +29,6 @@ namespace Z64.Forms
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SkeletonViewerForm));
             this.modelViewer = new Z64.Forms.ModelViewerControl();
             this.treeView_hierarchy = new System.Windows.Forms.TreeView();
@@ -47,8 +46,6 @@ namespace Z64.Forms
             this.label_anim = new System.Windows.Forms.Label();
             this.button_playAnim = new System.Windows.Forms.Button();
             this.button_playbackAnim = new System.Windows.Forms.Button();
-            this.button_pauseAnim = new System.Windows.Forms.Button();
-            this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.toolStrip1.SuspendLayout();
             this.toolStrip2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.trackBar_anim)).BeginInit();
@@ -172,9 +169,9 @@ namespace Z64.Forms
             // 
             this.trackBar_anim.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.trackBar_anim.Location = new System.Drawing.Point(122, 557);
+            this.trackBar_anim.Location = new System.Drawing.Point(86, 557);
             this.trackBar_anim.Name = "trackBar_anim";
-            this.trackBar_anim.Size = new System.Drawing.Size(572, 45);
+            this.trackBar_anim.Size = new System.Drawing.Size(608, 45);
             this.trackBar_anim.TabIndex = 12;
             this.trackBar_anim.ValueChanged += new System.EventHandler(this.trackBar_anim_ValueChanged);
             // 
@@ -182,7 +179,7 @@ namespace Z64.Forms
             // 
             this.label_anim.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.label_anim.AutoSize = true;
-            this.label_anim.Location = new System.Drawing.Point(122, 539);
+            this.label_anim.Location = new System.Drawing.Point(91, 539);
             this.label_anim.Name = "label_anim";
             this.label_anim.Size = new System.Drawing.Size(24, 13);
             this.label_anim.TabIndex = 13;
@@ -191,10 +188,10 @@ namespace Z64.Forms
             // button_playAnim
             // 
             this.button_playAnim.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.button_playAnim.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("button_playAnim.BackgroundImage")));
+            this.button_playAnim.BackgroundImage = global::Z64.Properties.Resources.play_icon;
             this.button_playAnim.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.button_playAnim.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-            this.button_playAnim.Location = new System.Drawing.Point(80, 553);
+            this.button_playAnim.Location = new System.Drawing.Point(44, 553);
             this.button_playAnim.Name = "button_playAnim";
             this.button_playAnim.Size = new System.Drawing.Size(36, 36);
             this.button_playAnim.TabIndex = 14;
@@ -214,30 +211,11 @@ namespace Z64.Forms
             this.button_playbackAnim.UseVisualStyleBackColor = true;
             this.button_playbackAnim.Click += new System.EventHandler(this.button_playbackAnim_Click);
             // 
-            // button_pauseAnim
-            // 
-            this.button_pauseAnim.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.button_pauseAnim.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("button_pauseAnim.BackgroundImage")));
-            this.button_pauseAnim.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.button_pauseAnim.Enabled = false;
-            this.button_pauseAnim.Font = new System.Drawing.Font("Gill Sans Ultra Bold", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.button_pauseAnim.Location = new System.Drawing.Point(42, 553);
-            this.button_pauseAnim.Name = "button_pauseAnim";
-            this.button_pauseAnim.Size = new System.Drawing.Size(36, 36);
-            this.button_pauseAnim.TabIndex = 16;
-            this.button_pauseAnim.UseVisualStyleBackColor = true;
-            this.button_pauseAnim.Click += new System.EventHandler(this.button_pauseAnim_Click);
-            // 
-            // timer1
-            // 
-            this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
-            // 
             // SkeletonViewerForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(706, 617);
-            this.Controls.Add(this.button_pauseAnim);
             this.Controls.Add(this.button_playbackAnim);
             this.Controls.Add(this.button_playAnim);
             this.Controls.Add(this.label_anim);
@@ -283,7 +261,5 @@ namespace Z64.Forms
         private System.Windows.Forms.Label label_anim;
         private System.Windows.Forms.Button button_playAnim;
         private System.Windows.Forms.Button button_playbackAnim;
-        private System.Windows.Forms.Button button_pauseAnim;
-        private System.Windows.Forms.Timer timer1;
     }
 }

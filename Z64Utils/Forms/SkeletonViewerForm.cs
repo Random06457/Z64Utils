@@ -15,11 +15,23 @@ using Syroot.BinaryData;
 using System.Diagnostics;
 using DList = System.Collections.Generic.List<System.Tuple<uint, F3DZEX.Command.CommandInfo>>;
 using Common;
+using System.Threading;
 
 namespace Z64.Forms
 {
     public partial class SkeletonViewerForm : MicrosoftFontForm
     {
+        enum PlayState
+        {
+            Pause,
+            Forward,
+            Backward,
+        }
+
+        bool _formClosing = false;
+        System.Timers.Timer _timer;
+        PlayState _playState;
+
         Z64Game _game;
         F3DZEX.Render.Renderer _renderer;
         SegmentEditorForm _segForm;
@@ -47,8 +59,21 @@ namespace Z64.Forms
             _renderer = new F3DZEX.Render.Renderer(game, _rendererCfg);
             modelViewer.RenderCallback = RenderCallback;
 
+            _timer = new System.Timers.Timer();
+            _timer.Elapsed += Timer_Elapsed;
+
             RenderModelViewer();
+
+            FormClosing += (s, e) => {
+                if (!_formClosing)
+                {
+                    _formClosing = true;
+                    e.Cancel = true;
+                }
+            };
+            _playState = PlayState.Pause;
         }
+
 
         void RenderLimb(int limbIdx, bool overlay = false)
         {
@@ -346,7 +371,6 @@ namespace Z64.Forms
             }
         }
 
-
         private void listBox_anims_SelectedIndexChanged(object sender, EventArgs e)
         {
             _curAnim = null;
@@ -365,43 +389,63 @@ namespace Z64.Forms
             NewRender();
         }
 
+        private void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            if (this.IsDisposed || _formClosing)
+            {
+                _timer.Stop();
+                Invoke(new Action(Close));
+                return;
+            }
+
+            Invoke(new Action(() =>
+            {
+                if (_playState == PlayState.Forward)
+                {
+                    trackBar_anim.Value = trackBar_anim.Value < trackBar_anim.Maximum
+                        ? trackBar_anim.Value + 1
+                        : 0;
+                }
+                else
+                {
+                    trackBar_anim.Value = trackBar_anim.Value > 0
+                        ? trackBar_anim.Value - 1
+                        : trackBar_anim.Maximum;
+                }
+            }));
+        }
         private void button_playbackAnim_Click(object sender, EventArgs e)
         {
-            timer1.Start();
-            button_playbackAnim.Enabled = false;
-            button_playAnim.Enabled = button_pauseAnim.Enabled = true;
+            if (_playState == PlayState.Backward)
+            {
+                _playState = PlayState.Pause;
+                _timer.Stop();
+                button_playbackAnim.BackgroundImage = Properties.Resources.playback_icon;
+            }
+            else
+            {
+                _playState = PlayState.Backward;
+                _timer.Start();
+                button_playbackAnim.BackgroundImage = Properties.Resources.pause_icon;
+                button_playAnim.BackgroundImage = Properties.Resources.play_icon;
+            }
         }
 
         private void button_playAnim_Click(object sender, EventArgs e)
         {
-            timer1.Start();
-            button_playAnim.Enabled = false;
-            button_playbackAnim.Enabled = button_pauseAnim.Enabled = true;
-        }
-
-        private void button_pauseAnim_Click(object sender, EventArgs e)
-        {
-            timer1.Stop();
-            button_pauseAnim.Enabled = false;
-            button_playAnim.Enabled = button_playbackAnim.Enabled = true;
-        }
-
-        private void timer1_Tick(object sender, EventArgs e)
-        {
-            if (button_playbackAnim.Enabled)
+            if (_playState == PlayState.Forward)
             {
-                trackBar_anim.Value = trackBar_anim.Value < trackBar_anim.Maximum
-                    ? trackBar_anim.Value + 1
-                    : 0;
+                _playState = PlayState.Pause;
+                _timer.Stop();
+                button_playAnim.BackgroundImage = Properties.Resources.play_icon;
             }
             else
             {
-                trackBar_anim.Value = trackBar_anim.Value > 0
-                    ? trackBar_anim.Value - 1
-                    : trackBar_anim.Maximum;
+                _playState = PlayState.Forward;
+                _timer.Start();
+                button_playAnim.BackgroundImage = Properties.Resources.pause_icon;
+                button_playbackAnim.BackgroundImage = Properties.Resources.playback_icon;
             }
-        }
-
-        
+        }      
     }
 }
