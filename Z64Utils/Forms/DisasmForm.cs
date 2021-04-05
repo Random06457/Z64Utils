@@ -37,6 +37,10 @@ namespace Z64.Forms
             _dlist = dlist;
             UpdateDisassembly();
         }
+        public void SetMessage(string text)
+        {
+            textBox_disassembly.Text = text;
+        }
 
         private void textBox1_TextChanged(object sender, EventArgs e)
         {

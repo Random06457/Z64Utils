@@ -232,14 +232,7 @@ namespace F3DZEX.Render
 
         public Dlist GetDlist(uint vaddr)
         {
-            try
-            {
-                return new Dlist(Memory, vaddr);
-            }
-            catch
-            {
-                return null;
-            }
+            return new Dlist(Memory, vaddr);
         }
 
         public void RenderDList(Dlist dlist)

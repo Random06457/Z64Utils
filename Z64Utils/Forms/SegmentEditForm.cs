@@ -23,6 +23,7 @@ namespace Z64.Forms
         const string SRC_FILE = "File";
         const string SRC_IDENT_MTX = "Ident Matrices";
         const string SRC_NULL = "Null Bytes";
+        const string SRC_EMPTY_DLIST = "Empty Dlist";
 
         public Memory.Segment ResultSegment { get; set; }
 
@@ -42,6 +43,7 @@ namespace Z64.Forms
             comboBox1.Items.Add(SRC_FILE);
             comboBox1.Items.Add(SRC_IDENT_MTX);
             comboBox1.Items.Add(SRC_NULL);
+            comboBox1.Items.Add(SRC_EMPTY_DLIST);
 
             comboBox1.SelectedItem = SRC_EMPTY;
             DialogResult = DialogResult.Cancel;
@@ -74,6 +76,7 @@ namespace Z64.Forms
                 case SRC_EMPTY: // Empty
                 case SRC_IDENT_MTX: // Ident Matrices
                 case SRC_NULL: // Null Bytes
+                case SRC_EMPTY_DLIST: // Empty Dlist
                     tabControl1.SelectedTab = tabPage_empty;
                     okBtn.Enabled = true;
                     break;
@@ -134,6 +137,10 @@ namespace Z64.Forms
                     break;
                 case SRC_EMPTY:
                     ResultSegment = Memory.Segment.Empty();
+                    break;
+
+                case SRC_EMPTY_DLIST:
+                    ResultSegment = Memory.Segment.FromBytes("Empty Dlist", new byte[] { 0xDF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 });
                     break;
 
                 default:

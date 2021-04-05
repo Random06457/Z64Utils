@@ -140,11 +140,15 @@ namespace F3DZEX
             return $"{push} | {load} | {projection}";
         }
 
-        public static string ParseMirrorClamFlag(int v)
+        public static string ParseMirrorClampFlag(ClampMirrorFlag v)
         {
-            var mirror = (ClampMirrorFlag)v & ClampMirrorFlag.G_TX_MIRROR;
-            var wrap = (ClampMirrorFlag)v & ClampMirrorFlag.G_TX_CLAMP;
+            var mirror = v & ClampMirrorFlag.G_TX_MIRROR;
+            var wrap = v & ClampMirrorFlag.G_TX_CLAMP;
             return $"{mirror} | {wrap}";
+        }
+        public static string ParseMirrorClampFlag(int v)
+        {
+            return ParseMirrorClampFlag((ClampMirrorFlag)v);
         }
 
     }

@@ -60,7 +60,7 @@ namespace F3DZEX
                         // decode dlist recursively
                         DecodeDlist(mem, gdl.dl, depth + 1);
 
-                        size = 0;
+                        size = -8;
                     }
                     else
                     {
