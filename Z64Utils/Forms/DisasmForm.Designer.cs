@@ -40,6 +40,8 @@
             // 
             // textBox_bytes
             // 
+            this.textBox_bytes.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.textBox_bytes.Location = new System.Drawing.Point(12, 41);
             this.textBox_bytes.Multiline = true;
             this.textBox_bytes.Name = "textBox_bytes";
@@ -61,7 +63,7 @@
             this.textBox_disassembly.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBox_disassembly.Font = new System.Drawing.Font("Consolas", 8.25F);
+            this.textBox_disassembly.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.textBox_disassembly.Location = new System.Drawing.Point(12, 249);
             this.textBox_disassembly.Multiline = true;
             this.textBox_disassembly.Name = "textBox_disassembly";
@@ -93,10 +95,9 @@
             // 
             // toolStripButton1
             // 
-            this.toolStripButton1.Image = global::Z64.Properties.Resources.tools;
             this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripButton1.Name = "toolStripButton1";
-            this.toolStripButton1.Size = new System.Drawing.Size(137, 22);
+            this.toolStripButton1.Size = new System.Drawing.Size(121, 22);
             this.toolStripButton1.Text = "Disassembly Settings";
             this.toolStripButton1.Click += new System.EventHandler(this.toolStripButton1_Click);
             // 

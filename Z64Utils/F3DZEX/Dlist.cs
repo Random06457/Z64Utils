@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RDP;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
@@ -50,17 +51,31 @@ namespace F3DZEX
                 {
                     var cmds = Command.DecodeDList(mem.ReadBytes(addr, size + 8), 0);
 
-                    // append previous command to the list
+                    // append previous command to the list and increment address
                     cmds.ForEach(cmd => { _cmds.Add(new CommandHolder(addr, depth, cmd)); addr += (uint)cmd.GetSize(); });
 
                     if (id == Command.OpCodeID.G_DL)
                     {
                         var gdl = cmds[^1].Convert<Command.GDl>();
 
-                        // decode dlist recursively
-                        DecodeDlist(mem, gdl.dl, depth + 1);
+                        // checks if the segment is set
+                        SegmentedAddress dlAddr = new SegmentedAddress(gdl.dl);
+                        if (dlAddr.Segmented && mem.Segments[dlAddr.SegmentId].Type == Memory.SegmentType.Empty)
+                            throw new Exception($"G_DL : Trying to jump to an empty segment (0x{gdl.dl:X8}). Set Segment {dlAddr.SegmentId} to fix the issue.");
+
+                        if (gdl.branch)
+                        {
+                            // branch
+                            addr = gdl.dl;
+                        }
+                        else
+                        {
+                            // decode dlist recursively
+                            DecodeDlist(mem, gdl.dl, depth + 1);
+                        }
 
                         size = -8;
+
                     }
                     else
                     {

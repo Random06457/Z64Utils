@@ -98,6 +98,9 @@ namespace RDP
             }
         }
 
+        public static implicit operator uint(SegmentedAddress seg) => seg.VAddr;
+        public static explicit operator SegmentedAddress(uint addr) => new SegmentedAddress(addr);
+
         public static SegmentedAddress Parse(string text, bool acceptPrefix = true)
         {
             if (acceptPrefix && text.StartsWith("0x"))
