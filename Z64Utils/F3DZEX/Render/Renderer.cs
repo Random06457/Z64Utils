@@ -42,6 +42,7 @@ namespace F3DZEX.Render
             public Color NormalColor { get; set; } = Color.Yellow;
             public Color HighlightColor { get; set; } = Color.Red;
             public Color WireframeColor { get; set; } = Color.Black;
+            public Color BackColor { get; set; } = Color.DodgerBlue;
         }
 
 
@@ -151,6 +152,9 @@ namespace F3DZEX.Render
             if (!_initialized)
                 Init();
 
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            GL.ClearColor(CurrentConfig.BackColor);
+
             if (RenderFailed())
                 return;
 
@@ -174,8 +178,6 @@ namespace F3DZEX.Render
             _rdpVtxDrawer.SendNormalColor(CurrentConfig.NormalColor);
             _rdpVtxDrawer.SendWireFrameColor(CurrentConfig.WireframeColor);
             _rdpVtxDrawer.SendLightingEnabled(CurrentConfig.EnabledLighting);
-            
-
 
             GL.Enable(EnableCap.DepthTest);
             //GL.DepthFunc(DepthFunction.Lequal);

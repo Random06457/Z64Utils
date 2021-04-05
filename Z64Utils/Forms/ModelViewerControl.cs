@@ -113,9 +113,6 @@ namespace Z64.Forms
 
             HandleCamera();
 
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            GL.ClearColor(BackColor);
-
             RenderCallback?.Invoke(_projectionMtx, _viewMtx);
 
             SwapBuffers();
