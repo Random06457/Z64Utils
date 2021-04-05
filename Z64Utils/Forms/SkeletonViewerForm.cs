@@ -140,6 +140,8 @@ namespace Z64.Forms
                 var dlist = _limbDlists[_limbs.IndexOf((SkeletonLimbHolder)tag)];
                 if (dlist != null)
                     _disasForm?.UpdateDlist(dlist);
+                else
+                    _disasForm?.SetMessage("Empty limb");
             }
 
             NewRender();
