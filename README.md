@@ -3,6 +3,7 @@
 WIP Tool to parse and view various files and structures in Zelda 64 roms.
 
 <img src="https://i.imgur.com/N7ROTdS.png" width=100%/>
+Demo (old) : https://youtu.be/AIVDunCtSnM
 
 # Features
 
@@ -29,5 +30,3 @@ The Skeleton Viewer can parse and render skeletons and animations used in Ocarin
 
 Note that currently only standart limbs are supported (no SkinLimb/LodLimb)
 
-
-Demo (old) : https://youtu.be/AIVDunCtSnM
