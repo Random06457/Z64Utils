@@ -334,7 +334,7 @@ namespace Z64.Forms
             {
                 var res = MessageBox.Show($"A new release is available on github (tag {newTag}).\r\nWould you like to open the release page?", "New Release Available", MessageBoxButtons.YesNo);
                 if (res == DialogResult.Yes)
-                    Process.Start(UpdateChecker.ReleaseURL);
+                    Utils.OpenBrowser(UpdateChecker.ReleaseURL);
             }
             else
                 MessageBox.Show("No new release available.");
