@@ -76,12 +76,12 @@ namespace Z64.Forms
 
         void RenderLimb(int limbIdx, bool overlay = false)
         {
-            _renderer.PushMatrix();
+            _renderer.RdpMtxStack.Push();
 
 
             if (_curAnim != null)
             {
-                _renderer.LoadMatrix(CalcMatrix(_renderer.TopMatrix(), limbIdx));
+                _renderer.RdpMtxStack.Load(CalcMatrix(_renderer.RdpMtxStack.Top(), limbIdx));
 
                 if (overlay)
                 {
@@ -113,7 +113,7 @@ namespace Z64.Forms
             if (_limbs[limbIdx].Child != 0xFF)
                 RenderLimb(_limbs[limbIdx].Child, overlay);
 
-            _renderer.PopMatrix();
+            _renderer.RdpMtxStack.Pop();
 
             if (_limbs[limbIdx].Sibling != 0xFF)
                 RenderLimb(_limbs[limbIdx].Sibling, overlay);

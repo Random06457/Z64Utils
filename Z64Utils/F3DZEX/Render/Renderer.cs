@@ -50,6 +50,11 @@ namespace F3DZEX.Render
         public Config CurrentConfig { get; set; }
         public Memory Memory { get; private set; }
 
+        // matrix that gets transforms the vertices loaded with G_VTX
+        public MatrixStack RdpMtxStack { get; }
+        public MatrixStack ModelMtxStack { get; }
+
+
         G_IM_SIZ _loadTexSiz;
         G_IM_FMT _renderTexFmt;
         G_IM_SIZ _renderTexSiz;
@@ -69,8 +74,6 @@ namespace F3DZEX.Render
         ColoredVertexDrawer _axisDrawer;
         TextDrawer _textDrawer;
         TextureHandler _curTex;
-        Stack<Matrix4> _mtxStack = new Stack<Matrix4>();
-
 
         public bool RenderFailed() => ErrorMsg != null;
 
@@ -83,48 +86,15 @@ namespace F3DZEX.Render
             Memory = mem;
             CurrentConfig = cfg;
 
-            _mtxStack.Push(Matrix4.Identity);
+            RdpMtxStack = new MatrixStack();
+            ModelMtxStack = new MatrixStack();
+
+            ModelMtxStack.OnTopMatrixChanged += (sender, e) => _rdpVtxDrawer.SendModelMatrix(e.newTop);
         }
         
         public void ClearErrors() => ErrorMsg = null;
 
-        #region Matrix Stack
 
-        public Matrix4 TopMatrix()
-        {
-            return _mtxStack.Peek();
-        }
-        public void PushMatrix()
-        {
-            _mtxStack.Push(_mtxStack.Peek());
-        }
-        public void PushMatrix(Matrix4 mtx)
-        {
-            _mtxStack.Push(mtx);
-            SendModelMatrix();
-        }
-        public Matrix4 PopMatrix()
-        {
-            var ret = _mtxStack.Pop();
-            SendModelMatrix();
-            return ret;
-        }
-        public void LoadMatrix(Matrix4 mtx)
-        {
-            _mtxStack.Pop();
-            PushMatrix(mtx);
-        }
-        
-        #endregion
-
-        private void SendModelMatrix()
-        {
-            _gridDrawer.SendModelMatrix(_mtxStack.Peek());
-            _axisDrawer.SendModelMatrix(_mtxStack.Peek());
-            
-            /* The vertices coordinates are multiplied by the model matrix during the G_VTX command processing */
-            //_rdpVtxDrawer.SendModelMatrix(_mtxStack.Peek());
-        }
 
 
         private void CheckGLErros()
@@ -184,15 +154,19 @@ namespace F3DZEX.Render
             if (RenderFailed())
                 return;
 
-            _mtxStack = new Stack<Matrix4>();
-            PushMatrix(Matrix4.Identity);
+            RdpMtxStack.Clear();
+            ModelMtxStack.Clear();
 
-            
+
             _gridDrawer.SendProjViewMatrices(ref proj, ref view);
             _axisDrawer.SendProjViewMatrices(ref proj, ref view);
             _rdpVtxDrawer.SendProjViewMatrices(ref proj, ref view);
             Matrix4 id = Matrix4.Identity;
             _textDrawer.SendProjViewMatrices(ref id, ref id);
+
+            _rdpVtxDrawer.SendModelMatrix(ModelMtxStack.Top());
+            _gridDrawer.SendModelMatrix(Matrix4.Identity);
+            _axisDrawer.SendModelMatrix(Matrix4.Identity);
 
             _rdpVtxDrawer.SendHighlightColor(CurrentConfig.HighlightColor);
             _rdpVtxDrawer.SendHighlightEnabled(false);
@@ -292,10 +266,8 @@ namespace F3DZEX.Render
                     {
                         var cmd = info.Convert<GVtx>();
 
-                        /* We have to multiply the vertex coordinates with the model view matrix here */
-
-                        Matrix4 curMtx = _mtxStack.Peek();
-
+                        /* We have to send the rdp model matrix here */
+                        Matrix4 curMtx = RdpMtxStack.Top();
 
                         using (MemoryStream ms = new MemoryStream())
                         {
@@ -305,6 +277,7 @@ namespace F3DZEX.Render
                                 byte[] data = Memory.ReadBytes(cmd.vaddr + (uint)(Vertex.SIZE * i), Vertex.SIZE);
                                 bw.Write(data);
 
+                                // send the rdp top matrix
                                 for (int y = 0; y < 4; y++)
                                     for (int x = 0; x < 4; x++)
                                         bw.Write(curMtx[y, x]);
@@ -312,38 +285,6 @@ namespace F3DZEX.Render
 
                             _rdpVtxDrawer.SetSubData(ms.ToArray(), cmd.vbidx * (Vertex.SIZE + 4 * 4 * 4));
                         }
-
-
-                        /*
-                        byte[] data = Memory.ReadBytes(cmd.vaddr, Vertex.SIZE * cmd.numv);
-
-                        for (int off = 0; off < cmd.numv * Vertex.SIZE; off += Vertex.SIZE)
-                        {
-                            Vector4 pos = new Vector4(
-                                (short)(data[off + 0] << 8 | data[off + 1]),
-                                (short)(data[off + 2] << 8 | data[off + 3]),
-                                (short)(data[off + 4] << 8 | data[off + 5]),
-                                1
-                                ) * curMtx;
-
-                            short x = (short)pos.X;
-                            short y = (short)pos.Y;
-                            short z = (short)pos.Z;
-
-                            data[off + 0] = (byte)((x >> 8) & 0xFF);
-                            data[off + 1] = (byte)((x >> 0) & 0xFF);
-
-                            data[off + 2] = (byte)((y >> 8) & 0xFF);
-                            data[off + 3] = (byte)((y >> 0) & 0xFF);
-                            
-                            data[off + 4] = (byte)((z >> 8) & 0xFF);
-                            data[off + 5] = (byte)((z >> 0) & 0xFF);
-                        }
-
-                        _rdpVtxDrawer.SetSubData(data, cmd.vbidx * Vertex.SIZE);*/
-
-
-
                     }
                     break;
                 case CmdID.G_TRI1:
@@ -359,43 +300,11 @@ namespace F3DZEX.Render
                         byte[] indices = new byte[] { cmd.v0, cmd.v1, cmd.v2 };
                         _rdpVtxDrawer.Draw(PrimitiveType.Triangles, indices, CurrentConfig.DrawNormals);
 
-                        /*if (CurrentConfig.RenderTextures && !CurrentConfig.WireFrame)
-                        {
-                            DecodeTexIfRequired();
-                            _rdpVtxDrawer.SendTexture(0);
-
-                            byte[] indices = new byte[] { cmd.v0, cmd.v1, cmd.v2 };
-                            _rdpVtxDrawer.Draw(PrimitiveType.Triangles, indices, CurrentConfig.DrawNormals);
-                        }
-                        else
-                        {
-                            byte[] indices = new byte[] { cmd.v0, cmd.v1, cmd.v2, cmd.v0 };
-                            _rdpVtxDrawer.Draw(PrimitiveType.LineStrip, indices, CurrentConfig.DrawNormals);
-                        }*/
                     }
                     break;
                 case CmdID.G_TRI2:
                     {
                         var cmd = info.Convert<GTri2>();
-
-                        /*if (CurrentConfig.RenderTextures)
-                        {
-                            DecodeTexIfRequired();
-                            _rdpVtxDrawer.SendTexture(0);
-
-                            byte[] indices = new byte[] { cmd.v00, cmd.v01, cmd.v02, cmd.v10, cmd.v11, cmd.v12 };
-                            _rdpVtxDrawer.Draw(PrimitiveType.Triangles, indices, CurrentConfig.DrawNormals);
-
-                        }
-                        else
-                        {
-                            //byte[] indices = new byte[] { cmd.v00, cmd.v01, cmd.v02, cmd.v00, cmd.v10, cmd.v11, cmd.v12, cmd.v10 };
-                            //_rdpVtxDrawer.Draw(PrimitiveType.LineStrip, indices);
-                            byte[] indices = new byte[] { cmd.v00, cmd.v01, cmd.v02 };
-                            _rdpVtxDrawer.Draw(PrimitiveType.LineLoop, indices, CurrentConfig.DrawNormals);
-                            indices = new byte[] { cmd.v10, cmd.v11, cmd.v12 };
-                            _rdpVtxDrawer.Draw(PrimitiveType.LineLoop, indices, CurrentConfig.DrawNormals);
-                        }*/
 
                         if (CurrentConfig.RenderMode == RdpVertexDrawer.ModelRenderMode.Textured)
                         {
@@ -513,7 +422,7 @@ namespace F3DZEX.Render
                     {
                         var cmd = info.Convert<GPopMtx>();
                         for (uint i = 0; i < cmd.num; i++)
-                            PopMatrix();
+                            RdpMtxStack.Pop();
 
                         break;
                     }
@@ -524,14 +433,14 @@ namespace F3DZEX.Render
                         var mtxf = mtx.ToMatrix4();
 
                         if (cmd.param.HasFlag(G_MTX_PARAM.G_MTX_PUSH))
-                            _mtxStack.Push(mtxf);
+                            RdpMtxStack.Push(mtxf);
 
                         // check G_MTX_MUL
                         if (!cmd.param.HasFlag(G_MTX_PARAM.G_MTX_LOAD))
                             //mtxf = curMtx * mtxf;
-                            mtxf *= _mtxStack.Peek();
+                            mtxf *= RdpMtxStack.Top();
 
-                        LoadMatrix(mtxf);
+                        RdpMtxStack.Load(mtxf);
                         break;
                     }
                 default:

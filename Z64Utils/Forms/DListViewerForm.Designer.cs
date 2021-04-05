@@ -46,6 +46,7 @@
             this.routineContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.AddRoutineMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.RemoveRoutineMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.EditRoutineMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             this.renderContextMenuStrip.SuspendLayout();
@@ -165,9 +166,10 @@
             // 
             this.routineContextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.AddRoutineMenuItem,
+            this.EditRoutineMenuItem,
             this.RemoveRoutineMenuItem});
             this.routineContextMenuStrip.Name = "routineContextMenuStrip";
-            this.routineContextMenuStrip.Size = new System.Drawing.Size(118, 48);
+            this.routineContextMenuStrip.Size = new System.Drawing.Size(118, 70);
             // 
             // AddRoutineMenuItem
             // 
@@ -182,6 +184,13 @@
             this.RemoveRoutineMenuItem.Size = new System.Drawing.Size(117, 22);
             this.RemoveRoutineMenuItem.Text = "Remove";
             this.RemoveRoutineMenuItem.Click += new System.EventHandler(this.RemoveRoutineMenuItem_Click);
+            // 
+            // EditRoutineMenuItem
+            // 
+            this.EditRoutineMenuItem.Name = "EditRoutineMenuItem";
+            this.EditRoutineMenuItem.Size = new System.Drawing.Size(117, 22);
+            this.EditRoutineMenuItem.Text = "Edit";
+            this.EditRoutineMenuItem.Click += new System.EventHandler(this.EditRoutineMenuItem_Click);
             // 
             // DListViewerForm
             // 
@@ -227,5 +236,6 @@
         private System.Windows.Forms.ContextMenuStrip routineContextMenuStrip;
         private System.Windows.Forms.ToolStripMenuItem AddRoutineMenuItem;
         private System.Windows.Forms.ToolStripMenuItem RemoveRoutineMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem EditRoutineMenuItem;
     }
 }

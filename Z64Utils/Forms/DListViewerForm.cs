@@ -68,6 +68,7 @@ namespace Z64.Forms
 
 
             RemoveRoutineMenuItem.Visible = false;
+            EditRoutineMenuItem.Visible = false;
 
             _routines = new List<RenderRoutine>();
             DecodeDlists();
@@ -104,7 +105,11 @@ namespace Z64.Forms
             }
 
             foreach (var routine in _routines)
+            {
+                _renderer.ModelMtxStack.Push(Matrix4.CreateTranslation(routine.X, routine.Y, routine.Z));
                 _renderer.RenderDList(routine.Dlist);
+                _renderer.ModelMtxStack.Pop();
+            }
 
             toolStripStatusErrorLabel.Text = _renderer.RenderFailed()
                 ? $"RENDER ERROR AT 0x{_renderer.RenderErrorAddr:X8}! ({_renderer.ErrorMsg})"
@@ -287,6 +292,7 @@ namespace Z64.Forms
             if (idx >= 0 && idx < _routines.Count)
             {
                 RemoveRoutineMenuItem.Visible = true;
+                EditRoutineMenuItem.Visible = true;
 
                 var dlist = _routines[idx].Dlist;
 
@@ -298,6 +304,7 @@ namespace Z64.Forms
             else
             {
                 RemoveRoutineMenuItem.Visible = false;
+                EditRoutineMenuItem.Visible = false;
             }
         }
 
@@ -343,7 +350,40 @@ namespace Z64.Forms
                 AddDList(addr.VAddr, x, y, z);
             }
         }
-        
+
+        private void EditRoutineMenuItem_Click(object sender, EventArgs e)
+        {
+            int idx = listBox_routines.SelectedIndex;
+            if (idx >= 0 && idx < listBox_routines.Items.Count)
+            {
+                var routine = _routines[idx];
+
+                EditValueForm form = new EditValueForm("Edit Dlist",
+                    "Enter the address and coordinates of the dlist to add.",
+                    IsInputValid, $"{routine.Address:X8}; {routine.X}; {routine.Y}; {routine.Z}");
+
+                if (form.ShowDialog() == DialogResult.OK)
+                {
+                    var parts = form.Result.Replace(" ", "").Split(";");
+
+                    routine.X =
+                    routine.Y =
+                    routine.Z = 0;
+                    routine.Address = SegmentedAddress.Parse(parts[0], true);
+
+                    if (parts.Length > 1)
+                    {
+                        routine.X = int.Parse(parts[1]);
+                        routine.Y = int.Parse(parts[2]);
+                        routine.Z = int.Parse(parts[3]);
+                    }
+                    NewRender();
+                }
+            }
+            
+        }
+
+
         private void RemoveRoutineMenuItem_Click(object sender, System.EventArgs e)
         {
             int idx = listBox_routines.SelectedIndex;
@@ -356,5 +396,6 @@ namespace Z64.Forms
                 NewRender();
             }
         }
+
     }
 }

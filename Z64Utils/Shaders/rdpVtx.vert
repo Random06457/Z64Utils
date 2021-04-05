@@ -73,7 +73,7 @@ void main()
     v_VtxTexCoords = getTexCoords();
     v_VtxColor = decodeColor(rdpVtxColor);
 
-    mat4 matrix = u_Projection * u_View * rdpMatrix /* u_Model*/;
+    mat4 matrix = u_Projection * u_View * rdpMatrix * u_Model;
     mat3 normalMatrix = mat3(transpose(inverse(u_View * rdpMatrix)));
 
     gl_Position = matrix * vec4(pos, 1);
