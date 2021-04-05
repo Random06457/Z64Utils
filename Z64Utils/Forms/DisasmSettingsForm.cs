@@ -49,7 +49,7 @@ namespace Z64.Forms
             checkBoxStatic.CheckedChanged += new EventHandler(DisassemblyOptionForm_OnOptionUpdate);
 
             byte[] dlist = new byte[] { 0x01, 0x01, 0x20, 0x24, 0x06, 0x00, 0x0F, 0xC8 };
-            _disas = new F3DZEX.Disassembler(dlist, 0x060002C8);
+            _disas = new F3DZEX.Disassembler(new F3DZEX.Command.Dlist(dlist, 0x060002C8));
 
             DisassemblyOptionForm_OnOptionUpdate(this, EventArgs.Empty);
         }

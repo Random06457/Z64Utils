@@ -16,8 +16,7 @@ using System.Globalization;
 using Syroot.BinaryData;
 using Z64;
 using Common;
-
-using DList = System.Collections.Generic.List<System.Tuple<uint, F3DZEX.Command.CommandInfo>>;
+using F3DZEX.Command;
 
 namespace Z64.Forms
 {
@@ -29,7 +28,7 @@ namespace Z64.Forms
             public int X;
             public int Y;
             public int Z;
-            public DList DList;
+            public Dlist Dlist;
 
             public RenderRoutine(uint addr, int x = 0, int y = 0, int z = 0)
             {
@@ -37,11 +36,7 @@ namespace Z64.Forms
                 X = x;
                 Y = y;
                 Z = z;
-                DList = null;
-            }
-            public RenderRoutine(F3DZEX.Render.Renderer renderer, uint addr, int x = 0, int y = 0, int z = 0) : this(addr, x, y, z)
-            {
-                DList = renderer.GetFullDlist(addr);
+                Dlist = null;
             }
 
             public override string ToString() => $"{Address:X8} [{X};{Y};{Z}]";
@@ -49,6 +44,7 @@ namespace Z64.Forms
 
         public static DListViewerForm Instance { get; set; }
 
+        string _dlistError;
         Z64Game _game;
         F3DZEX.Render.Renderer _renderer;
         SegmentEditorForm _segForm;
@@ -70,35 +66,45 @@ namespace Z64.Forms
             _renderer = new F3DZEX.Render.Renderer(game, _rendererCfg);
             modelViewer.RenderCallback = RenderCallback;
 
+
+            RemoveRoutineMenuItem.Visible = false;
+
             _routines = new List<RenderRoutine>();
-            SetupDLists();
+            DecodeDlists();
             NewRender();
         }
 
-        void SetupDLists()
+        void DecodeDlists()
         {
             _renderer.ClearErrors();
+            _dlistError = null;
+
             foreach (RenderRoutine routine in _routines)
-                routine.DList = _renderer.GetFullDlist(routine.Address);
+            {
+                try
+                {
+                    routine.Dlist = _renderer.GetDlist(routine.Address);
+                }
+                catch (Exception ex)
+                {
+                    _dlistError = $"Error while decoding dlist 0x{routine.Address:X8} : {ex.Message}";
+                    return;
+                }
+            }
         }
 
         void RenderCallback(Matrix4 proj, Matrix4 view)
         {
-            /*
-            foreach (RenderRoutine routine in _routines)
-            {
-                GL.PushMatrix();
-                GL.Translate(routine.X, routine.Y, routine.Z);
-                _renderer.RenderDList(routine.DList);
-                GL.PopMatrix();
-            }
-            */
-
             _renderer.RenderStart(proj, view);
-            foreach (var routine in _routines)
+
+            if (_dlistError != null)
             {
-                _renderer.RenderDList(routine.DList);
+                toolStripStatusErrorLabel.Text = _dlistError;
+                return;
             }
+
+            foreach (var routine in _routines)
+                _renderer.RenderDList(routine.Dlist);
 
             toolStripStatusErrorLabel.Text = _renderer.RenderFailed()
                 ? $"RENDER ERROR AT 0x{_renderer.RenderErrorAddr:X8}! ({_renderer.ErrorMsg})"
@@ -109,17 +115,6 @@ namespace Z64.Forms
             _renderer.ClearErrors();
 
             toolStripStatusErrorLabel.Text = "";
-
-            // TODO: on listbox item changed
-            /*
-            if (_renderer.Routines.Count > 0)
-            {
-                uint addr = _renderer.Routines.First().Entrypoint;
-                _disasForm?.Update(addr, _renderer.GetDlist(addr));
-            }
-            else
-                _disasForm?.Update(0, new List<F3DZEX.Command.CommandInfo>());
-            */
 
             modelViewer.Render();
         }
@@ -146,29 +141,31 @@ namespace Z64.Forms
             if (index >= 0 && index < F3DZEX.Memory.Segment.COUNT)
             {
                 _renderer.Memory.Segments[index] = segment;
-                SetupDLists();
+                DecodeDlists();
                 NewRender();
             }
         }
 
-        public void SetSingleDlist(uint vaddr)
+        public void SetSingleDlist(uint vaddr, int x = 0, int y = 0, int z = 0)
         {
             listBox_routines.Items.Clear();
             _routines.Clear();
 
-            var routine = new RenderRoutine(_renderer, vaddr);
+            var routine = new RenderRoutine(vaddr);
             listBox_routines.Items.Add(routine.ToString());
             _routines.Add(routine);
 
+            DecodeDlists();
             NewRender();
         }
 
-        public void AddDList(uint vaddr)
+        public void AddDList(uint vaddr, int x = 0, int y = 0, int z = 0)
         {
-            var routine = new RenderRoutine(_renderer, vaddr);
+            var routine = new RenderRoutine(vaddr, x, y, z);
             listBox_routines.Items.Add(routine.ToString());
             _routines.Add(routine);
 
+            DecodeDlists();
             NewRender();
         }
 
@@ -206,6 +203,8 @@ namespace Z64.Forms
         private void SegForm_SegmentsChanged(object sender, F3DZEX.Memory.Segment e)
         {
             _renderer.Memory.Segments[(int)sender] = e;
+
+            DecodeDlists();
             NewRender();
         }
 
@@ -217,12 +216,19 @@ namespace Z64.Forms
             }
             else
             {
-                _disasForm = new DisasmForm(new List<F3DZEX.Command.CommandInfo>());
+                _disasForm = new DisasmForm(defaultText: "No Dlist selected");
 
-                if (listBox_routines.SelectedIndex != -1)
-                    _disasForm.Update(_routines[listBox_routines.SelectedIndex].DList);
                 _disasForm.FormClosed += (sender, e) => _disasForm = null;
                 _disasForm.Show();
+            }
+
+            if (listBox_routines.SelectedIndex != -1)
+            {
+                var dlist = _routines[listBox_routines.SelectedIndex].Dlist;
+                if (dlist == null)
+                    _disasForm.SetMessage("Error");
+                else
+                    _disasForm.UpdateDlist(dlist);
             }
         }
 
@@ -271,7 +277,83 @@ namespace Z64.Forms
         {
             if (e.Button == MouseButtons.Right)
             {
-                contextMenuStrip1.Show(modelViewer.PointToScreen(e.Location));
+                renderContextMenuStrip.Show(modelViewer.PointToScreen(e.Location));
+            }
+        }
+
+        private void listBox_routines_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            int idx = listBox_routines.SelectedIndex;
+            if (idx >= 0 && idx < _routines.Count)
+            {
+                RemoveRoutineMenuItem.Visible = true;
+
+                var dlist = _routines[idx].Dlist;
+
+                if (dlist == null)
+                    _disasForm?.SetMessage("Error");
+                else
+                    _disasForm?.UpdateDlist(dlist);
+            }
+            else
+            {
+                RemoveRoutineMenuItem.Visible = false;
+            }
+        }
+
+        private string IsInputValid(string input)
+        {
+            string err ="Invalid format, must be \"<address in hex>(; <x>; <y>; <z>)\"";
+
+            var parts = input.Replace(" ", "").Split(";");
+            if (parts.Length != 1 && parts.Length != 4)
+                return err;
+
+            string addrStr = parts[0];
+            if (addrStr.StartsWith("0x"))
+                addrStr = addrStr.Substring(2);
+
+            if (!SegmentedAddress.TryParse(addrStr, true, out SegmentedAddress addr))
+                return err;
+
+            for (int i = 1; i < parts.Length; i++)
+            {
+                if (!int.TryParse(parts[i], out int res))
+                    return err;
+            }
+
+            return null;
+        }
+
+        private void AddRoutineMenuItem_Click(object sender, System.EventArgs e)
+        {
+            EditValueForm form = new EditValueForm("Add Dlist", "Enter the address and coordinates of the dlist to add.", IsInputValid);
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                var parts = form.Result.Replace(" ", "").Split(";");
+                int x = 0, y = 0, z = 0;
+                var addr = SegmentedAddress.Parse(parts[0], true);
+                if (parts.Length > 1)
+                {
+                    x = int.Parse(parts[1]);
+                    y = int.Parse(parts[2]);
+                    z = int.Parse(parts[3]);
+                }
+
+                AddDList(addr.VAddr, x, y, z);
+            }
+        }
+        
+        private void RemoveRoutineMenuItem_Click(object sender, System.EventArgs e)
+        {
+            int idx = listBox_routines.SelectedIndex;
+            if (idx >= 0 && idx < _routines.Count)
+            {
+                listBox_routines.Items.RemoveAt(idx);
+                _routines.RemoveAt(idx);
+
+                DecodeDlists();
+                NewRender();
             }
         }
     }

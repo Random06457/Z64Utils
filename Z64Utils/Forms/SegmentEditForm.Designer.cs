@@ -35,10 +35,10 @@
             this.addressValue = new System.Windows.Forms.TextBox();
             this.tabPage_file = new System.Windows.Forms.TabPage();
             this.button1 = new System.Windows.Forms.Button();
+            this.tabPage_empty = new System.Windows.Forms.TabPage();
             this.label1 = new System.Windows.Forms.Label();
             this.okBtn = new System.Windows.Forms.Button();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-            this.tabPage_empty = new System.Windows.Forms.TabPage();
             this.tabControl1.SuspendLayout();
             this.tabPage_address.SuspendLayout();
             this.tabPage_file.SuspendLayout();
@@ -54,7 +54,8 @@
             "ROM FS",
             "File",
             "Ident Matrices",
-            "Null Bytes"});
+            "Null Bytes",
+            "Empty Dlist"});
             this.comboBox1.Location = new System.Drawing.Point(21, 22);
             this.comboBox1.Name = "comboBox1";
             this.comboBox1.Size = new System.Drawing.Size(108, 21);
@@ -116,6 +117,15 @@
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
+            // tabPage_empty
+            // 
+            this.tabPage_empty.Location = new System.Drawing.Point(4, 22);
+            this.tabPage_empty.Name = "tabPage_empty";
+            this.tabPage_empty.Size = new System.Drawing.Size(91, 27);
+            this.tabPage_empty.TabIndex = 2;
+            this.tabPage_empty.Text = "Empty";
+            this.tabPage_empty.UseVisualStyleBackColor = true;
+            // 
             // label1
             // 
             this.label1.AutoSize = true;
@@ -139,15 +149,6 @@
             // openFileDialog1
             // 
             this.openFileDialog1.FileName = "openFileDialog1";
-            // 
-            // tabPage_empty
-            // 
-            this.tabPage_empty.Location = new System.Drawing.Point(4, 22);
-            this.tabPage_empty.Name = "tabPage_empty";
-            this.tabPage_empty.Size = new System.Drawing.Size(91, 27);
-            this.tabPage_empty.TabIndex = 2;
-            this.tabPage_empty.Text = "Empty";
-            this.tabPage_empty.UseVisualStyleBackColor = true;
             // 
             // SegmentEditForm
             // 

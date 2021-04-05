@@ -5,7 +5,7 @@ using System.Linq;
 using Common;
 using RDP;
 
-namespace F3DZEX
+namespace F3DZEX.Command
 {
     [Serializable]
     public class F3DZEXOpCodeSizeException : Exception
@@ -29,77 +29,11 @@ namespace F3DZEX
           System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
 
-
-    public struct DlistEntry
+    public static partial class CmdEncoding
     {
-        public uint Address;
-        public int Level;
-        public Command.CommandInfo Cmd;
-    }
-
-    public static partial class Command
-    {
-
-        public enum OpCodeID
+        public static List<CmdInfo> DecodeCmds(byte[] ucode, int off = 0)
         {
-            G_NOOP = 0x00,
-            G_VTX = 0x01,
-            G_MODIFYVTX = 0x02,
-            G_CULLDL = 0x03,
-            G_BRANCH_Z = 0x04,
-            G_TRI1 = 0x05,
-            G_TRI2 = 0x06,
-            G_QUAD = 0x07,
-
-            G_DMA_IO = 0xD6,
-            G_TEXTURE = 0xD7,
-            G_POPMTX = 0xD8,
-            G_GEOMETRYMODE = 0xD9,
-            G_MTX = 0xDA,
-            G_MOVEWORD = 0xDB,
-            G_MOVEMEM = 0xDC,
-            G_LOAD_UCODE = 0xDD,
-            G_DL = 0xDE,
-            G_ENDDL = 0xDF,
-
-            G_SPNOOP = 0xE0,
-            G_RDPHALF_1 = 0xE1,
-            G_SETOTHERMODE_L = 0xE2,
-            G_SETOTHERMODE_H = 0xE3,
-            G_TEXRECT = 0xE4,
-            G_TEXRECTFLIP = 0xE5,
-            G_RDPLOADSYNC = 0xE6,
-            G_RDPPIPESYNC = 0xE7,
-            G_RDPTILESYNC = 0xE8,
-            G_RDPFULLSYNC = 0xE9,
-            G_SETKEYGB = 0xEA,
-            G_SETKEYR = 0xEB,
-            G_SETCONVERT = 0xEC,
-            G_SETSCISSOR = 0xED,
-            G_SETPRIMDEPTH = 0xEE,
-            G_RDPSETOTHERMODE = 0xEF,
-
-            G_LOADTLUT = 0xF0,
-            G_RDPHALF_2 = 0xF1,
-            G_SETTILESIZE = 0xF2,
-            G_LOADBLOCK = 0xF3,
-            G_LOADTILE = 0xF4,
-            G_SETTILE = 0xF5,
-            G_FILLRECT = 0xF6,
-            G_SETFILLCOLOR = 0xF7,
-            G_SETFOGCOLOR = 0xF8,
-            G_SETBLENDCOLOR = 0xF9,
-            G_SETPRIMCOLOR = 0xFA,
-            G_SETENVCOLOR = 0xFB,
-            G_SETCOMBINE = 0xFC,
-            G_SETTIMG = 0xFD,
-            G_SETZIMG = 0xFE,
-            G_SETCIMG = 0xFF,
-        }
-        
-        public static List<CommandInfo> DecodeDList(byte[] ucode, int off = 0)
-        {
-            var dlist = new List<CommandInfo>();
+            var dlist = new List<CmdInfo>();
 
             using (MemoryStream ms = new MemoryStream(ucode))
             {
@@ -107,7 +41,7 @@ namespace F3DZEX
                 BitReader br = new BitReader(ms);
                 while (br.BaseStream.Position < br.BaseStream.Length)
                 {
-                    OpCodeID id = (OpCodeID)br.ReadByte();
+                    CmdID id = (CmdID)br.ReadByte();
 
                     if (DEC_TABLE.ContainsKey(id))
                     {
@@ -116,13 +50,13 @@ namespace F3DZEX
                     }
                     else new InvalidF3DZEXOpCodeException($"Invalid OpCode : {id:X}");
 
-                    if (id == OpCodeID.G_ENDDL)
+                    if (id == CmdID.G_ENDDL)
                         break;
                 }
             }
             return dlist;
         }
-        public static byte[] EncodeDList(List<CommandInfo> dlist)
+        public static byte[] EncodeCmds(List<CmdInfo> dlist)
         {
             using (MemoryStream ms = new MemoryStream())
             {
@@ -137,18 +71,19 @@ namespace F3DZEX
             }
         }
 
-        public static readonly Dictionary<OpCodeID, Func<BitReader, CommandInfo>> DEC_TABLE = new Dictionary<OpCodeID, Func<BitReader, CommandInfo>>()
+
+        public static readonly Dictionary<CmdID, Func<BitReader, CmdInfo>> DEC_TABLE = new Dictionary<CmdID, Func<BitReader, CmdInfo>>()
         {
-            { OpCodeID.G_NOOP, (br) => {
+            { CmdID.G_NOOP, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 br.SkipBits(24);
                 args.Add("tag", br.ReadUInt32());
 
-                return new CommandInfo(OpCodeID.G_NOOP, args);
+                return new CmdInfo(CmdID.G_NOOP, args);
             } },
 
-            { OpCodeID.G_VTX, (br) => {
+            { CmdID.G_VTX, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 br.SkipBits(4);
@@ -161,10 +96,10 @@ namespace F3DZEX
                 args.Add("vbidx", vbidx);
                 args.Add("vaddr", vaddr);
 
-                return new CommandInfo(OpCodeID.G_VTX, args);
+                return new CmdInfo(CmdID.G_VTX, args);
             } },
 
-            { OpCodeID.G_MODIFYVTX, (br) => {
+            { CmdID.G_MODIFYVTX, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 int where = br.ReadByte();
@@ -175,10 +110,10 @@ namespace F3DZEX
                 args.Add("vbidx", vbidx);
                 args.Add("val", val);
 
-                return new CommandInfo(OpCodeID.G_MODIFYVTX, args);
+                return new CmdInfo(CmdID.G_MODIFYVTX, args);
             } },
 
-            { OpCodeID.G_CULLDL, (br) => {
+            { CmdID.G_CULLDL, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 br.ReadByte();
@@ -189,10 +124,10 @@ namespace F3DZEX
                 args.Add("vfirst", vfirst);
                 args.Add("vlast", vlast);
 
-                return new CommandInfo(OpCodeID.G_CULLDL, args);
+                return new CmdInfo(CmdID.G_CULLDL, args);
             } },
 
-            { OpCodeID.G_BRANCH_Z, (br) => {
+            { CmdID.G_BRANCH_Z, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 int vbidx = br.ReadUInt16(12)/5;
@@ -201,10 +136,10 @@ namespace F3DZEX
 
                 args.Add("vbidx", vbidx);
                 args.Add("zval", zval);
-                return new CommandInfo(OpCodeID.G_BRANCH_Z, args);
+                return new CmdInfo(CmdID.G_BRANCH_Z, args);
             } },
 
-            { OpCodeID.G_TRI1, (br) => {
+            { CmdID.G_TRI1, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 byte v0 = (byte)(br.ReadByte() / 2);
@@ -216,10 +151,10 @@ namespace F3DZEX
                 args.Add("v1", v1);
                 args.Add("v2", v2);
 
-                return new CommandInfo(OpCodeID.G_TRI1, args);
+                return new CmdInfo(CmdID.G_TRI1, args);
             } },
 
-            { OpCodeID.G_TRI2, (br) => {
+            { CmdID.G_TRI2, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 byte v00 = (byte)(br.ReadByte() / 2);
@@ -237,10 +172,10 @@ namespace F3DZEX
                 args.Add("v11", v11);
                 args.Add("v12", v12);
 
-                return new CommandInfo(OpCodeID.G_TRI2, args);
+                return new CmdInfo(CmdID.G_TRI2, args);
             } },
 
-            { OpCodeID.G_QUAD, (br) => {
+            { CmdID.G_QUAD, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 int v0 = br.ReadByte() / 2;
@@ -256,10 +191,10 @@ namespace F3DZEX
                 args.Add("v2", v2);
                 args.Add("v3", v3);
 
-                return new CommandInfo(OpCodeID.G_QUAD, args);
+                return new CmdInfo(CmdID.G_QUAD, args);
             } },
 
-            { OpCodeID.G_DMA_IO, (br) => {
+            { CmdID.G_DMA_IO, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 bool flag = br.ReadBoolean();
@@ -273,17 +208,17 @@ namespace F3DZEX
                 args.Add("size", size);
                 args.Add("dram", dram);
 
-                return new CommandInfo(OpCodeID.G_DMA_IO, args);
+                return new CmdInfo(CmdID.G_DMA_IO, args);
             } },
 
-            { OpCodeID.G_TEXTURE, (br) => {
+            { CmdID.G_TEXTURE, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 br.ReadByte();
                 br.ReadByte(2);
                 int level = br.ReadByte(3);
-                var tile = (Enums.G_TX_tile)br.ReadByte(3);
-                var on = (Enums.G_TexOnOff)br.ReadByte(7);
+                var tile = (G_TX_TILE)br.ReadByte(3);
+                var on = (G_TEX_ENABLE)br.ReadByte(7);
                 br.ReadByte(1);
                 ushort scaleS = br.ReadUInt16();
                 ushort scaleT = br.ReadUInt16();
@@ -294,10 +229,10 @@ namespace F3DZEX
                 args.Add("scaleS", scaleS);
                 args.Add("scaleT", scaleT);
 
-                return new CommandInfo(OpCodeID.G_TEXTURE, args);
+                return new CmdInfo(CmdID.G_TEXTURE, args);
             } },
 
-            { OpCodeID.G_POPMTX, (br) => {
+            { CmdID.G_POPMTX, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 br.SkipBits(24);
@@ -305,10 +240,10 @@ namespace F3DZEX
 
                 args.Add("num", num);
 
-                return new CommandInfo(OpCodeID.G_POPMTX, args);
+                return new CmdInfo(CmdID.G_POPMTX, args);
             } },
 
-            { OpCodeID.G_GEOMETRYMODE, (br) => {
+            { CmdID.G_GEOMETRYMODE, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 int clearbits = br.ReadInt32(24);
@@ -317,23 +252,23 @@ namespace F3DZEX
                 args.Add("clearbits", clearbits);
                 args.Add("setbits", setbits);
 
-                return new CommandInfo(OpCodeID.G_GEOMETRYMODE, args);
+                return new CmdInfo(CmdID.G_GEOMETRYMODE, args);
             } },
 
-            { OpCodeID.G_MTX, (br) => {
+            { CmdID.G_MTX, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 br.ReadUInt16();
-                Enums.G_MtxParams param = (Enums.G_MtxParams)(br.ReadByte() ^ 1);
+                G_MTX_PARAM param = (G_MTX_PARAM)(br.ReadByte() ^ 1);
                 uint mtxaddr = br.ReadUInt32();
 
                 args.Add("mtxaddr", mtxaddr);
                 args.Add("param", param);
 
-                return new CommandInfo(OpCodeID.G_MTX, args);
+                return new CmdInfo(CmdID.G_MTX, args);
             } },
 
-            { OpCodeID.G_MOVEWORD, (br) => {
+            { CmdID.G_MOVEWORD, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 int index = br.ReadByte();
@@ -344,10 +279,10 @@ namespace F3DZEX
                 args.Add("offset", offset);
                 args.Add("data", data);
 
-                return new CommandInfo(OpCodeID.G_MOVEWORD, args);
+                return new CmdInfo(CmdID.G_MOVEWORD, args);
             } },
 
-            { OpCodeID.G_MOVEMEM, (br) => {
+            { CmdID.G_MOVEMEM, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 int size = ((br.ReadByte() >> 3) + 1) * 8;
@@ -360,10 +295,10 @@ namespace F3DZEX
                 args.Add("index", index);
                 args.Add("address", address);
 
-                return new CommandInfo(OpCodeID.G_MOVEMEM, args);
+                return new CmdInfo(CmdID.G_MOVEMEM, args);
             } },
 
-            { OpCodeID.G_LOAD_UCODE, (br) => {
+            { CmdID.G_LOAD_UCODE, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 br.ReadByte();
@@ -372,10 +307,10 @@ namespace F3DZEX
 
                 args.Add("dsize", dsize);
                 args.Add("tstart", tstart);
-                return new CommandInfo(OpCodeID.G_LOAD_UCODE, args);
+                return new CmdInfo(CmdID.G_LOAD_UCODE, args);
             } },
 
-            { OpCodeID.G_DL, (br) => {
+            { CmdID.G_DL, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 bool branch = br.ReadByte() != 0;
@@ -385,36 +320,36 @@ namespace F3DZEX
                 args.Add("branch", branch);
                 args.Add("dl", dl);
 
-                return new CommandInfo(OpCodeID.G_DL, args);
+                return new CmdInfo(CmdID.G_DL, args);
             } },
 
-            { OpCodeID.G_ENDDL, (br) => {
+            { CmdID.G_ENDDL, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 br.SkipBits(24+32);
 
-                return new CommandInfo(OpCodeID.G_ENDDL, args);
+                return new CmdInfo(CmdID.G_ENDDL, args);
             } },
 
-            { OpCodeID.G_SPNOOP, (br) => {
+            { CmdID.G_SPNOOP, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 br.SkipBits(24+32);
 
-                return new CommandInfo(OpCodeID.G_SPNOOP, args);
+                return new CmdInfo(CmdID.G_SPNOOP, args);
             } },
 
-            { OpCodeID.G_RDPHALF_1, (br) => {
+            { CmdID.G_RDPHALF_1, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 br.SkipBits(24);
                 uint word = br.ReadUInt32();
 
                 args.Add("word", word);
-                return new CommandInfo(OpCodeID.G_RDPHALF_1, args);
+                return new CmdInfo(CmdID.G_RDPHALF_1, args);
             } },
 
-            { OpCodeID.G_SETOTHERMODE_L, (br) => {
+            { CmdID.G_SETOTHERMODE_L, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 br.ReadByte();
@@ -427,10 +362,10 @@ namespace F3DZEX
                 args.Add("len", len);
                 args.Add("data", data);
 
-                return new CommandInfo(OpCodeID.G_SETOTHERMODE_L, args);
+                return new CmdInfo(CmdID.G_SETOTHERMODE_L, args);
             } },
 
-            { OpCodeID.G_SETOTHERMODE_H, (br) => {
+            { CmdID.G_SETOTHERMODE_H, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 br.ReadByte();
@@ -443,17 +378,17 @@ namespace F3DZEX
                 args.Add("len", len);
                 args.Add("data", data);
 
-                return new CommandInfo(OpCodeID.G_SETOTHERMODE_H, args);
+                return new CmdInfo(CmdID.G_SETOTHERMODE_H, args);
             } },
 
 
-            { OpCodeID.G_TEXRECT, (br) => {
+            { CmdID.G_TEXRECT, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 FixedPoint lrx = new FixedPoint(br.ReadInt32(12), 10, 2);
                 FixedPoint lry = new FixedPoint(br.ReadInt32(12), 10, 2);
                 br.ReadByte(4);
-                var tile = (Enums.G_TX_tile)br.ReadByte(4);
+                var tile = (G_TX_TILE)br.ReadByte(4);
                 FixedPoint ulx = new FixedPoint(br.ReadInt32(12), 10, 2);
                 FixedPoint uly = new FixedPoint(br.ReadInt32(12), 10, 2);
                 br.ReadByte(); //E1
@@ -474,17 +409,17 @@ namespace F3DZEX
                 args.Add("ult", ult);
                 args.Add("dsdx", dsdx);
                 args.Add("dtdy", dtdy);
-                return new CommandInfo(OpCodeID.G_TEXRECT, args);
+                return new CmdInfo(CmdID.G_TEXRECT, args);
             } },
 
 
-            { OpCodeID.G_TEXRECTFLIP, (br) => {
+            { CmdID.G_TEXRECTFLIP, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 FixedPoint lrx = new FixedPoint(br.ReadInt32(12), 10, 2);
                 FixedPoint lry = new FixedPoint(br.ReadInt32(12), 10, 2);
                 br.ReadByte(4);
-                var tile = (Enums.G_TX_tile)br.ReadByte(4);
+                var tile = (G_TX_TILE)br.ReadByte(4);
                 FixedPoint ulx = new FixedPoint(br.ReadInt32(12), 10, 2);
                 FixedPoint uly = new FixedPoint(br.ReadInt32(12), 10, 2);
                 br.ReadByte(); //E1
@@ -505,36 +440,36 @@ namespace F3DZEX
                 args.Add("ult", ult);
                 args.Add("dsdx", dsdx);
                 args.Add("dtdy", dtdy);
-                return new CommandInfo(OpCodeID.G_TEXRECTFLIP, args);
+                return new CmdInfo(CmdID.G_TEXRECTFLIP, args);
             } },
 
 
-            { OpCodeID.G_RDPLOADSYNC, (br) => {
+            { CmdID.G_RDPLOADSYNC, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
                 br.SkipBits(56);
-                return new CommandInfo(OpCodeID.G_RDPLOADSYNC, args);
+                return new CmdInfo(CmdID.G_RDPLOADSYNC, args);
             } },
 
-            { OpCodeID.G_RDPPIPESYNC, (br) => {
+            { CmdID.G_RDPPIPESYNC, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
                 br.SkipBits(56);
-                return new CommandInfo(OpCodeID.G_RDPPIPESYNC, args);
+                return new CmdInfo(CmdID.G_RDPPIPESYNC, args);
             } },
 
-            { OpCodeID.G_RDPTILESYNC, (br) => {
+            { CmdID.G_RDPTILESYNC, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
                 br.SkipBits(56);
-                return new CommandInfo(OpCodeID.G_RDPTILESYNC, args);
+                return new CmdInfo(CmdID.G_RDPTILESYNC, args);
             } },
 
-            { OpCodeID.G_RDPFULLSYNC, (br) => {
+            { CmdID.G_RDPFULLSYNC, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
                 br.SkipBits(56);
-                return new CommandInfo(OpCodeID.G_RDPFULLSYNC, args);
+                return new CmdInfo(CmdID.G_RDPFULLSYNC, args);
             } },
 
 
-            { OpCodeID.G_SETKEYGB, (br) => {
+            { CmdID.G_SETKEYGB, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 var widthG = new FixedPoint(br.ReadInt32(12), 4, 8);
@@ -550,11 +485,11 @@ namespace F3DZEX
                 args.Add("scaleG", scaleG);
                 args.Add("centerB", centerB);
                 args.Add("scaleB", scaleB);
-                return new CommandInfo(OpCodeID.G_SETKEYGB, args);
+                return new CmdInfo(CmdID.G_SETKEYGB, args);
             } },
 
 
-            { OpCodeID.G_SETKEYR, (br) => {
+            { CmdID.G_SETKEYR, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 br.SkipBits(28);
@@ -565,11 +500,11 @@ namespace F3DZEX
                 args.Add("widthR", widthR);
                 args.Add("centerR", centerR);
                 args.Add("scaleR", scaleR);
-                return new CommandInfo(OpCodeID.G_SETKEYR, args);
+                return new CmdInfo(CmdID.G_SETKEYR, args);
             } },
 
 
-            { OpCodeID.G_SETCONVERT, (br) => {
+            { CmdID.G_SETCONVERT, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 br.ReadByte(2);
@@ -586,11 +521,11 @@ namespace F3DZEX
                 args.Add("k3", k3);
                 args.Add("k4", k4);
                 args.Add("k5", k5);
-                return new CommandInfo(OpCodeID.G_SETCONVERT, args);
+                return new CmdInfo(CmdID.G_SETCONVERT, args);
             } },
 
 
-            { OpCodeID.G_SETSCISSOR, (br) => {
+            { CmdID.G_SETSCISSOR, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 var ulx = new FixedPoint(br.ReadInt32(12), 10, 2);
@@ -605,10 +540,10 @@ namespace F3DZEX
                 args.Add("mode", mode);
                 args.Add("lrx", lrx);
                 args.Add("lry", lry);
-                return new CommandInfo(OpCodeID.G_SETSCISSOR, args);
+                return new CmdInfo(CmdID.G_SETSCISSOR, args);
             } },
 
-            { OpCodeID.G_SETPRIMDEPTH, (br) => {
+            { CmdID.G_SETPRIMDEPTH, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 br.SkipBits(24);
@@ -617,10 +552,10 @@ namespace F3DZEX
 
                 args.Add("z", z);
                 args.Add("dz", dz);
-                return new CommandInfo(OpCodeID.G_SETPRIMDEPTH, args);
+                return new CmdInfo(CmdID.G_SETPRIMDEPTH, args);
             } },
 
-            { OpCodeID.G_RDPSETOTHERMODE, (br) => {
+            { CmdID.G_RDPSETOTHERMODE, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 uint omodeH = br.ReadUInt32(24);
@@ -628,40 +563,40 @@ namespace F3DZEX
 
                 args.Add("omodeH", omodeH);
                 args.Add("omodeL", omodeL);
-                return new CommandInfo(OpCodeID.G_RDPSETOTHERMODE, args);
+                return new CmdInfo(CmdID.G_RDPSETOTHERMODE, args);
             } },
 
-            { OpCodeID.G_LOADTLUT, (br) => {
+            { CmdID.G_LOADTLUT, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 br.SkipBits(28);
-                var tile = (Enums.G_TX_tile)br.ReadByte(4);
+                var tile = (G_TX_TILE)br.ReadByte(4);
                 int count = br.ReadUInt16(12) >> 2;
                 br.ReadUInt16(12);
 
                 args.Add("tile", tile);
                 args.Add("count", count);
-                return new CommandInfo(OpCodeID.G_LOADTLUT, args);
+                return new CmdInfo(CmdID.G_LOADTLUT, args);
             } },
 
-            { OpCodeID.G_RDPHALF_2, (br) => {
+            { CmdID.G_RDPHALF_2, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 br.SkipBits(24);
                 uint word = br.ReadUInt32();
 
                 args.Add("word", word);
-                return new CommandInfo(OpCodeID.G_RDPHALF_2, args);
+                return new CmdInfo(CmdID.G_RDPHALF_2, args);
             } },
 
 
-            { OpCodeID.G_SETTILESIZE, (br) => {
+            { CmdID.G_SETTILESIZE, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 var uls = new FixedPoint(br.ReadInt32(12), 10, 2);
                 var ult = new FixedPoint(br.ReadInt32(12), 10, 2);
                 br.ReadByte(4);
-                var tile = (Enums.G_TX_tile)br.ReadByte(4);
+                var tile = (G_TX_TILE)br.ReadByte(4);
                 var lrs = new FixedPoint(br.ReadInt32(12), 10, 2);
                 var lrt = new FixedPoint(br.ReadInt32(12), 10, 2);
 
@@ -670,17 +605,17 @@ namespace F3DZEX
                 args.Add("tile", tile);
                 args.Add("lrs", lrs);
                 args.Add("lrt", lrt);
-                return new CommandInfo(OpCodeID.G_SETTILESIZE, args);
+                return new CmdInfo(CmdID.G_SETTILESIZE, args);
             } },
 
 
-            { OpCodeID.G_LOADBLOCK, (br) => {
+            { CmdID.G_LOADBLOCK, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 var uls = new FixedPoint(br.ReadInt32(12), 10, 2);
                 var ult = new FixedPoint(br.ReadInt32(12), 10, 2);
                 br.ReadByte(4);
-                var tile = (Enums.G_TX_tile)br.ReadByte(4);
+                var tile = (G_TX_TILE)br.ReadByte(4);
                 int texels = br.ReadInt32(12);
                 var dxt = new FixedPoint(br.ReadInt32(12), 1, 11);
 
@@ -689,17 +624,17 @@ namespace F3DZEX
                 args.Add("tile", tile);
                 args.Add("texels", texels);
                 args.Add("dxt", dxt);
-                return new CommandInfo(OpCodeID.G_LOADBLOCK, args);
+                return new CmdInfo(CmdID.G_LOADBLOCK, args);
             } },
 
 
-            { OpCodeID.G_LOADTILE, (br) => {
+            { CmdID.G_LOADTILE, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 var uls = new FixedPoint(br.ReadInt32(12), 10, 2);
                 var ult = new FixedPoint(br.ReadInt32(12), 10, 2);
                 br.ReadByte(4);
-                var tile = (Enums.G_TX_tile)br.ReadByte(4);
+                var tile = (G_TX_TILE)br.ReadByte(4);
                 var lrs = new FixedPoint(br.ReadInt32(12), 10, 2);
                 var lrt = new FixedPoint(br.ReadInt32(12), 10, 2);
 
@@ -708,24 +643,24 @@ namespace F3DZEX
                 args.Add("tile", tile);
                 args.Add("lrs", lrs);
                 args.Add("lrt", lrt);
-                return new CommandInfo(OpCodeID.G_LOADTILE, args);
+                return new CmdInfo(CmdID.G_LOADTILE, args);
             } },
 
-            { OpCodeID.G_SETTILE, (br) => {
+            { CmdID.G_SETTILE, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
-                var fmt = (Enums.G_IM_FMT)br.ReadByte(3);
-                var siz = (Enums.G_IM_SIZ)br.ReadByte(2);
+                var fmt = (G_IM_FMT)br.ReadByte(3);
+                var siz = (G_IM_SIZ)br.ReadByte(2);
                 br.ReadByte(1);
                 int line = br.ReadInt32(9);
                 int tmem = br.ReadInt32(9);
                 br.ReadByte(5);
-                var tile = (Enums.G_TX_tile)br.ReadByte(3);
+                var tile = (G_TX_TILE)br.ReadByte(3);
                 int palette = br.ReadByte(4);
-                var cmT = (Enums.ClampMirrorFlag)br.ReadByte(2);
+                var cmT = (G_TX_TEXWRAP)br.ReadByte(2);
                 int maskT = br.ReadByte(4);
                 int shiftT = br.ReadByte(4);
-                var cmS = (Enums.ClampMirrorFlag)br.ReadByte(2);
+                var cmS = (G_TX_TEXWRAP)br.ReadByte(2);
                 int maskS = br.ReadByte(4);
                 int shiftS = br.ReadByte(4);
 
@@ -741,10 +676,10 @@ namespace F3DZEX
                 args.Add("cmS", cmS);
                 args.Add("maskS", maskS);
                 args.Add("shiftS", shiftS);
-                return new CommandInfo(OpCodeID.G_SETTILE, args);
+                return new CmdInfo(CmdID.G_SETTILE, args);
             } },
 
-            { OpCodeID.G_FILLRECT, (br) => {
+            { CmdID.G_FILLRECT, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 var lrx = new FixedPoint(br.ReadInt32(12), 10, 2);
@@ -757,20 +692,20 @@ namespace F3DZEX
                 args.Add("lry", lry);
                 args.Add("ulx", ulx);
                 args.Add("uly", uly);
-                return new CommandInfo(OpCodeID.G_FILLRECT, args);
+                return new CmdInfo(CmdID.G_FILLRECT, args);
             } },
 
-            { OpCodeID.G_SETFILLCOLOR, (br) => {
+            { CmdID.G_SETFILLCOLOR, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 br.SkipBits(24);
                 uint color = br.ReadUInt32();
 
                 args.Add("color", color);
-                return new CommandInfo(OpCodeID.G_SETFILLCOLOR, args);
+                return new CmdInfo(CmdID.G_SETFILLCOLOR, args);
             } },
 
-            { OpCodeID.G_SETFOGCOLOR, (br) => {
+            { CmdID.G_SETFOGCOLOR, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 br.SkipBits(24);
@@ -783,10 +718,10 @@ namespace F3DZEX
                 args.Add("G", G);
                 args.Add("B", B);
                 args.Add("A", A);
-                return new CommandInfo(OpCodeID.G_SETFOGCOLOR, args);
+                return new CmdInfo(CmdID.G_SETFOGCOLOR, args);
             } },
 
-            { OpCodeID.G_SETBLENDCOLOR, (br) => {
+            { CmdID.G_SETBLENDCOLOR, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 br.SkipBits(24);
@@ -799,10 +734,10 @@ namespace F3DZEX
                 args.Add("G", G);
                 args.Add("B", B);
                 args.Add("A", A);
-                return new CommandInfo(OpCodeID.G_SETBLENDCOLOR, args);
+                return new CmdInfo(CmdID.G_SETBLENDCOLOR, args);
             } },
 
-            { OpCodeID.G_SETPRIMCOLOR, (br) => {
+            { CmdID.G_SETPRIMCOLOR, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 br.ReadByte();
@@ -819,10 +754,10 @@ namespace F3DZEX
                 args.Add("G", G);
                 args.Add("B", B);
                 args.Add("A", A);
-                return new CommandInfo(OpCodeID.G_SETPRIMCOLOR, args);
+                return new CmdInfo(CmdID.G_SETPRIMCOLOR, args);
             } },
 
-            { OpCodeID.G_SETENVCOLOR, (br) => {
+            { CmdID.G_SETENVCOLOR, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 br.SkipBits(24);
@@ -835,28 +770,28 @@ namespace F3DZEX
                 args.Add("G", G);
                 args.Add("B", B);
                 args.Add("A", A);
-                return new CommandInfo(OpCodeID.G_SETENVCOLOR, args);
+                return new CmdInfo(CmdID.G_SETENVCOLOR, args);
             } },
 
-            { OpCodeID.G_SETCOMBINE, (br) => {
+            { CmdID.G_SETCOMBINE, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
-                var a0 = (Enums.G_CCMUX)br.ReadInt32(4);
-                var c0 = (Enums.G_CCMUX)br.ReadInt32(5);
-                var Aa0 = (Enums.G_ACMUX)br.ReadInt32(3);
-                var Ac0 = (Enums.G_ACMUX)br.ReadInt32(3);
-                var a1 = (Enums.G_CCMUX)br.ReadInt32(4);
-                var c1 = (Enums.G_CCMUX)br.ReadInt32(5);
-                var b0 = (Enums.G_CCMUX)br.ReadInt32(4);
-                var b1 = (Enums.G_CCMUX)br.ReadInt32(4);
-                var Aa1 = (Enums.G_ACMUX)br.ReadInt32(3);
-                var Ac1 = (Enums.G_ACMUX)br.ReadInt32(3);
-                var d0 = (Enums.G_CCMUX)br.ReadInt32(3);
-                var Ab0 = (Enums.G_ACMUX)br.ReadInt32(3);
-                var Ad0 = (Enums.G_ACMUX)br.ReadInt32(3);
-                var d1 = (Enums.G_CCMUX)br.ReadInt32(3);
-                var Ab1 = (Enums.G_ACMUX)br.ReadInt32(3);
-                var Ad1 = (Enums.G_ACMUX)br.ReadInt32(3);
+                var a0 = (G_CCMUX)br.ReadInt32(4);
+                var c0 = (G_CCMUX)br.ReadInt32(5);
+                var Aa0 = (G_ACMUX)br.ReadInt32(3);
+                var Ac0 = (G_ACMUX)br.ReadInt32(3);
+                var a1 = (G_CCMUX)br.ReadInt32(4);
+                var c1 = (G_CCMUX)br.ReadInt32(5);
+                var b0 = (G_CCMUX)br.ReadInt32(4);
+                var b1 = (G_CCMUX)br.ReadInt32(4);
+                var Aa1 = (G_ACMUX)br.ReadInt32(3);
+                var Ac1 = (G_ACMUX)br.ReadInt32(3);
+                var d0 = (G_CCMUX)br.ReadInt32(3);
+                var Ab0 = (G_ACMUX)br.ReadInt32(3);
+                var Ad0 = (G_ACMUX)br.ReadInt32(3);
+                var d1 = (G_CCMUX)br.ReadInt32(3);
+                var Ab1 = (G_ACMUX)br.ReadInt32(3);
+                var Ad1 = (G_ACMUX)br.ReadInt32(3);
 
                 args.Add("a0", a0);
                 args.Add("b0", b0);
@@ -874,14 +809,14 @@ namespace F3DZEX
                 args.Add("Ab1", Ab1);
                 args.Add("Ac1", Ac1);
                 args.Add("Ad1", Ad1);
-                return new CommandInfo(OpCodeID.G_SETCOMBINE, args);
+                return new CmdInfo(CmdID.G_SETCOMBINE, args);
             } },
 
-            { OpCodeID.G_SETTIMG, (br) => {
+            { CmdID.G_SETTIMG, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
-                var fmt = (Enums.G_IM_FMT)br.ReadByte(3);
-                var siz = (Enums.G_IM_SIZ)br.ReadByte(2);
+                var fmt = (G_IM_FMT)br.ReadByte(3);
+                var siz = (G_IM_SIZ)br.ReadByte(2);
                 br.SkipBits(3+4);
                 int width = br.ReadInt32(12)+1;
                 uint imgaddr = br.ReadUInt32();
@@ -890,24 +825,24 @@ namespace F3DZEX
                 args.Add("siz", siz);
                 args.Add("width", width);
                 args.Add("imgaddr", imgaddr);
-                return new CommandInfo(OpCodeID.G_SETTIMG, args);
+                return new CmdInfo(CmdID.G_SETTIMG, args);
             } },
 
-            { OpCodeID.G_SETZIMG, (br) => {
+            { CmdID.G_SETZIMG, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 br.SkipBits(24);
                 uint imgaddr = br.ReadUInt32();
 
                 args.Add("imgaddr", imgaddr);
-                return new CommandInfo(OpCodeID.G_SETZIMG, args);
+                return new CmdInfo(CmdID.G_SETZIMG, args);
             } },
 
-            { OpCodeID.G_SETCIMG, (br) => {
+            { CmdID.G_SETCIMG, (br) => {
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
-                var fmt = (Enums.G_IM_FMT)br.ReadByte(3);
-                var siz = (Enums.G_IM_SIZ)br.ReadByte(2);
+                var fmt = (G_IM_FMT)br.ReadByte(3);
+                var siz = (G_IM_SIZ)br.ReadByte(2);
                 br.ReadByte(3+4);
                 int width = br.ReadUInt16(12)+1;
                 uint imgaddr = br.ReadUInt32();
@@ -916,13 +851,13 @@ namespace F3DZEX
                 args.Add("siz", siz);
                 args.Add("width", width);
                 args.Add("imgaddr", imgaddr);
-                return new CommandInfo(OpCodeID.G_SETCIMG, args);
+                return new CmdInfo(CmdID.G_SETCIMG, args);
             } },
         };
 
-        public static readonly Dictionary<OpCodeID, Action<CommandInfo, BitWriter>> ENC_TABLE = new Dictionary<OpCodeID, Action<CommandInfo, BitWriter>>()
+        public static readonly Dictionary<CmdID, Action<CmdInfo, BitWriter>> ENC_TABLE = new Dictionary<CmdID, Action<CmdInfo, BitWriter>>()
         {
-            { OpCodeID.G_NOOP, (info, bw) => {
+            { CmdID.G_NOOP, (info, bw) => {
                 uint tag = (uint)info.Args["tag"];
 
                 bw.Write((byte)info.ID);
@@ -930,7 +865,7 @@ namespace F3DZEX
                 bw.Write(tag);
             } },
 
-            { OpCodeID.G_VTX, (info, bw) => {
+            { CmdID.G_VTX, (info, bw) => {
                 int numv = (int)info.Args["numv"];
                 int vbidx = (int)info.Args["vbidx"];
                 uint vaddr = (uint)info.Args["vaddr"];
@@ -943,7 +878,7 @@ namespace F3DZEX
                 bw.Write(vaddr);
             } },
 
-            { OpCodeID.G_MODIFYVTX, (info, bw) => {
+            { CmdID.G_MODIFYVTX, (info, bw) => {
                 int where = (int)info.Args["where"];
                 int vbidx = (int)info.Args["vbidx"];
                 uint val = (uint)info.Args["val"];
@@ -954,7 +889,7 @@ namespace F3DZEX
                 bw.Write(val);
             } },
 
-            { OpCodeID.G_CULLDL, (info, bw) => {
+            { CmdID.G_CULLDL, (info, bw) => {
                 int vfirst = (int)info.Args["vfirst"];
                 int vlast = (int)info.Args["vlast"];
 
@@ -965,7 +900,7 @@ namespace F3DZEX
                 bw.Write((ushort)(vlast*2));
             } },
 
-            { OpCodeID.G_BRANCH_Z, (info, bw) => {
+            { CmdID.G_BRANCH_Z, (info, bw) => {
                 int vbidx = (int)info.Args["vbidx"];
                 uint zval = (uint)info.Args["zval"];
 
@@ -975,7 +910,7 @@ namespace F3DZEX
                 bw.Write(zval);
             } },
 
-            { OpCodeID.G_TRI1, (info, bw) => {
+            { CmdID.G_TRI1, (info, bw) => {
 
                 byte v0 = (byte)info.Args["v0"];
                 byte v1 = (byte)info.Args["v1"];
@@ -988,7 +923,7 @@ namespace F3DZEX
                 bw.Write(0);
             } },
 
-            { OpCodeID.G_TRI2, (info, bw) => {
+            { CmdID.G_TRI2, (info, bw) => {
 
                 byte v00 = (byte)info.Args["v00"];
                 byte v01 = (byte)info.Args["v01"];
@@ -1007,7 +942,7 @@ namespace F3DZEX
                 bw.Write((byte)(v12*2));
             } },
 
-            { OpCodeID.G_QUAD, (info, bw) => {
+            { CmdID.G_QUAD, (info, bw) => {
                 int v0 = (int)info.Args["v0"];
                 int v1 = (int)info.Args["v1"];
                 int v2 = (int)info.Args["v2"];
@@ -1023,7 +958,7 @@ namespace F3DZEX
                 bw.Write((byte)(v3*2));
             } },
 
-            { OpCodeID.G_DMA_IO, (info, bw) => {
+            { CmdID.G_DMA_IO, (info, bw) => {
 
                 bool flag = (bool)info.Args["flag"];
                 uint dmem = (uint)info.Args["dmem"];
@@ -1038,11 +973,11 @@ namespace F3DZEX
                 bw.Write(dram);
             } },
 
-            { OpCodeID.G_TEXTURE, (info, bw) => {
+            { CmdID.G_TEXTURE, (info, bw) => {
 
                 int level = (int)info.Args["level"];
                 int tile = (int)info.Args["tile"];
-                Enums.G_TexOnOff on = (Enums.G_TexOnOff)info.Args["on"];
+                G_TEX_ENABLE on = (G_TEX_ENABLE)info.Args["on"];
                 ushort scaleS = (ushort)info.Args["scaleS"];
                 ushort scaleT = (ushort)info.Args["scaleT"];
 
@@ -1057,7 +992,7 @@ namespace F3DZEX
                 bw.Write(scaleT);
             } },
 
-            { OpCodeID.G_POPMTX, (info, bw) => {
+            { CmdID.G_POPMTX, (info, bw) => {
 
                 uint num = (uint)info.Args["num"];
 
@@ -1066,7 +1001,7 @@ namespace F3DZEX
                 bw.Write(num*64);
             } },
 
-            { OpCodeID.G_GEOMETRYMODE, (info, bw) => {
+            { CmdID.G_GEOMETRYMODE, (info, bw) => {
 
                 int clearbits = (int)info.Args["clearbits"];
                 int setbits = (int)info.Args["setbits"];
@@ -1076,7 +1011,7 @@ namespace F3DZEX
                 bw.Write(setbits, 24);
             } },
 
-            { OpCodeID.G_MTX, (info, bw) => {
+            { CmdID.G_MTX, (info, bw) => {
 
                 uint mtxaddr = (uint)info.Args["mtxaddr"];
                 int param = (int)info.Args["param"];
@@ -1087,7 +1022,7 @@ namespace F3DZEX
                 bw.Write(mtxaddr);
             } },
 
-            { OpCodeID.G_MOVEWORD, (info, bw) => {
+            { CmdID.G_MOVEWORD, (info, bw) => {
 
                 int index = (int)info.Args["index"];
                 int offset = (int)info.Args["offset"];
@@ -1099,7 +1034,7 @@ namespace F3DZEX
                 bw.Write(data);
             } },
 
-            { OpCodeID.G_MOVEMEM, (info, bw) => {
+            { CmdID.G_MOVEMEM, (info, bw) => {
 
                 int size = (int)info.Args["size"];
                 int offset = (int)info.Args["offset"];
@@ -1113,7 +1048,7 @@ namespace F3DZEX
                 bw.Write(address);
             } },
 
-            { OpCodeID.G_LOAD_UCODE, (info, bw) => {
+            { CmdID.G_LOAD_UCODE, (info, bw) => {
 
                 int dsize = (int)info.Args["dsize"];
                 uint tstart = (uint)info.Args["tstart"];
@@ -1124,7 +1059,7 @@ namespace F3DZEX
                 bw.Write(tstart);
             } },
 
-            { OpCodeID.G_DL, (info, bw) => {
+            { CmdID.G_DL, (info, bw) => {
 
                 bool branch = (bool)info.Args["branch"];
                 uint dl = (uint)info.Args["dl"];
@@ -1135,21 +1070,21 @@ namespace F3DZEX
                 bw.Write(dl);
             } },
 
-            { OpCodeID.G_ENDDL, (info, bw) => {
+            { CmdID.G_ENDDL, (info, bw) => {
                 
                 bw.Write((byte)info.ID);
                 bw.Write(0, 24);
                 bw.Write(0);
             } },
 
-            { OpCodeID.G_SPNOOP, (info, bw) => {
+            { CmdID.G_SPNOOP, (info, bw) => {
 
                 bw.Write((byte)info.ID);
                 bw.Write(0, 24);
                 bw.Write(0);
             } },
 
-            { OpCodeID.G_RDPHALF_1, (info, bw) => {
+            { CmdID.G_RDPHALF_1, (info, bw) => {
 
                 uint word = (uint)info.Args["word"];
 
@@ -1158,7 +1093,7 @@ namespace F3DZEX
                 bw.Write(word);
             } },
 
-            { OpCodeID.G_SETOTHERMODE_L, (info, bw) => {
+            { CmdID.G_SETOTHERMODE_L, (info, bw) => {
 
                 int shift = (int)info.Args["shift"];
                 int len = (int)info.Args["len"];
@@ -1171,7 +1106,7 @@ namespace F3DZEX
                 bw.Write(data);
             } },
 
-            { OpCodeID.G_SETOTHERMODE_H, (info, bw) => {
+            { CmdID.G_SETOTHERMODE_H, (info, bw) => {
 
                 int shift = (int)info.Args["shift"];
                 int len = (int)info.Args["len"];
@@ -1184,7 +1119,7 @@ namespace F3DZEX
                 bw.Write(data);
             } },
 
-            { OpCodeID.G_TEXRECT, (info, bw) => {
+            { CmdID.G_TEXRECT, (info, bw) => {
 
                 var lrx = (FixedPoint)info.Args["lrx"];
                 var lry = (FixedPoint)info.Args["lry"];
@@ -1213,7 +1148,7 @@ namespace F3DZEX
                 bw.Write(dtdy.Raw, 16);
             } },
             
-            { OpCodeID.G_TEXRECTFLIP, (info, bw) => {
+            { CmdID.G_TEXRECTFLIP, (info, bw) => {
 
                 var lrx = (FixedPoint)info.Args["lrx"];
                 var lry = (FixedPoint)info.Args["lry"];
@@ -1242,35 +1177,35 @@ namespace F3DZEX
                 bw.Write(dtdy.Raw, 16);
             } },
 
-            { OpCodeID.G_RDPLOADSYNC, (info, bw) => {
+            { CmdID.G_RDPLOADSYNC, (info, bw) => {
 
                 bw.Write((byte)info.ID);
                 bw.Write(0, 24);
                 bw.Write(32);
             } },
 
-            { OpCodeID.G_RDPPIPESYNC, (info, bw) => {
+            { CmdID.G_RDPPIPESYNC, (info, bw) => {
 
                 bw.Write((byte)info.ID);
                 bw.Write(0, 24);
                 bw.Write(32);
             } },
 
-            { OpCodeID.G_RDPTILESYNC, (info, bw) => {
+            { CmdID.G_RDPTILESYNC, (info, bw) => {
 
                 bw.Write((byte)info.ID);
                 bw.Write(0, 24);
                 bw.Write(32);
             } },
 
-            { OpCodeID.G_RDPFULLSYNC, (info, bw) => {
+            { CmdID.G_RDPFULLSYNC, (info, bw) => {
 
                 bw.Write((byte)info.ID);
                 bw.Write(0, 24);
                 bw.Write(32);
             } },
 
-            { OpCodeID.G_SETKEYGB, (info, bw) => {
+            { CmdID.G_SETKEYGB, (info, bw) => {
 
                 var widthG = (FixedPoint)info.Args["widthG"];
                 var widthB = (FixedPoint)info.Args["widthB"];
@@ -1289,7 +1224,7 @@ namespace F3DZEX
                 bw.Write(scaleB);
             } },
 
-            { OpCodeID.G_SETKEYR, (info, bw) => {
+            { CmdID.G_SETKEYR, (info, bw) => {
                 
                 var widthR = (FixedPoint)info.Args["widthR"];
                 byte centerR = (byte)info.Args["centerR"];
@@ -1302,7 +1237,7 @@ namespace F3DZEX
                 bw.Write(scaleR);
             } },
 
-            { OpCodeID.G_SETCONVERT, (info, bw) => {
+            { CmdID.G_SETCONVERT, (info, bw) => {
 
                 int k0 = (int)info.Args["k0"];
                 int k1 = (int)info.Args["k1"];
@@ -1321,7 +1256,7 @@ namespace F3DZEX
                 bw.WriteSigned(k5, 8);
             } },
 
-            { OpCodeID.G_SETSCISSOR, (info, bw) => {
+            { CmdID.G_SETSCISSOR, (info, bw) => {
 
                 var ulx = (FixedPoint)info.Args["ulx"];
                 var uly = (FixedPoint)info.Args["uly"];
@@ -1338,7 +1273,7 @@ namespace F3DZEX
                 bw.Write(lry.Raw, 12);
             } },
 
-            { OpCodeID.G_SETPRIMDEPTH, (info, bw) => {
+            { CmdID.G_SETPRIMDEPTH, (info, bw) => {
 
                 int z = (int)info.Args["z"];
                 int dz = (int)info.Args["dz"];
@@ -1349,7 +1284,7 @@ namespace F3DZEX
                 bw.Write((short)dz);
             } },
 
-            { OpCodeID.G_RDPSETOTHERMODE, (info, bw) => {
+            { CmdID.G_RDPSETOTHERMODE, (info, bw) => {
 
                 uint omodeH = (uint)info.Args["omodeH"];
                 uint omodeL = (uint)info.Args["omodeL"];
@@ -1360,7 +1295,7 @@ namespace F3DZEX
 
             } },
 
-            { OpCodeID.G_LOADTLUT, (info, bw) => {
+            { CmdID.G_LOADTLUT, (info, bw) => {
 
                 int tile = (int)info.Args["tile"];
                 int count = (int)info.Args["count"];
@@ -1372,7 +1307,7 @@ namespace F3DZEX
                 bw.Write(0, 12);
             } },
 
-            { OpCodeID.G_RDPHALF_2, (info, bw) => {
+            { CmdID.G_RDPHALF_2, (info, bw) => {
 
                 uint word = (uint)info.Args["word"];
 
@@ -1381,7 +1316,7 @@ namespace F3DZEX
                 bw.Write(word);
             } },
 
-            { OpCodeID.G_SETTILESIZE, (info, bw) => {
+            { CmdID.G_SETTILESIZE, (info, bw) => {
 
                 var uls = (FixedPoint)info.Args["uls"];
                 var ult = (FixedPoint)info.Args["ult"];
@@ -1398,7 +1333,7 @@ namespace F3DZEX
                 bw.Write(lrt.Raw, 12);
             } },
 
-            { OpCodeID.G_LOADBLOCK, (info, bw) => {
+            { CmdID.G_LOADBLOCK, (info, bw) => {
 
                 var uls = (FixedPoint)info.Args["uls"];
                 var ult = (FixedPoint)info.Args["ult"];
@@ -1416,7 +1351,7 @@ namespace F3DZEX
             } },
 
 
-            { OpCodeID.G_LOADTILE, (info, bw) => {
+            { CmdID.G_LOADTILE, (info, bw) => {
 
                 var uls = (FixedPoint)info.Args["uls"];
                 var ult = (FixedPoint)info.Args["ult"];
@@ -1433,10 +1368,10 @@ namespace F3DZEX
                 bw.Write(lrt.Raw, 12);
             } },
 
-            { OpCodeID.G_SETTILE, (info, bw) => {
+            { CmdID.G_SETTILE, (info, bw) => {
 
-                var fmt = (Enums.G_IM_FMT)info.Args["fmt"];
-                var siz = (Enums.G_IM_SIZ)info.Args["siz"];
+                var fmt = (G_IM_FMT)info.Args["fmt"];
+                var siz = (G_IM_SIZ)info.Args["siz"];
                 int line = (int)info.Args["line"];
                 int tmem = (int)info.Args["tmem"];
                 int tile = (int)info.Args["tile"];
@@ -1465,7 +1400,7 @@ namespace F3DZEX
                 bw.Write(shiftS, 4);
             } },
 
-            { OpCodeID.G_FILLRECT, (info, bw) => {
+            { CmdID.G_FILLRECT, (info, bw) => {
 
                 var lrx = (FixedPoint)info.Args["lrx"];
                 var lry = (FixedPoint)info.Args["lry"];
@@ -1480,7 +1415,7 @@ namespace F3DZEX
                 bw.Write(uly.Raw, 12);
             } },
 
-            { OpCodeID.G_SETFILLCOLOR, (info, bw) => {
+            { CmdID.G_SETFILLCOLOR, (info, bw) => {
 
                 uint color = (uint)info.Args["color"];
 
@@ -1489,7 +1424,7 @@ namespace F3DZEX
                 bw.Write(color);
             } },
 
-            { OpCodeID.G_SETFOGCOLOR, (info, bw) => {
+            { CmdID.G_SETFOGCOLOR, (info, bw) => {
 
                 byte R = (byte)info.Args["R"];
                 byte G = (byte)info.Args["G"];
@@ -1504,7 +1439,7 @@ namespace F3DZEX
                 bw.Write(A);
             } },
 
-            { OpCodeID.G_SETBLENDCOLOR, (info, bw) => {
+            { CmdID.G_SETBLENDCOLOR, (info, bw) => {
 
                 byte R = (byte)info.Args["R"];
                 byte G = (byte)info.Args["G"];
@@ -1519,7 +1454,7 @@ namespace F3DZEX
                 bw.Write(A);
             } },
 
-            { OpCodeID.G_SETPRIMCOLOR, (info, bw) => {
+            { CmdID.G_SETPRIMCOLOR, (info, bw) => {
 
                 byte minlevel = (byte)info.Args["minlevel"];
                 byte lodfrac = (byte)info.Args["lodfrac"];
@@ -1538,7 +1473,7 @@ namespace F3DZEX
                 bw.Write(A);
             } },
 
-            { OpCodeID.G_SETENVCOLOR, (info, bw) => {
+            { CmdID.G_SETENVCOLOR, (info, bw) => {
 
                 byte R = (byte)info.Args["R"];
                 byte G = (byte)info.Args["G"];
@@ -1553,7 +1488,7 @@ namespace F3DZEX
                 bw.Write(A);
             } },
 
-            { OpCodeID.G_SETCOMBINE, (info, bw) => {
+            { CmdID.G_SETCOMBINE, (info, bw) => {
 
                 int a0 = (int)info.Args["a0"];
                 int c0 = (int)info.Args["c0"];
@@ -1591,10 +1526,10 @@ namespace F3DZEX
                 bw.Write(Ad1, 3);
             } },
 
-            { OpCodeID.G_SETTIMG, (info, bw) => {
+            { CmdID.G_SETTIMG, (info, bw) => {
 
-                var fmt = (Enums.G_IM_FMT)info.Args["fmt"];
-                var siz = (Enums.G_IM_FMT)info.Args["siz"];
+                var fmt = (G_IM_FMT)info.Args["fmt"];
+                var siz = (G_IM_FMT)info.Args["siz"];
                 int width = (int)info.Args["width"];
                 uint imgaddr = (uint)info.Args["imgaddr"];
 
@@ -1606,7 +1541,7 @@ namespace F3DZEX
                 bw.Write(imgaddr);
             } },
 
-            { OpCodeID.G_SETZIMG, (info, bw) => {
+            { CmdID.G_SETZIMG, (info, bw) => {
 
                 uint imgaddr = (uint)info.Args["imgaddr"];
 
@@ -1615,10 +1550,10 @@ namespace F3DZEX
                 bw.Write(imgaddr);
             } },
 
-            { OpCodeID.G_SETCIMG, (info, bw) => {
+            { CmdID.G_SETCIMG, (info, bw) => {
 
-                var fmt = (Enums.G_IM_FMT)info.Args["fmt"];
-                var siz = (Enums.G_IM_FMT)info.Args["siz"];
+                var fmt = (G_IM_FMT)info.Args["fmt"];
+                var siz = (G_IM_FMT)info.Args["siz"];
                 int width = (int)info.Args["width"];
                 uint imgaddr = (uint)info.Args["imgaddr"];
 
