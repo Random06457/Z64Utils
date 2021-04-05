@@ -2,9 +2,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Text;
 
-namespace F3DZEX
+namespace F3DZEX.Command
 {
     public class Dlist : IEnumerable<Dlist.CommandHolder>
     {
@@ -12,9 +11,9 @@ namespace F3DZEX
         {
             public uint addr;
             public int depth;
-            public Command.CommandInfo cmd;
+            public CmdInfo cmd;
 
-            public CommandHolder(uint addr, int depth, Command.CommandInfo cmd)
+            public CommandHolder(uint addr, int depth, CmdInfo cmd)
                 => (this.addr, this.depth, this.cmd) = (addr, depth, cmd);
         }
 
@@ -33,7 +32,7 @@ namespace F3DZEX
 
         public Dlist(byte[] data, uint addr = 0) : this(1)
         {
-            var cmds = Command.DecodeDList(data, 0);
+            var cmds = Command.CmdEncoding.DecodeCmds(data, 0);
 
             cmds.ForEach(cmd => { _cmds.Add(new CommandHolder(addr, 0, cmd)); addr += (uint)cmd.GetSize(); });
         }
@@ -45,18 +44,18 @@ namespace F3DZEX
 
             for (int size = 0; ; size += 8)
             {
-                Command.OpCodeID id = (Command.OpCodeID)mem.ReadBytes(addr + (uint)size, 1)[0];
+                CmdID id = (CmdID)mem.ReadBytes(addr + (uint)size, 1)[0];
 
-                if (id == Command.OpCodeID.G_DL || id == Command.OpCodeID.G_ENDDL)
+                if (id == CmdID.G_DL || id == CmdID.G_ENDDL)
                 {
-                    var cmds = Command.DecodeDList(mem.ReadBytes(addr, size + 8), 0);
+                    var cmds = Command.CmdEncoding.DecodeCmds(mem.ReadBytes(addr, size + 8), 0);
 
                     // append previous command to the list and increment address
                     cmds.ForEach(cmd => { _cmds.Add(new CommandHolder(addr, depth, cmd)); addr += (uint)cmd.GetSize(); });
 
-                    if (id == Command.OpCodeID.G_DL)
+                    if (id == CmdID.G_DL)
                     {
-                        var gdl = cmds[^1].Convert<Command.GDl>();
+                        var gdl = cmds[^1].Convert<GDl>();
 
                         // checks if the segment is set
                         SegmentedAddress dlAddr = new SegmentedAddress(gdl.dl);

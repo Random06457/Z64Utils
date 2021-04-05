@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.IO;
 using Common;
 using RDP;
-using static F3DZEX.Enums;
+using F3DZEX.Command;
 using System.Diagnostics;
 
 namespace F3DZEX
@@ -89,7 +89,7 @@ namespace F3DZEX
                 this.Ad = Ad & (G_ACMUX)((1 << 3) - 1);
             }
 
-            public bool Match(Command.GSetCombine cmd, int cycle)
+            public bool Match(GSetCombine cmd, int cycle)
             {
                 switch (cycle)
                 {
@@ -147,7 +147,7 @@ namespace F3DZEX
 
             }
 
-            public bool Match(Command.GSetOtherMode cmd)
+            public bool Match(GSetOtherMode cmd)
             {
                 return cmd.shift == shift && cmd.len == len;
             }
@@ -258,11 +258,11 @@ namespace F3DZEX
 
         abstract class MultiMacro
         {
-            Command.OpCodeID[] _ids;
+            CmdID[] _ids;
 
             protected T GetCmd<T>(Disassembler dis, int idx) => dis._dlist.AtIndex(idx).cmd.Convert<T>();
 
-            protected MultiMacro(params Command.OpCodeID[] ids)
+            protected MultiMacro(params CmdID[] ids)
             {
                 _ids = ids;
             }
@@ -285,12 +285,12 @@ namespace F3DZEX
         class LoadTLutMacro : MultiMacro
         {
             public LoadTLutMacro() : base(
-                Command.OpCodeID.G_SETTIMG,
-                Command.OpCodeID.G_RDPTILESYNC,
-                Command.OpCodeID.G_SETTILE,
-                Command.OpCodeID.G_RDPLOADSYNC,
-                Command.OpCodeID.G_LOADTLUT,
-                Command.OpCodeID.G_RDPPIPESYNC
+                CmdID.G_SETTIMG,
+                CmdID.G_RDPTILESYNC,
+                CmdID.G_SETTILE,
+                CmdID.G_RDPLOADSYNC,
+                CmdID.G_LOADTLUT,
+                CmdID.G_RDPPIPESYNC
                 )
             {
 
@@ -300,17 +300,17 @@ namespace F3DZEX
             {
                 output = null;
 
-                var setTimg = GetCmd<Command.GSetTImg>(dis, idx++);
+                var setTimg = GetCmd<GSetTImg>(dis, idx++);
                 if (setTimg.fmt != G_IM_FMT.G_IM_FMT_RGBA || setTimg.width != 1)
                     return false;
 
                 idx++; // G_RDPTILESYNC 
 
-                var setTile = GetCmd<Command.GSetTile>(dis, idx++);
+                var setTile = GetCmd<GSetTile>(dis, idx++);
 
                 idx++; // G_RDPLOADSYNC
 
-                var loadTlut = GetCmd<Command.GLoadTlut>(dis, idx++);
+                var loadTlut = GetCmd<GLoadTlut>(dis, idx++);
 
                 idx++; // G_RDPPIPESYNC
 
@@ -325,13 +325,13 @@ namespace F3DZEX
 
 
             public LoadTextureBlockMacro() : base(
-                Command.OpCodeID.G_SETTIMG,
-                Command.OpCodeID.G_SETTILE,
-                Command.OpCodeID.G_RDPLOADSYNC,
-                Command.OpCodeID.G_LOADBLOCK,
-                Command.OpCodeID.G_RDPPIPESYNC,
-                Command.OpCodeID.G_SETTILE,
-                Command.OpCodeID.G_SETTILESIZE
+                CmdID.G_SETTIMG,
+                CmdID.G_SETTILE,
+                CmdID.G_RDPLOADSYNC,
+                CmdID.G_LOADBLOCK,
+                CmdID.G_RDPPIPESYNC,
+                CmdID.G_SETTILE,
+                CmdID.G_SETTILESIZE
                 )
             {
 
@@ -426,21 +426,21 @@ namespace F3DZEX
             {
                 output = null;
 
-                var setTimg = GetCmd<Command.GSetTImg>(dis, idx++);
+                var setTimg = GetCmd<GSetTImg>(dis, idx++);
                 if (setTimg.width != 1)
                     return false;
 
-                var setTile = GetCmd<Command.GSetTile>(dis, idx++);
+                var setTile = GetCmd<GSetTile>(dis, idx++);
 
                 idx++; // G_RDPLOADSYNC
 
-                var loadBlock = GetCmd<Command.GLoadBlock>(dis, idx++);
+                var loadBlock = GetCmd<GLoadBlock>(dis, idx++);
 
                 idx++; // G_RDPPIPESYNC
 
-                var setTile2 = GetCmd<Command.GSetTile>(dis, idx++);
+                var setTile2 = GetCmd<GSetTile>(dis, idx++);
 
-                var setTileSize = GetCmd<Command.GLoadTile>(dis, idx++);
+                var setTileSize = GetCmd<GLoadTile>(dis, idx++);
 
                 var timg = setTimg.imgaddr;
                 var fmt = setTile2.fmt;  
@@ -455,7 +455,7 @@ namespace F3DZEX
                 var masks = setTile2.maskS;
                 var shifts = setTile2.shiftS;
                 int tmem = setTile2.tmem;
-                G_TX_tile rtile = setTile2.tile;
+                G_TX_TILE rtile = setTile2.tile;
 
                 if (
                     setTimg.fmt == fmt &&
@@ -466,12 +466,12 @@ namespace F3DZEX
                     setTile.siz == SizLoadBlock(siz) &&
                     setTile.line == 0 &&
                     setTile.tmem == tmem &&
-                    setTile.tile == G_TX_tile.G_TX_LOADTILE &&
+                    setTile.tile == G_TX_TILE.G_TX_LOADTILE &&
                     setTile.palette == 0 &&
                     setTile.cmT == cmt && setTile.maskT == maskt && setTile.shiftT == shiftt &&
                     setTile.cmS == cms && setTile.maskS == masks && setTile.shiftS == shifts &&
 
-                    loadBlock.tile == G_TX_tile.G_TX_LOADTILE &&
+                    loadBlock.tile == G_TX_TILE.G_TX_LOADTILE &&
                     loadBlock.uls.Raw == 0 && loadBlock.ult.Raw == 0 &&
                     loadBlock.texels == ((width * height + SizIncr(siz)) >> SizShift(siz)) - 1 &&
                     //(loadBlock.dxt.Raw == 0 || loadBlock.dxt.Raw == CalcDxt(width, SizBytes(siz))) &&
@@ -488,9 +488,9 @@ namespace F3DZEX
                         if ((loadBlock.dxt.Raw == 0 || loadBlock.dxt.Raw == CalcDxt_4b(width)) &&
                             setTile2.line == ((width >> 1)+7) >> 3)
                         {
-                            output = (tmem == 0 && rtile == G_TX_tile.G_TX_RENDERTILE)
-                               ? $"gsDPLoadTextureBlock_4b{s}({dis.DisAddress(timg)}, {fmt}, {width}, {height}, {pal}, {ParseMirrorClampFlag(cms)}, {ParseMirrorClampFlag(cmt)}, {masks}, {maskt}, {shifts}, {shiftt})"
-                               : $"gsDPLoadMultiBlock_4b{s}({dis.DisAddress(timg)}, 0x{tmem:X}, {rtile}, {fmt}, {width}, {height}, {pal}, {ParseMirrorClampFlag(cms)}, {ParseMirrorClampFlag(cmt)}, {masks}, {maskt}, {shifts}, {shiftt})";
+                            output = (tmem == 0 && rtile == G_TX_TILE.G_TX_RENDERTILE)
+                               ? $"gsDPLoadTextureBlock_4b{s}({dis.DisAddress(timg)}, {fmt}, {width}, {height}, {pal}, {DisTexWrap(cms)}, {DisTexWrap(cmt)}, {masks}, {maskt}, {shifts}, {shiftt})"
+                               : $"gsDPLoadMultiBlock_4b{s}({dis.DisAddress(timg)}, 0x{tmem:X}, {rtile}, {fmt}, {width}, {height}, {pal}, {DisTexWrap(cms)}, {DisTexWrap(cmt)}, {masks}, {maskt}, {shifts}, {shiftt})";
                         }
                     }
                     else
@@ -498,9 +498,9 @@ namespace F3DZEX
                         if ((loadBlock.dxt.Raw == 0 || loadBlock.dxt.Raw == CalcDxt(width, SizBytes(siz))) &&
                             setTile2.line == ((width * SizLineBytes(siz)) + 7) >> 3)
                         {
-                            output = (tmem == 0 && rtile == G_TX_tile.G_TX_RENDERTILE)
-                               ? $"gsDPLoadTextureBlock{s}({dis.DisAddress(timg)}, {fmt}, {siz}, {width}, {height}, {pal}, {ParseMirrorClampFlag(cms)}, {ParseMirrorClampFlag(cmt)}, {masks}, {maskt}, {shifts}, {shiftt})"
-                               : $"gsDPLoadMultiBlock{s}({dis.DisAddress(timg)}, 0x{tmem:X}, {rtile}, {fmt}, {siz}, {width}, {height}, {pal}, {ParseMirrorClampFlag(cms)}, {ParseMirrorClampFlag(cmt)}, {masks}, {maskt}, {shifts}, {shiftt})";
+                            output = (tmem == 0 && rtile == G_TX_TILE.G_TX_RENDERTILE)
+                               ? $"gsDPLoadTextureBlock{s}({dis.DisAddress(timg)}, {fmt}, {siz}, {width}, {height}, {pal}, {DisTexWrap(cms)}, {DisTexWrap(cmt)}, {masks}, {maskt}, {shifts}, {shiftt})"
+                               : $"gsDPLoadMultiBlock{s}({dis.DisAddress(timg)}, 0x{tmem:X}, {rtile}, {fmt}, {siz}, {width}, {height}, {pal}, {DisTexWrap(cms)}, {DisTexWrap(cmt)}, {masks}, {maskt}, {shifts}, {shiftt})";
                         }
                     }
                 }
@@ -514,7 +514,7 @@ namespace F3DZEX
         private string DisAddress(object addr) => _cfg.AddressLiteral ? $"0x{addr:X8}" : $"D_{addr:X8}";
        
         // These 2 functions are reimps of oot's code
-        private string DisCCM(G_CCMUX value, int idx)
+        private static string DisCCM(G_CCMUX value, int idx)
         {
             switch (value)
             {
@@ -552,7 +552,7 @@ namespace F3DZEX
                     }
             }
         }
-        private string DisACM(G_ACMUX value, int idx)
+        private static string DisACM(G_ACMUX value, int idx)
         {
             switch (value)
             {
@@ -572,70 +572,88 @@ namespace F3DZEX
                     return "?";
             }
         }
+        private static string DisMtxParams(int v)
+        {
+            G_MTX_PARAM param = (G_MTX_PARAM)v;
+            string push = param.HasFlag(G_MTX_PARAM.G_MTX_PUSH) ? "G_MTX_PUSH" : "G_MTX_NOPUSH";
+            string load = param.HasFlag(G_MTX_PARAM.G_MTX_LOAD) ? "G_MTX_LOAD" : "G_MTX_MUL";
+            string projection = param.HasFlag(G_MTX_PARAM.G_MTX_PROJECTION) ? "G_MTX_PROJECTION" : "G_MTX_MODELVIEW";
+            return $"{push} | {load} | {projection}";
+        }
+        private static string DisTexWrap(G_TX_TEXWRAP v)
+        {
+            var mirror = v & G_TX_TEXWRAP.G_TX_MIRROR;
+            var wrap = v & G_TX_TEXWRAP.G_TX_CLAMP;
+            return $"{mirror} | {wrap}";
+        }
+        private static string DisTexWrap(int v)
+        {
+            return DisTexWrap((G_TX_TEXWRAP)v);
+        }
 
-        private string DisassembleInstruction(Command.CommandInfo info)
+        private string DisassembleInstruction(CmdInfo info)
         {
             switch (info.ID)
             {
-                case Command.OpCodeID.G_NOOP: return $"gsDPNoOpTag(0x{(uint)info.Args["tag"]:X})";
-                case Command.OpCodeID.G_VTX: return $"gsSPVertex({DisAddress(info.Args["vaddr"])}, {info.Args["numv"]}, {info.Args["vbidx"]})";
-                case Command.OpCodeID.G_MODIFYVTX: return $"gsSPModifyVertex({info.Args["where"]}, {info.Args["vbidx"]}, {info.Args["val"]})";
-                case Command.OpCodeID.G_CULLDL: return $"gsSPCullDisplayList({info.Args["vfirst"]}, {info.Args["vlast"]})";
-                case Command.OpCodeID.G_BRANCH_Z: return $"gsSPBranchLessZraw({DisAddress(_wordHi)}, {info.Args["vbidx"]}, 0x{info.Args["zval"]:X})";
-                case Command.OpCodeID.G_TRI1: return $"gsSP1Triangle({info.Args["v0"]}, {info.Args["v1"]}, {info.Args["v2"]}, 0)";
-                case Command.OpCodeID.G_TRI2: return $"gsSP2Triangles({info.Args["v00"]}, {info.Args["v01"]}, {info.Args["v02"]}, 0, {info.Args["v10"]}, {info.Args["v11"]}, {info.Args["v12"]}, 0)";
-                case Command.OpCodeID.G_QUAD: return $"gsSPQuadrangle({info.Args["v0"]}, {info.Args["v1"]}, {info.Args["v2"]}, {info.Args["v3"]}, 0)";
-                case Command.OpCodeID.G_DMA_IO: return $"gsSPDma_io(0x{info.Args["flag"]:X}, 0x{info.Args["dmem"]:X}, 0x{ info.Args["dram"]:X}, 0x{info.Args["size"]:X})";
-                case Command.OpCodeID.G_TEXTURE: return $"gsSPTexture(0x{info.Args["scaleS"]:X}, 0x{info.Args["scaleT"]:X}, {info.Args["level"]}, {(G_TX_tile)info.Args["tile"]}, {info.Args["on"]})";
-                case Command.OpCodeID.G_POPMTX: return $"gsSPPopMatrixN(G_MTX_MODELVIEW, {info.Args["num"]})";
-                case Command.OpCodeID.G_GEOMETRYMODE:
+                case CmdID.G_NOOP: return $"gsDPNoOpTag(0x{(uint)info.Args["tag"]:X})";
+                case CmdID.G_VTX: return $"gsSPVertex({DisAddress(info.Args["vaddr"])}, {info.Args["numv"]}, {info.Args["vbidx"]})";
+                case CmdID.G_MODIFYVTX: return $"gsSPModifyVertex({info.Args["where"]}, {info.Args["vbidx"]}, {info.Args["val"]})";
+                case CmdID.G_CULLDL: return $"gsSPCullDisplayList({info.Args["vfirst"]}, {info.Args["vlast"]})";
+                case CmdID.G_BRANCH_Z: return $"gsSPBranchLessZraw({DisAddress(_wordHi)}, {info.Args["vbidx"]}, 0x{info.Args["zval"]:X})";
+                case CmdID.G_TRI1: return $"gsSP1Triangle({info.Args["v0"]}, {info.Args["v1"]}, {info.Args["v2"]}, 0)";
+                case CmdID.G_TRI2: return $"gsSP2Triangles({info.Args["v00"]}, {info.Args["v01"]}, {info.Args["v02"]}, 0, {info.Args["v10"]}, {info.Args["v11"]}, {info.Args["v12"]}, 0)";
+                case CmdID.G_QUAD: return $"gsSPQuadrangle({info.Args["v0"]}, {info.Args["v1"]}, {info.Args["v2"]}, {info.Args["v3"]}, 0)";
+                case CmdID.G_DMA_IO: return $"gsSPDma_io(0x{info.Args["flag"]:X}, 0x{info.Args["dmem"]:X}, 0x{ info.Args["dram"]:X}, 0x{info.Args["size"]:X})";
+                case CmdID.G_TEXTURE: return $"gsSPTexture(0x{info.Args["scaleS"]:X}, 0x{info.Args["scaleT"]:X}, {info.Args["level"]}, {(G_TX_TILE)info.Args["tile"]}, {info.Args["on"]})";
+                case CmdID.G_POPMTX: return $"gsSPPopMatrixN(G_MTX_MODELVIEW, {info.Args["num"]})";
+                case CmdID.G_GEOMETRYMODE:
                     {
                         int clearbits = (int)info.Args["clearbits"];
                         int setbits = (int)info.Args["setbits"];
                         
                         if (clearbits == 0)
                         {
-                            var flag = new BitFlag<GeometryMode>((GeometryMode)setbits);
+                            var flag = new BitFlag<G_GEO_MODE>((G_GEO_MODE)setbits);
                             return $"gsSPLoadGeometryMode({flag})";
                         }
                         else if (setbits == 0)
                         {
-                            var flag = new BitFlag<GeometryMode>((GeometryMode)~clearbits);
+                            var flag = new BitFlag<G_GEO_MODE>((G_GEO_MODE)~clearbits);
                             return $"gsSPClearGeometryMode({flag})";
                         }
                         else if (clearbits == 0xFFFFFF)
                         {
-                            var flag = new BitFlag<GeometryMode>((GeometryMode)setbits);
+                            var flag = new BitFlag<G_GEO_MODE>((G_GEO_MODE)setbits);
                             return $"gsSPSetGeometryMode({flag})";
                         }
                         else
                         {
-                            var clearFlag = new BitFlag<GeometryMode>((GeometryMode)~clearbits);
-                            var setFlag = new BitFlag<GeometryMode>((GeometryMode)setbits);
+                            var clearFlag = new BitFlag<G_GEO_MODE>((G_GEO_MODE)~clearbits);
+                            var setFlag = new BitFlag<G_GEO_MODE>((G_GEO_MODE)setbits);
                             return $"gsSPGeometryMode({clearFlag}, {setFlag})";
                         }
                     }
-                case Command.OpCodeID.G_MTX: return $"gsSPMatrix({DisAddress(info.Args["mtxaddr"])}, {ParseMtxParam((int)info.Args["param"])})";
-                case Command.OpCodeID.G_MOVEWORD: break;
-                case Command.OpCodeID.G_MOVEMEM: break;
-                case Command.OpCodeID.G_LOAD_UCODE: return $"gsSPLoadUcodeEx({DisAddress(info.Args["tstart"])}, {DisAddress(_wordHi)}, 0x{info.Args["dsize"]:X})";
-                case Command.OpCodeID.G_DL:
+                case CmdID.G_MTX: return $"gsSPMatrix({DisAddress(info.Args["mtxaddr"])}, {DisMtxParams((int)info.Args["param"])})";
+                case CmdID.G_MOVEWORD: break;
+                case CmdID.G_MOVEMEM: break;
+                case CmdID.G_LOAD_UCODE: return $"gsSPLoadUcodeEx({DisAddress(info.Args["tstart"])}, {DisAddress(_wordHi)}, 0x{info.Args["dsize"]:X})";
+                case CmdID.G_DL:
                     {
                         var branch = info.GetArg<bool>("branch");
                         return branch
                             ? $"gsSPBranchList({DisAddress(info.Args["dl"])})"
                             : $"gsSPDisplayList({DisAddress(info.Args["dl"])})";
                     }
-                case Command.OpCodeID.G_ENDDL: return $"gsSPEndDisplayList()";
-                case Command.OpCodeID.G_SPNOOP: return $"gsSPNoOp()";
-                case Command.OpCodeID.G_RDPHALF_1:
+                case CmdID.G_ENDDL: return $"gsSPEndDisplayList()";
+                case CmdID.G_SPNOOP: return $"gsSPNoOp()";
+                case CmdID.G_RDPHALF_1:
                     {
                         _wordHi = (uint)info.Args["word"];
                         break;
                     }
-                case Command.OpCodeID.G_SETOTHERMODE_L:
+                case CmdID.G_SETOTHERMODE_L:
                     {
-                        var cmd = info.Convert<Command.GSetOtherMode>();
+                        var cmd = info.Convert<GSetOtherMode>();
 
                         var macro = OtherModeMacro.MacrosL.Find(m => m.Match(cmd));
                         if (macro != null)
@@ -646,9 +664,9 @@ namespace F3DZEX
 
                         return $"gsSPSetOtherMode(G_SETOTHERMODE_L, {(G_MDSFT_L)cmd.shift}, {cmd.len}, 0x{cmd.data:X})";
                     }
-                case Command.OpCodeID.G_SETOTHERMODE_H:
+                case CmdID.G_SETOTHERMODE_H:
                     {
-                        var cmd = info.Convert<Command.GSetOtherMode>();
+                        var cmd = info.Convert<GSetOtherMode>();
 
                         var macro = OtherModeMacro.MacrosH.Find(m => m.Match(cmd));
                         if (macro != null)
@@ -658,81 +676,81 @@ namespace F3DZEX
                         }
                         return $"gsSPSetOtherMode(G_SETOTHERMODE_H, {(G_MDSFT_H)cmd.shift}, {cmd.len}, 0x{cmd.data:X})";
                     }
-                case Command.OpCodeID.G_TEXRECT:
+                case CmdID.G_TEXRECT:
                     {
-                        var cmd = info.Convert<Command.GTexRect>();
+                        var cmd = info.Convert<GTexRect>();
                         return $"gsSPTextureRectangle({cmd.ulx}, {cmd.uly}, {cmd.lrx}, {cmd.lry}, {cmd.tile}, {cmd.uls}, {cmd.ult}, {cmd.dsdx}, {cmd.dtdy})";
                     }
-                case Command.OpCodeID.G_TEXRECTFLIP:
+                case CmdID.G_TEXRECTFLIP:
                     {
-                        var cmd = info.Convert<Command.GTexRect>();
+                        var cmd = info.Convert<GTexRect>();
                         return $"gsSPTextureRectangleFlip({cmd.ulx}, {cmd.uly}, {cmd.lrx}, {cmd.lry}, {cmd.tile}, {cmd.uls}, {cmd.ult}, {cmd.dsdx}, {cmd.dtdy})";
                     }
-                case Command.OpCodeID.G_RDPLOADSYNC: return "gsDPLoadSync()";
-                case Command.OpCodeID.G_RDPPIPESYNC: return "gsDPPipeSync()";
-                case Command.OpCodeID.G_RDPTILESYNC: return "gsDPTileSync()";
-                case Command.OpCodeID.G_RDPFULLSYNC: return "gsDPFullSync()";
-                case Command.OpCodeID.G_SETKEYGB:
+                case CmdID.G_RDPLOADSYNC: return "gsDPLoadSync()";
+                case CmdID.G_RDPPIPESYNC: return "gsDPPipeSync()";
+                case CmdID.G_RDPTILESYNC: return "gsDPTileSync()";
+                case CmdID.G_RDPFULLSYNC: return "gsDPFullSync()";
+                case CmdID.G_SETKEYGB:
                     {
-                        var cmd = info.Convert<Command.GSetKeyGB>();
+                        var cmd = info.Convert<GSetKeyGB>();
                         return $"gsDPSetKeyGB({cmd.centerG}, {cmd.scaleG}, {cmd.widthG}, {cmd.centerB}, {cmd.scaleB}, {cmd.widthB})";
                     }
-                case Command.OpCodeID.G_SETKEYR:
+                case CmdID.G_SETKEYR:
                     {
-                        var cmd = info.Convert<Command.GSetKeyR>();
+                        var cmd = info.Convert<GSetKeyR>();
                         return $"gsDPSetKeyR({cmd.centerR}, {cmd.widthR}, {cmd.scaleR})";
                     }
-                case Command.OpCodeID.G_SETCONVERT: return $"gsDPSetConvert({info.Args["k0"]}, {info.Args["k1"]}, {info.Args["k2"]}, {info.Args["k3"]}, {info.Args["k4"]}, {info.Args["k5"]})";
-                case Command.OpCodeID.G_SETSCISSOR:
+                case CmdID.G_SETCONVERT: return $"gsDPSetConvert({info.Args["k0"]}, {info.Args["k1"]}, {info.Args["k2"]}, {info.Args["k3"]}, {info.Args["k4"]}, {info.Args["k5"]})";
+                case CmdID.G_SETSCISSOR:
                     {
-                        var cmd = info.Convert<Command.GSetScissor>();
+                        var cmd = info.Convert<GSetScissor>();
                         if (cmd.lrx.FracPart() == 0 && cmd.lry.FracPart() == 0 && cmd.ulx.FracPart() == 0 && cmd.uly.FracPart() == 0)
                             return $"gsDPSetScissor({cmd.mode}, {cmd.ulx.IntPart()}, {cmd.uly.IntPart()}, {cmd.lrx.IntPart()}, {cmd.uly.IntPart()})";
                         else
                             return $"gsDPSetScissorFrac({cmd.mode}, {cmd.ulx}, {cmd.uly}, {cmd.lrx}, {cmd.lry})";
                     }
-                case Command.OpCodeID.G_SETPRIMDEPTH: return $"gsDPSetPrimDepth({info.Args["z"]}, {info.Args["dz"]})";
-                case Command.OpCodeID.G_RDPSETOTHERMODE: return $"gsDPSetOtherMode(0x{info.Args["omodeH"]:X}, 0x{info.Args["omodeL"]:X})";
-                case Command.OpCodeID.G_LOADTLUT: return $"gsDPLoadTLUTCmd({info.Args["tile"]}, {info.Args["count"]})";
-                case Command.OpCodeID.G_RDPHALF_2:
+                case CmdID.G_SETPRIMDEPTH: return $"gsDPSetPrimDepth({info.Args["z"]}, {info.Args["dz"]})";
+                case CmdID.G_RDPSETOTHERMODE: return $"gsDPSetOtherMode(0x{info.Args["omodeH"]:X}, 0x{info.Args["omodeL"]:X})";
+                case CmdID.G_LOADTLUT: return $"gsDPLoadTLUTCmd({info.Args["tile"]}, {info.Args["count"]})";
+                case CmdID.G_RDPHALF_2:
                     {
                         _wordLo = (uint)info.Args["word"];
                         break;
                     }
-                case Command.OpCodeID.G_SETTILESIZE:
+                case CmdID.G_SETTILESIZE:
                     {
-                        var cmd = info.Convert<Command.GLoadTile>();
+                        var cmd = info.Convert<GLoadTile>();
                         return $"gsDPSetTileSize({cmd.tile}, {cmd.uls}, {cmd.ult}, {cmd.lrs}, {cmd.lrt})";
                     }
-                case Command.OpCodeID.G_LOADBLOCK:
+                case CmdID.G_LOADBLOCK:
                     {
-                        var cmd = info.Convert<Command.GLoadBlock>();
+                        var cmd = info.Convert<GLoadBlock>();
                         return $"gsDPLoadBlock({cmd.tile}, {cmd.uls}, {cmd.ult}, {cmd.texels}, {cmd.dxt})";
                     }
-                case Command.OpCodeID.G_LOADTILE:
+                case CmdID.G_LOADTILE:
                     {
-                        var cmd = info.Convert<Command.GLoadTile>();
+                        var cmd = info.Convert<GLoadTile>();
                         return $"gsDPLoadTile({cmd.tile}, {cmd.uls}, {cmd.ult}, {cmd.lrs}, {cmd.lrt})";
                     }
-                case Command.OpCodeID.G_SETTILE:
+                case CmdID.G_SETTILE:
                     {
-                        var cmt = ParseMirrorClampFlag((int)info.Args["cmT"]);
-                        var cmS = ParseMirrorClampFlag((int)info.Args["cmS"]);
-                        return $"gsDPSetTile({info.Args["fmt"]}, {info.Args["siz"]}, {info.Args["line"]}, 0x{info.Args["tmem"]:X}, {(G_TX_tile)info.Args["tile"]}, {info.Args["palette"]}, {cmt}, {info.Args["maskT"]}, {info.Args["shiftT"]}, {cmS}, {info.Args["maskS"]}, {info.Args["shiftS"]})";
+                        var cmt = DisTexWrap((int)info.Args["cmT"]);
+                        var cmS = DisTexWrap((int)info.Args["cmS"]);
+                        return $"gsDPSetTile({info.Args["fmt"]}, {info.Args["siz"]}, {info.Args["line"]}, 0x{info.Args["tmem"]:X}, {(G_TX_TILE)info.Args["tile"]}, {info.Args["palette"]}, {cmt}, {info.Args["maskT"]}, {info.Args["shiftT"]}, {cmS}, {info.Args["maskS"]}, {info.Args["shiftS"]})";
                     }
-                case Command.OpCodeID.G_FILLRECT:
+                case CmdID.G_FILLRECT:
                     {
-                        var cmd = info.Convert<Command.GFillRect>();
+                        var cmd = info.Convert<GFillRect>();
                         return $"gsDPFillRectangle({cmd.ulx}, {cmd.uly}, {cmd.lrx}, {cmd.lry})";
                     }
-                case Command.OpCodeID.G_SETFILLCOLOR: return $"gsDPSetFillColor(0x{info.Args["color"]:X8})";
-                case Command.OpCodeID.G_SETFOGCOLOR: return $"gsDPSetFogColor({info.Args["R"]}, {info.Args["G"]}, {info.Args["B"]}, {info.Args["A"]})";
-                case Command.OpCodeID.G_SETBLENDCOLOR: return $"gsDPBlendColor({info.Args["R"]}, {info.Args["G"]}, {info.Args["B"]}, {info.Args["A"]})";
-                case Command.OpCodeID.G_SETPRIMCOLOR: return $"gsDPSetPrimColor(0x{info.Args["minlevel"]:X2}, 0x{info.Args["lodfrac"]:X2}, {info.Args["R"]}, {info.Args["G"]}, {info.Args["B"]}, {info.Args["A"]})";
-                case Command.OpCodeID.G_SETENVCOLOR: return $"gsDPSetEnvColor({info.Args["R"]}, {info.Args["G"]}, {info.Args["B"]}, {info.Args["A"]})";
-                case Command.OpCodeID.G_SETCOMBINE:
+                case CmdID.G_SETFILLCOLOR: return $"gsDPSetFillColor(0x{info.Args["color"]:X8})";
+                case CmdID.G_SETFOGCOLOR: return $"gsDPSetFogColor({info.Args["R"]}, {info.Args["G"]}, {info.Args["B"]}, {info.Args["A"]})";
+                case CmdID.G_SETBLENDCOLOR: return $"gsDPBlendColor({info.Args["R"]}, {info.Args["G"]}, {info.Args["B"]}, {info.Args["A"]})";
+                case CmdID.G_SETPRIMCOLOR: return $"gsDPSetPrimColor(0x{info.Args["minlevel"]:X2}, 0x{info.Args["lodfrac"]:X2}, {info.Args["R"]}, {info.Args["G"]}, {info.Args["B"]}, {info.Args["A"]})";
+                case CmdID.G_SETENVCOLOR: return $"gsDPSetEnvColor({info.Args["R"]}, {info.Args["G"]}, {info.Args["B"]}, {info.Args["A"]})";
+                case CmdID.G_SETCOMBINE:
                     {
-                        var cmd = info.Convert<Command.GSetCombine>();
+                        var cmd = info.Convert<GSetCombine>();
 
                         var mode0 = CCMode.Modes.Find(m => m.Match(cmd, 0));
                         var mode1 = CCMode.Modes.Find(m => m.Match(cmd, 1));
@@ -741,9 +759,9 @@ namespace F3DZEX
 
                         return $"gsDPSetCombineLERP({DisCCM(cmd.a0, 1)}, {DisCCM(cmd.b0, 2)}, {DisCCM(cmd.c0, 3)}, {DisCCM(cmd.d0, 4)}, {DisACM(cmd.Aa0, 1)}, {DisACM(cmd.Ab0, 2)}, {DisACM(cmd.Ac0, 3)}, {DisACM(cmd.Ad0, 4)}, {DisCCM(cmd.a1, 1)}, {DisCCM(cmd.b1, 2)}, {DisCCM(cmd.c1, 3)}, {DisCCM(cmd.d1, 4)}, {DisACM(cmd.Aa1, 1)}, {DisACM(cmd.Ab1, 2)}, {DisACM(cmd.Ac1, 3)}, {DisACM(cmd.Ad1, 4)})";
                     }
-                case Command.OpCodeID.G_SETTIMG: return $"gsDPSetTextureImage({info.Args["fmt"]}, {info.Args["siz"]}, {info.Args["width"]}, {DisAddress(info.Args["imgaddr"])})";
-                case Command.OpCodeID.G_SETZIMG: return $"gsDPSetDepthImage({DisAddress(info.Args["imgaddr"])})";
-                case Command.OpCodeID.G_SETCIMG: return $"gsDPSetColorImage({info.Args["fmt"]}, {info.Args["siz"]}, {info.Args["width"]}, {DisAddress(info.Args["imgaddr"])})";
+                case CmdID.G_SETTIMG: return $"gsDPSetTextureImage({info.Args["fmt"]}, {info.Args["siz"]}, {info.Args["width"]}, {DisAddress(info.Args["imgaddr"])})";
+                case CmdID.G_SETZIMG: return $"gsDPSetDepthImage({DisAddress(info.Args["imgaddr"])})";
+                case CmdID.G_SETCIMG: return $"gsDPSetColorImage({info.Args["fmt"]}, {info.Args["siz"]}, {info.Args["width"]}, {DisAddress(info.Args["imgaddr"])})";
                 default:
                     break;
             }

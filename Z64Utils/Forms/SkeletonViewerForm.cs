@@ -41,7 +41,7 @@ namespace Z64.Forms
         SkeletonHolder _skel;
         List<AnimationHolder> _anims;
         List<SkeletonLimbHolder> _limbs;
-        List<F3DZEX.Dlist> _limbDlists;
+        List<F3DZEX.Command.Dlist> _limbDlists;
 
         AnimationHolder _curAnim;
         short[] _frameData;
@@ -138,7 +138,8 @@ namespace Z64.Forms
             if (tag != null && tag is SkeletonLimbHolder)
             {
                 var dlist = _limbDlists[_limbs.IndexOf((SkeletonLimbHolder)tag)];
-                _disasForm?.UpdateDlist(dlist);
+                if (dlist != null)
+                    _disasForm?.UpdateDlist(dlist);
             }
 
             NewRender();
@@ -183,7 +184,7 @@ namespace Z64.Forms
 
         void UpdateLimbsDlists()
         {
-            _limbDlists = new List<F3DZEX.Dlist>();
+            _limbDlists = new List<F3DZEX.Command.Dlist>();
             _limbs.ForEach(l => _limbDlists.Add(l.DListSeg.VAddr != 0 ? _renderer.GetDlist(l.DListSeg.VAddr) : null));
         }
 

@@ -16,6 +16,7 @@ using System.Globalization;
 using Syroot.BinaryData;
 using Z64;
 using Common;
+using F3DZEX.Command;
 
 namespace Z64.Forms
 {
@@ -27,7 +28,7 @@ namespace Z64.Forms
             public int X;
             public int Y;
             public int Z;
-            public F3DZEX.Dlist Dlist;
+            public Dlist Dlist;
 
             public RenderRoutine(uint addr, int x = 0, int y = 0, int z = 0)
             {

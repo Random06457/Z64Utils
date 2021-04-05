@@ -81,7 +81,7 @@ namespace Z64.Forms
             {
                 try
                 {
-                    F3DZEX.Disassembler disas = new F3DZEX.Disassembler(new F3DZEX.Dlist(dlist.GetData(), new SegmentedAddress(_segment, _obj.OffsetOf(dlist)).VAddr));
+                    F3DZEX.Disassembler disas = new F3DZEX.Disassembler(new F3DZEX.Command.Dlist(dlist.GetData(), new SegmentedAddress(_segment, _obj.OffsetOf(dlist)).VAddr));
                     var lines = disas.Disassemble();
                     StringWriter sw = new StringWriter();
                     lines.ForEach(s => sw.WriteLine(s));
@@ -456,7 +456,7 @@ namespace Z64.Forms
                                 bool oldStatic = F3DZEX.Disassembler.StaticConfig.Static;
 
                                 F3DZEX.Disassembler.StaticConfig.Static = true;
-                                F3DZEX.Disassembler dis = new F3DZEX.Disassembler(new F3DZEX.Dlist(entry.GetData(), new SegmentedAddress(_segment, _obj.OffsetOf(entry)).VAddr));
+                                F3DZEX.Disassembler dis = new F3DZEX.Disassembler(new F3DZEX.Command.Dlist(entry.GetData(), new SegmentedAddress(_segment, _obj.OffsetOf(entry)).VAddr));
                                 dis.Disassemble().ForEach(l => sw.WriteLine($"    {l}")); ;
 
                                 F3DZEX.Disassembler.StaticConfig.Static = oldStatic;

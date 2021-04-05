@@ -9,18 +9,19 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Common;
+using F3DZEX.Command;
 
 namespace Z64.Forms
 {
     public partial class DisasmForm : MicrosoftFontForm
     {
-        F3DZEX.Dlist _dlist;
+        Dlist _dlist;
 
         public DisasmForm(bool showByteInputBox = false, string defaultText = null)
         {
             InitializeComponent();
 
-            _dlist = new F3DZEX.Dlist();
+            _dlist = new Dlist();
 
             if (!showByteInputBox)
             {
@@ -32,7 +33,7 @@ namespace Z64.Forms
             textBox_disassembly.Text = defaultText ?? "";
         }
 
-        public void UpdateDlist(F3DZEX.Dlist dlist)
+        public void UpdateDlist(Dlist dlist)
         {
             _dlist = dlist;
             UpdateDisassembly();
@@ -47,14 +48,14 @@ namespace Z64.Forms
             bool valid = Utils.IsValidHex(textBox_bytes.Text);
             textBox_disassembly.Text = "";
 
-            _dlist = new F3DZEX.Dlist();
+            _dlist = new Dlist();
 
             if (valid)
             {
                 byte[] data = Utils.HexToBytes(textBox_bytes.Text);
                 try
                 {
-                    _dlist = new F3DZEX.Dlist(data);
+                    _dlist = new Dlist(data);
                 }
                 catch
                 {

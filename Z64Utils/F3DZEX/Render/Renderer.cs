@@ -13,6 +13,7 @@ using Syroot.BinaryData;
 using Z64;
 using RDP;
 using System.Diagnostics;
+using F3DZEX.Command;
 
 namespace F3DZEX.Render
 {
@@ -49,9 +50,9 @@ namespace F3DZEX.Render
         public Config CurrentConfig { get; set; }
         public Memory Memory { get; private set; }
 
-        Enums.G_IM_SIZ _loadTexSiz;
-        Enums.G_IM_FMT _renderTexFmt;
-        Enums.G_IM_SIZ _renderTexSiz;
+        G_IM_SIZ _loadTexSiz;
+        G_IM_FMT _renderTexFmt;
+        G_IM_SIZ _renderTexSiz;
         uint _curImgAddr;
         byte[] _loadTexData;
         byte[] _renderTexData;
@@ -275,21 +276,21 @@ namespace F3DZEX.Render
             }
         }
 
-        private unsafe void ProcessInstruction(Command.CommandInfo info)
+        private unsafe void ProcessInstruction(CmdInfo info)
         {
             switch (info.ID)
             {
-                case Command.OpCodeID.G_SETPRIMCOLOR:
+                case CmdID.G_SETPRIMCOLOR:
                     {
-                        var cmd = info.Convert<Command.GSetPrimColor>();
+                        var cmd = info.Convert<GSetPrimColor>();
 
                         _rdpVtxDrawer.SendPrimColor(Color.FromArgb(cmd.A, cmd.R, cmd.G, cmd.B));
                     }
                     break;
 
-                case Command.OpCodeID.G_VTX:
+                case CmdID.G_VTX:
                     {
-                        var cmd = info.Convert<Command.GVtx>();
+                        var cmd = info.Convert<GVtx>();
 
                         /* We have to multiply the vertex coordinates with the model view matrix here */
 
@@ -345,9 +346,9 @@ namespace F3DZEX.Render
 
                     }
                     break;
-                case Command.OpCodeID.G_TRI1:
+                case CmdID.G_TRI1:
                     {
-                        var cmd = info.Convert<Command.GTri1>();
+                        var cmd = info.Convert<GTri1>();
                         
                         if (CurrentConfig.RenderMode == RdpVertexDrawer.ModelRenderMode.Textured)
                         {
@@ -373,9 +374,9 @@ namespace F3DZEX.Render
                         }*/
                     }
                     break;
-                case Command.OpCodeID.G_TRI2:
+                case CmdID.G_TRI2:
                     {
-                        var cmd = info.Convert<Command.GTri2>();
+                        var cmd = info.Convert<GTri2>();
 
                         /*if (CurrentConfig.RenderTextures)
                         {
@@ -410,12 +411,12 @@ namespace F3DZEX.Render
                     break;
 
 
-                case Command.OpCodeID.G_SETTILESIZE:
+                case CmdID.G_SETTILESIZE:
                     {
                         if (CurrentConfig.RenderMode != RdpVertexDrawer.ModelRenderMode.Textured)
                             return;
 
-                        var cmd = info.Convert<Command.GLoadTile>();
+                        var cmd = info.Convert<GLoadTile>();
 
                         int w = (int)(cmd.lrs.Float() + 1 - cmd.uls.Float());
                         int h = (int)(cmd.lrt.Float() + 1 - cmd.ult.Float());
@@ -429,14 +430,14 @@ namespace F3DZEX.Render
                         _reqDecodeTex = true;
                     }
                     break;
-                case Command.OpCodeID.G_LOADBLOCK:
+                case CmdID.G_LOADBLOCK:
                     {
                         if (CurrentConfig.RenderMode != RdpVertexDrawer.ModelRenderMode.Textured)
                             return;
 
-                        var cmd = info.Convert<Command.GLoadBlock>();
+                        var cmd = info.Convert<GLoadBlock>();
 
-                        if (cmd.tile != Enums.G_TX_tile.G_TX_LOADTILE)
+                        if (cmd.tile != G_TX_TILE.G_TX_LOADTILE)
                             throw new Exception("??");
                         int texels = cmd.texels + 1;
 
@@ -444,49 +445,49 @@ namespace F3DZEX.Render
                         _reqDecodeTex = true;
                     }
                     break;
-                case Command.OpCodeID.G_LOADTLUT:
+                case CmdID.G_LOADTLUT:
                     {
                         if (CurrentConfig.RenderMode != RdpVertexDrawer.ModelRenderMode.Textured)
                             return;
 
-                        var cmd = info.Convert<Command.GLoadTlut>();
+                        var cmd = info.Convert<GLoadTlut>();
                         _curTLUT = Memory.ReadBytes(_curImgAddr, (cmd.count + 1) * 2);
                         _reqDecodeTex = true;
                     }
                     break;
-                case Command.OpCodeID.G_SETTIMG:
+                case CmdID.G_SETTIMG:
                     {
-                        var cmd = info.Convert<Command.GSetTImg>();
+                        var cmd = info.Convert<GSetTImg>();
                         _curImgAddr = cmd.imgaddr;
                         _reqDecodeTex = true;
                     }
                     break;
-                case Command.OpCodeID.G_SETTILE:
+                case CmdID.G_SETTILE:
                     {
                         if (CurrentConfig.RenderMode != RdpVertexDrawer.ModelRenderMode.Textured)
                             return;
 
-                        var settile = info.Convert<Command.GSetTile>();
+                        var settile = info.Convert<GSetTile>();
 
-                        _mirrorV = settile.cmT.HasFlag(Enums.ClampMirrorFlag.G_TX_MIRROR);
-                        _mirrorH = settile.cmS.HasFlag(Enums.ClampMirrorFlag.G_TX_MIRROR);
+                        _mirrorV = settile.cmT.HasFlag(G_TX_TEXWRAP.G_TX_MIRROR);
+                        _mirrorH = settile.cmS.HasFlag(G_TX_TEXWRAP.G_TX_MIRROR);
 
-                        var wrapS = settile.cmS.HasFlag(Enums.ClampMirrorFlag.G_TX_CLAMP)
+                        var wrapS = settile.cmS.HasFlag(G_TX_TEXWRAP.G_TX_CLAMP)
                             ? TextureWrapMode.ClampToEdge
                             : (_mirrorH ? TextureWrapMode.MirroredRepeat : TextureWrapMode.Repeat);
 
-                        var wrapT = settile.cmT.HasFlag(Enums.ClampMirrorFlag.G_TX_CLAMP)
+                        var wrapT = settile.cmT.HasFlag(G_TX_TEXWRAP.G_TX_CLAMP)
                             ? TextureWrapMode.ClampToEdge
                             : (_mirrorV ? TextureWrapMode.MirroredRepeat : TextureWrapMode.Repeat);
 
   
                         _curTex.SetTextureWrap((int)wrapS, (int)wrapT);
 
-                        if (settile.tile == Enums.G_TX_tile.G_TX_LOADTILE)
+                        if (settile.tile == G_TX_TILE.G_TX_LOADTILE)
                         {
                             _loadTexSiz = settile.siz;
                         }
-                        else if (settile.tile == Enums.G_TX_tile.G_TX_RENDERTILE)
+                        else if (settile.tile == G_TX_TILE.G_TX_RENDERTILE)
                         {
                             _renderTexFmt = settile.fmt;
                             _renderTexSiz = settile.siz;
@@ -508,25 +509,25 @@ namespace F3DZEX.Render
 
 
 
-                case Command.OpCodeID.G_POPMTX:
+                case CmdID.G_POPMTX:
                     {
-                        var cmd = info.Convert<Command.GPopMtx>();
+                        var cmd = info.Convert<GPopMtx>();
                         for (uint i = 0; i < cmd.num; i++)
                             PopMatrix();
 
                         break;
                     }
-                case Command.OpCodeID.G_MTX:
+                case CmdID.G_MTX:
                     {
-                        var cmd = info.Convert<Command.GMtx>();
+                        var cmd = info.Convert<GMtx>();
                         var mtx = new Mtx(Memory.ReadBytes(cmd.mtxaddr, Mtx.SIZE));
                         var mtxf = mtx.ToMatrix4();
 
-                        if (cmd.param.HasFlag(Enums.G_MtxParams.G_MTX_PUSH))
+                        if (cmd.param.HasFlag(G_MTX_PARAM.G_MTX_PUSH))
                             _mtxStack.Push(mtxf);
 
                         // check G_MTX_MUL
-                        if (!cmd.param.HasFlag(Enums.G_MtxParams.G_MTX_LOAD))
+                        if (!cmd.param.HasFlag(G_MTX_PARAM.G_MTX_LOAD))
                             //mtxf = curMtx * mtxf;
                             mtxf *= _mtxStack.Peek();
 
