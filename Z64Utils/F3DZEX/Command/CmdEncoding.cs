@@ -103,7 +103,7 @@ namespace F3DZEX.Command
                 Dictionary<string, object> args = new Dictionary<string, object>();
 
                 int where = br.ReadByte();
-                int vbidx = br.ReadByte()/2;
+                int vbidx = br.ReadUInt16()/2;
                 uint val = br.ReadUInt32();
 
                 args.Add("where", where);

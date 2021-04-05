@@ -268,12 +268,27 @@ namespace Z64.Forms
                 return;
             }
 
+
+            string defaultValue = null;
+            string fileName = _game.GetFileName(file.VRomStart).ToLower();
+
+            if (fileName.StartsWith("object_"))
+                defaultValue = "6";
+            else if (fileName.Contains("_room_"))
+                defaultValue = "3";
+            else if (fileName.EndsWith("_scene"))
+                defaultValue = "2";
+            else if (fileName == "gameplay_keep")
+                defaultValue = "4";
+            else if (fileName.StartsWith("gameplay_"))
+                defaultValue = "5";
+
             var valueForm = new EditValueForm("Choose Segment", "Plase enter a segment id", (v) =>
             {
                 return (int.TryParse(v, out int ret) && ret >= 0 && ret < 16)
                 ? null
                 : "Segment ID must be a value between 0 and 15";
-            });
+            }, defaultValue);
             if (valueForm.ShowDialog() == DialogResult.OK)
             {
                 var form = new ObjectAnalyzerForm(_game, file.Data, int.Parse(valueForm.Result));

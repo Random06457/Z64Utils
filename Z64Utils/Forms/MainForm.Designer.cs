@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem2 = new System.Windows.Forms.ListViewItem(new string[] {
             "",
             "00000000-00000000",
             "00000000-00000000",
@@ -146,7 +146,7 @@
             this.listView_files.FullRowSelect = true;
             this.listView_files.HideSelection = false;
             this.listView_files.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem1});
+            listViewItem2});
             this.listView_files.Location = new System.Drawing.Point(6, 53);
             this.listView_files.MultiSelect = false;
             this.listView_files.Name = "listView_files";
@@ -231,6 +231,7 @@
             // 
             // openToolStripMenuItem
             // 
+            this.openToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("openToolStripMenuItem.Image")));
             this.openToolStripMenuItem.Name = "openToolStripMenuItem";
             this.openToolStripMenuItem.Size = new System.Drawing.Size(123, 22);
             this.openToolStripMenuItem.Text = "Open";
@@ -267,7 +268,7 @@
             // 
             // openObjectToolStripMenuItem
             // 
-            this.openObjectToolStripMenuItem.Image = global::Z64.Properties.Resources.cube;
+            this.openObjectToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("openObjectToolStripMenuItem.Image")));
             this.openObjectToolStripMenuItem.Name = "openObjectToolStripMenuItem";
             this.openObjectToolStripMenuItem.Size = new System.Drawing.Size(200, 22);
             this.openObjectToolStripMenuItem.Text = "Open DList Viewer";
@@ -283,7 +284,7 @@
             // 
             // ROMRAMConversionsToolStripMenuItem
             // 
-            this.ROMRAMConversionsToolStripMenuItem.Image = global::Z64.Properties.Resources.conversion;
+            this.ROMRAMConversionsToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("ROMRAMConversionsToolStripMenuItem.Image")));
             this.ROMRAMConversionsToolStripMenuItem.Name = "ROMRAMConversionsToolStripMenuItem";
             this.ROMRAMConversionsToolStripMenuItem.Size = new System.Drawing.Size(200, 22);
             this.ROMRAMConversionsToolStripMenuItem.Text = "ROM/RAM Conversions";
@@ -291,7 +292,7 @@
             // 
             // textureViewerToolStripMenuItem
             // 
-            this.textureViewerToolStripMenuItem.Image = global::Z64.Properties.Resources.texture;
+            this.textureViewerToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("textureViewerToolStripMenuItem.Image")));
             this.textureViewerToolStripMenuItem.Name = "textureViewerToolStripMenuItem";
             this.textureViewerToolStripMenuItem.Size = new System.Drawing.Size(200, 22);
             this.textureViewerToolStripMenuItem.Text = "Texture Viewer";

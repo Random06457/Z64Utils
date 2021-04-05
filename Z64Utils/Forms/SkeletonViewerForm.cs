@@ -30,6 +30,7 @@ namespace Z64.Forms
         bool _formClosing = false;
         System.Timers.Timer _timer;
         PlayState _playState;
+        string _dlistError = null;
 
         Z64Game _game;
         F3DZEX.Render.Renderer _renderer;
@@ -61,7 +62,7 @@ namespace Z64.Forms
             _timer = new System.Timers.Timer();
             _timer.Elapsed += Timer_Elapsed;
 
-            RenderModelViewer();
+            NewRender();
 
             FormClosing += (s, e) => {
                 if (_timer.Enabled && !_formClosing)
@@ -121,15 +122,25 @@ namespace Z64.Forms
 
         void RenderCallback(Matrix4 proj, Matrix4 view)
         {
+            if (_dlistError != null)
+            {
+                toolStripErrorLabel.Text = _dlistError;
+                return;
+            }
+
             _renderer.RenderStart(proj, view);
             RenderLimb(0);
-            
+
             /*
             GL.PointSize(10.0f);
             GL.LineWidth(2.0f);
             GL.Color3(0xFF, 0, 0);
             RenderLimb(0, true);
             */
+
+            toolStripErrorLabel.Text = _renderer.RenderFailed()
+                ? $"RENDER ERROR AT 0x{_renderer.RenderErrorAddr:X8}! ({_renderer.ErrorMsg})"
+                : "";
         }
 
         private void TreeView_hierarchy_AfterSelect(object sender, EventArgs e)
@@ -147,24 +158,14 @@ namespace Z64.Forms
             NewRender();
         }
 
-
-        private void NewRender()
+        private void NewRender(object sender = null, EventArgs e = null)
         {
             _renderer.ClearErrors();
 
-            //UpdateLimbs();
-            //UpdateLimbsDlists();
+            toolStripErrorLabel.Text = "";
 
-            RenderModelViewer();
-        }
-
-        private void RenderModelViewer(object sender = null, EventArgs e = null)
-        {
             modelViewer.Render();
 
-            toolStripErrorLabel.Text = _renderer.RenderFailed()
-                ? $"RENDER ERROR AT 0x{_renderer.RenderErrorAddr:X8}! ({_renderer.ErrorMsg})"
-                : "";
         }
 
 
@@ -186,8 +187,24 @@ namespace Z64.Forms
 
         void UpdateLimbsDlists()
         {
+            _dlistError = null;
             _limbDlists = new List<F3DZEX.Command.Dlist>();
-            _limbs.ForEach(l => _limbDlists.Add(l.DListSeg.VAddr != 0 ? _renderer.GetDlist(l.DListSeg.VAddr) : null));
+
+            foreach (var limb in _limbs)
+            {
+                F3DZEX.Command.Dlist dlist = null;
+                try
+                {
+                    if (limb.DListSeg.VAddr != 0)
+                        dlist = _renderer.GetDlist(limb.DListSeg);
+                }
+                catch (Exception ex)
+                {
+                    if (_dlistError == null)
+                        _dlistError = $"Error while decoding dlist 0x{limb.DListSeg.VAddr:X8} : {ex.Message}";
+                }
+                _limbDlists.Add(dlist);
+            }
         }
 
         // Updates skeleton -> limbs / limbs dlists -> matrices
@@ -302,9 +319,6 @@ namespace Z64.Forms
             {
                 BinaryStream bw = new BinaryStream(ms, Syroot.BinaryData.ByteConverter.Big);
 
-
-                //GL.GetFloat(GetPName.ModelviewMatrix, out Matrix4 curMtx);
-
                 UpdateMatrixBuf(bw, 0, 0, Matrix4.Identity);
             }
 
@@ -342,7 +356,7 @@ namespace Z64.Forms
             {
                 _settingsForm = new RenderSettingsForm(_rendererCfg);
                 _settingsForm.FormClosed += (sender, e) => { _settingsForm = null; };
-                _settingsForm.SettingsChanged += RenderModelViewer;
+                _settingsForm.SettingsChanged += NewRender;
                 _settingsForm.Show();
             }
         }
@@ -382,6 +396,9 @@ namespace Z64.Forms
                 throw new IndexOutOfRangeException();
 
             _renderer.Memory.Segments[idx] = seg;
+
+            if (_limbs != null)
+                UpdateLimbsDlists();
         }
         private void ToolStripSegmentsBtn_Click(object sender, System.EventArgs e)
         {
@@ -400,6 +417,8 @@ namespace Z64.Forms
                     else
                     {
                         _renderer.Memory.Segments[(int)sender] = seg;
+
+                        UpdateLimbsDlists();
                         NewRender();
                     }
                 };
