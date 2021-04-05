@@ -1,6 +1,6 @@
 # Z64Utils
 
-WIP Tool to parse and view various files and structures in Zelda 64 roms.
+WIP Tool to parse and view various files and structures in Zelda 64 ROMs.
 
 <img src="https://i.imgur.com/N7ROTdS.png" width=100%/>
 Demo (old) : https://youtu.be/AIVDunCtSnM
