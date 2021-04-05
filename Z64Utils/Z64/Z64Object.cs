@@ -397,6 +397,7 @@ namespace Z64
                     bw.Write(FrameData.VAddr);
                     bw.Write(JointIndices.VAddr);
                     bw.Write(StaticIndexMax);
+                    bw.Write(new byte[2]); // padding
                     return ms.ToArray().Take((int)ms.Length).ToArray();
                 }
             }
