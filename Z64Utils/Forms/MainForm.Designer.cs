@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.ListViewItem listViewItem2 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem(new string[] {
             "",
             "00000000-00000000",
             "00000000-00000000",
@@ -146,7 +146,7 @@
             this.listView_files.FullRowSelect = true;
             this.listView_files.HideSelection = false;
             this.listView_files.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem2});
+            listViewItem1});
             this.listView_files.Location = new System.Drawing.Point(6, 53);
             this.listView_files.MultiSelect = false;
             this.listView_files.Name = "listView_files";
@@ -157,21 +157,25 @@
             // 
             // columnHeader1
             // 
+            this.columnHeader1.Name = "columnHeader1";
             this.columnHeader1.Text = "Name";
             this.columnHeader1.Width = 229;
             // 
             // columnHeader2
             // 
+            this.columnHeader2.Name = "columnHeader2";
             this.columnHeader2.Text = "VROM";
             this.columnHeader2.Width = 115;
             // 
             // columnHeader3
             // 
+            this.columnHeader3.Name = "columnHeader3";
             this.columnHeader3.Text = "ROM";
             this.columnHeader3.Width = 115;
             // 
             // columnHeader4
             // 
+            this.columnHeader4.Name = "columnHeader4";
             this.columnHeader4.Text = "Type";
             // 
             // contextMenuStrip_fs
