@@ -1316,108 +1316,99 @@ namespace Z64
 
         public void WriteXml(string filename)
         {
-            /*
+            XmlDocument doc = new XmlDocument();
+            XmlElement root = doc.CreateElement("Root");
+            doc.AppendChild(root);
+
+            XmlElement file = doc.CreateElement("File");
+            // TODO
+            file.SetAttribute("Name", null);
+            file.SetAttribute("Segment", null);
+            root.AppendChild(file);
+
             var list = new List<object>();
             foreach (var iter in Entries)
             {
+                XmlElement child = null;
                 switch (iter.GetEntryType())
                 {
                     case EntryType.DList:
-                        {
-                            list.Add(new JsonUCodeHolder()
-                            {
-                                Name = iter.Name,
-                                EntryType = iter.GetEntryType(),
-                                Size = iter.GetSize()
-                            });
-                            break;
-                        }
+                        child = doc.CreateElement("DList");
+                        break;
                     case EntryType.Vertex:
-                        {
-                            list.Add(new JsonVertexHolder()
-                            {
-                                Name = iter.Name,
-                                EntryType = iter.GetEntryType(),
-                                VertexCount = ((VertexHolder)iter).Vertices.Count,
-                            });
-                            break;
-                        }
+                        child = doc.CreateElement("Vtx");
+                        break;
                     case EntryType.Texture:
                         {
+                            child = doc.CreateElement("Texture");
+
                             var holder = (TextureHolder)iter;
-                            list.Add(new JsonTextureHolder()
-                            {
-                                Name = iter.Name,
-                                EntryType = iter.GetEntryType(),
-                                Width = holder.Width,
-                                Height = holder.Height,
-                                Format = holder.Format,
-                                Tlut = holder.Tlut?.Name,
-                            });
+                            child.SetAttribute("OutName", iter.Name); // TODO
+                            child.SetAttribute("Format", holder.Format.ToString()); // TODO
+                            child.SetAttribute("Width", holder.Width.ToString());
+                            child.SetAttribute("Height", holder.Height.ToString());
                             break;
                         }
                     case EntryType.Unknown:
-                        {
-                            list.Add(new JsonUnknowHolder()
-                            {
-                                Name = iter.Name,
-                                EntryType = iter.GetEntryType(),
-                                Size = iter.GetSize()
-                            });
-                            break;
-                        }
+                        child = doc.CreateElement("Blob");
+                        child.SetAttribute("Size", iter.GetSize().ToString());
+                        break;
                     case EntryType.SkeletonLimbs:
                         {
+                            continue;
+                            /*
+                            child = doc.CreateElement("Array");
+                            // I think ZAPD doesn't support this right now, but maybe in the future ?
+                            var subChild = doc.CreateElement("Limb");
+
                             var holder = (SkeletonLimbsHolder)iter;
-                            list.Add(new JsonArrayHolder()
-                            {
-                                Name = iter.Name,
-                                EntryType = iter.GetEntryType(),
-                                Count = holder.LimbSegments.Length
-                            });
-                            break;
+                            child.SetAttribute("Count", holder.LimbSegments.Length.ToString());
+                            child.AppendChild(subChild);
+                            */
+                            //break;
                         }
                     case EntryType.JointIndices:
                         {
-                            var holder = (AnimationJointIndicesHolder)iter;
-                            list.Add(new JsonArrayHolder()
-                            {
-                                Name = iter.Name,
-                                EntryType = iter.GetEntryType(),
-                                Count = holder.JointIndices.Length
-                            }); ;
-                            break;
+                            continue;
+                            // ?
+                            //break;
                         }
                     case EntryType.FrameData:
                         {
-                            var holder = (AnimationFrameDataHolder)iter;
-                            list.Add(new JsonArrayHolder()
-                            {
-                                Name = iter.Name,
-                                EntryType = iter.GetEntryType(),
-                                Count = holder.FrameData.Length
-                            });
-                            break;
+                            continue;
+                            // ?
+                            //break;
                         }
                     case EntryType.Mtx:
+                        child = doc.CreateElement("Mtx");
+                        break;
                     case EntryType.SkeletonHeader:
+                        child = doc.CreateElement("Skeleton");
+                        child.SetAttribute("Type", "Normal");
+                        child.SetAttribute("LimbType", "Standard");
+                        break;
                     case EntryType.FlexSkeletonHeader:
+                        child = doc.CreateElement("Skeleton");
+                        child.SetAttribute("Type", "Flex");
+                        child.SetAttribute("LimbType", "Standard");
+                        break;
                     case EntryType.SkeletonLimb:
+                        child = doc.CreateElement("Limb");
+                        child.SetAttribute("LimbType", "Standard");
+                        break;
                     case EntryType.AnimationHeader:
-                        {
-                            list.Add(new JsonObjectHolder()
-                            {
-                                Name = iter.Name,
-                                EntryType = iter.GetEntryType()
-                            });
-                            break;
-                        }
+                        child = doc.CreateElement("Animation");
+                        break;
                     default:
                         throw new Z64ObjectException($"Invalid entry type ({iter.GetEntryType()})");
                 }
+                child?.SetAttribute("Name", iter.Name);
+                //child?.SetAttribute("Offset", iter.Offset);
+                child?.SetAttribute("Offset", iter.Name.Split("_").Last());
+                file.AppendChild(child);
             }
-            return JsonSerializer.Serialize<object>(list, new JsonSerializerOptions() { WriteIndented = true }) ;
-            */
+            //return JsonSerializer.Serialize<object>(list, new JsonSerializerOptions() { WriteIndented = true }) ;
+            doc.Save(filename);
         }
 
     }
