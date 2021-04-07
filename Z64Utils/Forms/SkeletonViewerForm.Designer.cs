@@ -189,7 +189,7 @@ namespace Z64.Forms
             // button_playAnim
             // 
             this.button_playAnim.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.button_playAnim.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("button_playAnim.BackgroundImage")));
+            this.button_playAnim.BackgroundImage = global::Z64.Properties.Resources.play_icon;
             this.button_playAnim.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.button_playAnim.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             this.button_playAnim.Location = new System.Drawing.Point(44, 553);
@@ -202,7 +202,7 @@ namespace Z64.Forms
             // button_playbackAnim
             // 
             this.button_playbackAnim.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.button_playbackAnim.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("button_playbackAnim.BackgroundImage")));
+            this.button_playbackAnim.BackgroundImage = global::Z64.Properties.Resources.playback_icon;
             this.button_playbackAnim.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.button_playbackAnim.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             this.button_playbackAnim.Location = new System.Drawing.Point(4, 553);
