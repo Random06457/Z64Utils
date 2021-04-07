@@ -18,7 +18,7 @@ uniform sampler2D u_Tex;
 
 float S105ToFloat(int fp)
 {
-    return fp >> 5;
+    return float(fp >> 5);
 }
 
 int bomSwap16(int x)
@@ -73,9 +73,9 @@ void main()
     v_VtxTexCoords = getTexCoords();
     v_VtxColor = decodeColor(rdpVtxColor);
 
-    mat4 matrix = u_Projection * u_View * rdpMatrix * u_Model;
-    mat3 normalMatrix = mat3(transpose(inverse(u_View * rdpMatrix)));
+    mat4 view = u_View * rdpMatrix * u_Model;
+    mat3 normalMatrix = mat3(transpose(inverse(view)));
 
-    gl_Position = matrix * vec4(pos, 1);
-    v_VtxNormal = normalize(normalMatrix * normal);// (normalMatrix * vec4(normal, 1)).xyz;
+    gl_Position = u_Projection * view * vec4(pos, 1);
+    v_VtxNormal = normalize(normalMatrix * normal);
 }
