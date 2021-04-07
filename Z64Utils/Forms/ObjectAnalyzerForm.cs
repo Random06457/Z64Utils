@@ -438,6 +438,28 @@ namespace Z64.Forms
             }
         }
 
+        private void importXMLToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            openFileDialog1.FileName = "";
+            openFileDialog1.Filter = $"{Filters.XML}|{Filters.ALL}";
+            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                _obj = Z64Object.FromXml(openFileDialog1.FileName);
+                _obj.SetData(_data);
+                UpdateMap();
+            }
+        }
+
+        private void exportXMLToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            saveFileDialog1.FileName = "";
+            saveFileDialog1.Filter = $"{Filters.XML}|{Filters.ALL}";
+            if (saveFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                _obj.WriteXml(saveFileDialog1.FileName);
+            }
+        }
+
         private void exportCToolStripMenuItem_Click(object sender, EventArgs e)
         {
             saveFileDialog1.FileName = "";

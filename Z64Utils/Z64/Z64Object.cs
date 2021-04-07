@@ -12,6 +12,7 @@ using F3DZEX;
 using Syroot.BinaryData;
 using Common;
 using RDP;
+using System.Xml;
 
 namespace Z64
 {
@@ -1129,6 +1130,294 @@ namespace Z64
                 }
             }
             return obj;
+        }
+
+        public static Z64Object FromXml(string filename)
+        {
+            Z64Object obj = new Z64Object();
+            XmlDocument doc = new XmlDocument();
+            doc.Load(filename);
+            XmlElement root = (XmlElement)doc.FirstChild;
+            XmlElement file = (XmlElement)root.FirstChild;
+
+            // TODO: do something with this.
+            string xml_File_Name = file.GetAttributeNode("Name").Value;
+            int xml_File_Segment = Convert.ToInt32(file.GetAttributeNode("Segment").Value);
+            /*
+            // TODO: conditionally check if this attributes exists.
+            string xml_File_BaseAddress = file.GetAttributeNode("BaseAddress").Value;
+            string xml_File_RangeStart = file.GetAttributeNode("RangeStart").Value;
+            string xml_File_RangeEnd = file.GetAttributeNode("RangeEnd").Value;
+            */
+
+            foreach (XmlElement iter in file.ChildNodes)
+            {
+                //iter.GetAttributeNode("");
+                //var type = (EntryType)Enum.Parse(typeof(EntryType), iter.GetProperty(nameof(JsonObjectHolder.EntryType)).GetString());
+                var type = (EntryType)Enum.Parse(typeof(EntryType), iter.Name);
+                string nodeName = iter.GetAttributeNode("Name").Value;
+                int nodeOffset = Convert.ToInt32(iter.GetAttributeNode("Offset").Value, 16);
+
+                if (iter.Name == "DList")
+                {
+                    // TODO: do something with dlist size
+                    obj.AddDList(-1, nodeName, nodeOffset);
+                }
+                else if (iter.Name == "Vtx")
+                {
+                    // TODO: ZAPD usually uses <Array><Vtx/></Array>
+                    /*
+                    var holder = iter.ToObject<JsonVertexHolder>();
+                    obj.AddVertices(holder.VertexCount, holder.Name);
+                    break;
+                    */
+                }
+                else if (iter.Name == "Texture")
+                {
+                    string nodeOutName = iter.GetAttributeNode("OutName").Value;
+                    string nodeFormat = iter.GetAttributeNode("Format").Value;
+                    int nodeWidth = Convert.ToInt32(iter.GetAttributeNode("Width").Value);
+                    int nodeHeight = Convert.ToInt32(iter.GetAttributeNode("Height").Value);
+                    // TODO: parse nodeFormat -> N64TexFormat
+                    //obj.AddTexture(nodeWidth, nodeHeight, nodeFormat, nodeName, nodeOffset);
+                    obj.AddTexture(nodeWidth, nodeHeight, N64TexFormat.IA8, nodeName, nodeOffset);
+                }
+                else if (iter.Name == "Background")
+                {
+                    string nodeOutName = iter.GetAttributeNode("OutName").Value;
+                    // TODO: JPEG prerender
+                }
+                else if (iter.Name == "Blob")
+                {
+                    int nodeSize = Convert.ToInt32(iter.GetAttributeNode("Size").Value, 16);
+                    obj.AddUnknow(nodeSize, nodeName, nodeOffset);
+                }
+                else if (iter.Name == "Scene" || iter.Name == "Room")
+                {
+                    // TODO
+                }
+                else if (iter.Name == "Skeleton")
+                {
+                    string nodeType = iter.GetAttributeNode("Type").Value;
+                    string nodeLimbType = iter.GetAttributeNode("LimbType").Value;
+
+                    if (nodeType == "Normal")
+                    {
+                        obj.AddSkeleton(nodeName, nodeOffset);
+                    }
+                    else if (nodeType == "Flex")
+                    {
+                        obj.AddFlexSkeleton(nodeName, nodeOffset);
+                    }
+                    else if (nodeType == "Curve")
+                    {
+                        // obj.AddCurveSkeleton(nodeName, nodeOffset);
+                    }
+                    
+                    // TODO: Do something with nodeLimbType
+                }
+                else if (iter.Name == "Limb")
+                {
+                    //string nodeType = iter.GetAttributeNode("Type").Value;
+                    var lt = iter.GetAttributeNode("LimbType");
+                    string nodeLimbType;
+                    if (lt != null)
+                    {
+                        nodeLimbType = lt.Value;
+                    }
+                    else
+                    {
+                        nodeLimbType = iter.GetAttributeNode("Type").Value;
+                    }
+                    
+                    obj.AddSkeletonLimb(nodeName, nodeOffset);
+
+                    if (nodeLimbType == "Standard")
+                    {
+                    }
+                    else if (nodeLimbType == "LOD")
+                    {
+                    }
+                    else if (nodeLimbType == "Skin")
+                    {
+                    }
+                    else if (nodeLimbType == "Curve")
+                    {
+                    }
+                    
+                    // TODO: Do something with nodeLimbType
+                }
+                else if (iter.Name == "Symbol")
+                {
+                    // TODO?
+                    string nodeType = iter.GetAttributeNode("Type").Value;
+                    int nodeTypeSize = Convert.ToInt32(iter.GetAttributeNode("TypeSize").Value, 0);
+                    // This one is optional.
+                    //int nodeCount = Convert.ToInt32(iter.GetAttributeNode("Count").Value, 0);
+                }
+                else if (iter.Name == "Collision")
+                {
+                    // TODO
+                }
+                else if (iter.Name == "Scalar")
+                {
+                    // TODO
+                    string nodeType = iter.GetAttributeNode("Type").Value;
+                }
+                else if (iter.Name == "Vector")
+                {
+                    // TODO
+                    string nodeType = iter.GetAttributeNode("Type").Value;
+                    int nodeDimensions = Convert.ToInt32(iter.GetAttributeNode("Dimensions").Value, 16);
+                }
+                else if (iter.Name == "Cutscene")
+                {
+                    // TODO
+                }
+                else if (iter.Name == "Array")
+                {
+                    // TODO
+                    int nodeCount = Convert.ToInt32(iter.GetAttributeNode("Count").Value, 0);
+                }
+                else if (iter.Name == "Animation")
+                {
+                    obj.AddAnimation(nodeName, nodeOffset);
+                }
+                else if (iter.Name == "PlayerAnimation")
+                {
+                    //obj.AddPlayerAnimation(nodeName, nodeOffset);
+                }
+                else if (iter.Name == "CurveAnimation")
+                {
+                    //obj.AddCurveAnimation(nodeName, nodeOffset);
+                }
+                else if (iter.Name == "Mtx")
+                {
+                    obj.AddMtx(1, nodeName, nodeOffset);
+                }
+                else
+                {
+                    throw new Z64ObjectException($"Invalid xml element ({iter.Name})");
+                }
+            }
+            /*
+            for (int i = 0; i < list.Count; i++)
+            {
+                var holder = ((JsonElement)list[i]).ToObject<JsonTextureHolder>();
+                if (holder.EntryType == EntryType.Texture)
+                {
+                    var tlut = (TextureHolder)obj.Entries.Find(e => e.GetEntryType() == EntryType.Texture && e.Name == holder.Tlut);
+                    ((TextureHolder)obj.Entries[i]).Tlut = tlut;
+                }
+            }
+            */
+            return obj;
+        }
+
+        public void WriteXml(string filename)
+        {
+            /*
+            var list = new List<object>();
+            foreach (var iter in Entries)
+            {
+                switch (iter.GetEntryType())
+                {
+                    case EntryType.DList:
+                        {
+                            list.Add(new JsonUCodeHolder()
+                            {
+                                Name = iter.Name,
+                                EntryType = iter.GetEntryType(),
+                                Size = iter.GetSize()
+                            });
+                            break;
+                        }
+                    case EntryType.Vertex:
+                        {
+                            list.Add(new JsonVertexHolder()
+                            {
+                                Name = iter.Name,
+                                EntryType = iter.GetEntryType(),
+                                VertexCount = ((VertexHolder)iter).Vertices.Count,
+                            });
+                            break;
+                        }
+                    case EntryType.Texture:
+                        {
+                            var holder = (TextureHolder)iter;
+                            list.Add(new JsonTextureHolder()
+                            {
+                                Name = iter.Name,
+                                EntryType = iter.GetEntryType(),
+                                Width = holder.Width,
+                                Height = holder.Height,
+                                Format = holder.Format,
+                                Tlut = holder.Tlut?.Name,
+                            });
+                            break;
+                        }
+                    case EntryType.Unknown:
+                        {
+                            list.Add(new JsonUnknowHolder()
+                            {
+                                Name = iter.Name,
+                                EntryType = iter.GetEntryType(),
+                                Size = iter.GetSize()
+                            });
+                            break;
+                        }
+                    case EntryType.SkeletonLimbs:
+                        {
+                            var holder = (SkeletonLimbsHolder)iter;
+                            list.Add(new JsonArrayHolder()
+                            {
+                                Name = iter.Name,
+                                EntryType = iter.GetEntryType(),
+                                Count = holder.LimbSegments.Length
+                            });
+                            break;
+                        }
+                    case EntryType.JointIndices:
+                        {
+                            var holder = (AnimationJointIndicesHolder)iter;
+                            list.Add(new JsonArrayHolder()
+                            {
+                                Name = iter.Name,
+                                EntryType = iter.GetEntryType(),
+                                Count = holder.JointIndices.Length
+                            }); ;
+                            break;
+                        }
+                    case EntryType.FrameData:
+                        {
+                            var holder = (AnimationFrameDataHolder)iter;
+                            list.Add(new JsonArrayHolder()
+                            {
+                                Name = iter.Name,
+                                EntryType = iter.GetEntryType(),
+                                Count = holder.FrameData.Length
+                            });
+                            break;
+                        }
+                    case EntryType.Mtx:
+                    case EntryType.SkeletonHeader:
+                    case EntryType.FlexSkeletonHeader:
+                    case EntryType.SkeletonLimb:
+                    case EntryType.AnimationHeader:
+                        {
+                            list.Add(new JsonObjectHolder()
+                            {
+                                Name = iter.Name,
+                                EntryType = iter.GetEntryType()
+                            });
+                            break;
+                        }
+                    default:
+                        throw new Z64ObjectException($"Invalid entry type ({iter.GetEntryType()})");
+                }
+            }
+            return JsonSerializer.Serialize<object>(list, new JsonSerializerOptions() { WriteIndented = true }) ;
+            */
         }
 
     }
