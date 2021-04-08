@@ -29,11 +29,6 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.ListViewItem listViewItem2 = new System.Windows.Forms.ListViewItem(new string[] {
-            "",
-            "00000000-00000000",
-            "00000000-00000000",
-            "Unknow"}, -1);
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
@@ -145,8 +140,6 @@
             this.listView_files.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.listView_files.FullRowSelect = true;
             this.listView_files.HideSelection = false;
-            this.listView_files.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem2});
             this.listView_files.Location = new System.Drawing.Point(6, 53);
             this.listView_files.MultiSelect = false;
             this.listView_files.Name = "listView_files";

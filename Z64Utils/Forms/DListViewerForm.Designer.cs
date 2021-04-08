@@ -221,10 +221,8 @@
         private ModelViewerControl modelViewer;
         private System.Windows.Forms.ToolStrip toolStrip1;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
-        private System.Windows.Forms.ToolStripButton toolStripSegmentBtn;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusErrorLabel;
-        private System.Windows.Forms.ToolStripButton toolStripButton3;
         private System.Windows.Forms.ToolStripButton toolStripRenderCfgBtn;
         private System.Windows.Forms.ContextMenuStrip renderContextMenuStrip;
         private System.Windows.Forms.ToolStripMenuItem saveScreenToolStripMenuItem;
