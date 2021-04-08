@@ -29,11 +29,6 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem(new string[] {
-            "",
-            "00000000-00000000",
-            "00000000-00000000",
-            "Unknow"}, -1);
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
@@ -145,8 +140,6 @@
             this.listView_files.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.listView_files.FullRowSelect = true;
             this.listView_files.HideSelection = false;
-            this.listView_files.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem1});
             this.listView_files.Location = new System.Drawing.Point(6, 53);
             this.listView_files.MultiSelect = false;
             this.listView_files.Name = "listView_files";
@@ -227,7 +220,7 @@
             this.openToolStripMenuItem,
             this.exportFSToolStripMenuItem,
             this.saveToolStripMenuItem});
-            this.toolStripButton1.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton1.Image")));
+            this.toolStripButton1.Image = global::Z64.Properties.Resources.file;
             this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripButton1.Name = "toolStripButton1";
             this.toolStripButton1.Size = new System.Drawing.Size(63, 22);
@@ -235,7 +228,7 @@
             // 
             // openToolStripMenuItem
             // 
-            this.openToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("openToolStripMenuItem.Image")));
+            this.openToolStripMenuItem.Image = global::Z64.Properties.Resources.open;
             this.openToolStripMenuItem.Name = "openToolStripMenuItem";
             this.openToolStripMenuItem.Size = new System.Drawing.Size(123, 22);
             this.openToolStripMenuItem.Text = "Open";
@@ -243,7 +236,7 @@
             // 
             // exportFSToolStripMenuItem
             // 
-            this.exportFSToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("exportFSToolStripMenuItem.Image")));
+            this.exportFSToolStripMenuItem.Image = global::Z64.Properties.Resources.multiple_files;
             this.exportFSToolStripMenuItem.Name = "exportFSToolStripMenuItem";
             this.exportFSToolStripMenuItem.Size = new System.Drawing.Size(123, 22);
             this.exportFSToolStripMenuItem.Text = "Export FS";
@@ -251,7 +244,7 @@
             // 
             // saveToolStripMenuItem
             // 
-            this.saveToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("saveToolStripMenuItem.Image")));
+            this.saveToolStripMenuItem.Image = global::Z64.Properties.Resources.save;
             this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
             this.saveToolStripMenuItem.Size = new System.Drawing.Size(123, 22);
             this.saveToolStripMenuItem.Text = "Save As";
@@ -272,7 +265,7 @@
             // 
             // openObjectToolStripMenuItem
             // 
-            this.openObjectToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("openObjectToolStripMenuItem.Image")));
+            this.openObjectToolStripMenuItem.Image = global::Z64.Properties.Resources.cube;
             this.openObjectToolStripMenuItem.Name = "openObjectToolStripMenuItem";
             this.openObjectToolStripMenuItem.Size = new System.Drawing.Size(200, 22);
             this.openObjectToolStripMenuItem.Text = "Open DList Viewer";
@@ -280,7 +273,7 @@
             // 
             // f3DEXDisassemblerToolStripMenuItem
             // 
-            this.f3DEXDisassemblerToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("f3DEXDisassemblerToolStripMenuItem.Image")));
+            this.f3DEXDisassemblerToolStripMenuItem.Image = global::Z64.Properties.Resources.code;
             this.f3DEXDisassemblerToolStripMenuItem.Name = "f3DEXDisassemblerToolStripMenuItem";
             this.f3DEXDisassemblerToolStripMenuItem.Size = new System.Drawing.Size(200, 22);
             this.f3DEXDisassemblerToolStripMenuItem.Text = "F3DZEX Disassembler";
@@ -288,7 +281,7 @@
             // 
             // ROMRAMConversionsToolStripMenuItem
             // 
-            this.ROMRAMConversionsToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("ROMRAMConversionsToolStripMenuItem.Image")));
+            this.ROMRAMConversionsToolStripMenuItem.Image = global::Z64.Properties.Resources.conversion;
             this.ROMRAMConversionsToolStripMenuItem.Name = "ROMRAMConversionsToolStripMenuItem";
             this.ROMRAMConversionsToolStripMenuItem.Size = new System.Drawing.Size(200, 22);
             this.ROMRAMConversionsToolStripMenuItem.Text = "ROM/RAM Conversions";
@@ -296,7 +289,7 @@
             // 
             // textureViewerToolStripMenuItem
             // 
-            this.textureViewerToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("textureViewerToolStripMenuItem.Image")));
+            this.textureViewerToolStripMenuItem.Image = global::Z64.Properties.Resources.texture;
             this.textureViewerToolStripMenuItem.Name = "textureViewerToolStripMenuItem";
             this.textureViewerToolStripMenuItem.Size = new System.Drawing.Size(200, 22);
             this.textureViewerToolStripMenuItem.Text = "Texture Viewer";
@@ -309,7 +302,6 @@
             this.toolStripDropDownButton2.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.checkNewReleasesToolStripMenuItem,
             this.aboutToolStripMenuItem});
-            this.toolStripDropDownButton2.Image = ((System.Drawing.Image)(resources.GetObject("toolStripDropDownButton2.Image")));
             this.toolStripDropDownButton2.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripDropDownButton2.Name = "toolStripDropDownButton2";
             this.toolStripDropDownButton2.Size = new System.Drawing.Size(45, 22);

@@ -40,7 +40,7 @@
             // 
             // previewTextBox
             // 
-            this.previewTextBox.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.previewTextBox.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.previewTextBox.Location = new System.Drawing.Point(12, 133);
             this.previewTextBox.Multiline = true;
             this.previewTextBox.Name = "previewTextBox";

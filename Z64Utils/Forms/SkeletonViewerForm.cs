@@ -429,6 +429,10 @@ namespace Z64.Forms
 
         private void listBox_anims_SelectedIndexChanged(object sender, EventArgs e)
         {
+            button_playAnim.Enabled =
+            button_playbackAnim.Enabled =
+            trackBar_anim.Enabled = listBox_anims.SelectedIndex >= 0;
+
             _curAnim = null;
             if (listBox_anims.SelectedIndex >= 0)
             {

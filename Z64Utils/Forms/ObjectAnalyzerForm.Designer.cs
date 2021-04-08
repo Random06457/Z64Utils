@@ -29,13 +29,13 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem3 = new System.Windows.Forms.ListViewItem(new string[] {
             "06000000",
             "-32767, -32767, -32767",
             "0xFFFF",
             "-32767, -32767",
             "255, 255, 255, 255"}, -1);
-            System.Windows.Forms.ListViewItem listViewItem2 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem4 = new System.Windows.Forms.ListViewItem(new string[] {
             "00000000",
             "cube_vtx",
             "Vertex"}, -1);
@@ -205,7 +205,7 @@
             this.listView_vtx.FullRowSelect = true;
             this.listView_vtx.HideSelection = false;
             this.listView_vtx.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem1});
+            listViewItem3});
             this.listView_vtx.Location = new System.Drawing.Point(6, 6);
             this.listView_vtx.Name = "listView_vtx";
             this.listView_vtx.Size = new System.Drawing.Size(619, 461);
@@ -280,7 +280,7 @@
             this.listView_map.FullRowSelect = true;
             this.listView_map.HideSelection = false;
             this.listView_map.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem2});
+            listViewItem4});
             this.listView_map.Location = new System.Drawing.Point(12, 27);
             this.listView_map.MultiSelect = false;
             this.listView_map.Name = "listView_map";
