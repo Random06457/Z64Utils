@@ -50,6 +50,7 @@
             // segmentControl15
             // 
             this.segmentControl15.Location = new System.Drawing.Point(300, 229);
+            this.segmentControl15.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.segmentControl15.MaximumSize = new System.Drawing.Size(280, 25);
             this.segmentControl15.MinimumSize = new System.Drawing.Size(280, 25);
             this.segmentControl15.Name = "segmentControl15";
@@ -60,6 +61,7 @@
             // segmentControl14
             // 
             this.segmentControl14.Location = new System.Drawing.Point(300, 198);
+            this.segmentControl14.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.segmentControl14.MaximumSize = new System.Drawing.Size(280, 25);
             this.segmentControl14.MinimumSize = new System.Drawing.Size(280, 25);
             this.segmentControl14.Name = "segmentControl14";
@@ -70,6 +72,7 @@
             // segmentControl13
             // 
             this.segmentControl13.Location = new System.Drawing.Point(300, 167);
+            this.segmentControl13.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.segmentControl13.MaximumSize = new System.Drawing.Size(280, 25);
             this.segmentControl13.MinimumSize = new System.Drawing.Size(280, 25);
             this.segmentControl13.Name = "segmentControl13";
@@ -80,6 +83,7 @@
             // segmentControl12
             // 
             this.segmentControl12.Location = new System.Drawing.Point(300, 136);
+            this.segmentControl12.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.segmentControl12.MaximumSize = new System.Drawing.Size(280, 25);
             this.segmentControl12.MinimumSize = new System.Drawing.Size(280, 25);
             this.segmentControl12.Name = "segmentControl12";
@@ -90,6 +94,7 @@
             // segmentControl11
             // 
             this.segmentControl11.Location = new System.Drawing.Point(300, 105);
+            this.segmentControl11.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.segmentControl11.MaximumSize = new System.Drawing.Size(280, 25);
             this.segmentControl11.MinimumSize = new System.Drawing.Size(280, 25);
             this.segmentControl11.Name = "segmentControl11";
@@ -100,6 +105,7 @@
             // segmentControl10
             // 
             this.segmentControl10.Location = new System.Drawing.Point(300, 74);
+            this.segmentControl10.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.segmentControl10.MaximumSize = new System.Drawing.Size(280, 25);
             this.segmentControl10.MinimumSize = new System.Drawing.Size(280, 25);
             this.segmentControl10.Name = "segmentControl10";
@@ -110,6 +116,7 @@
             // segmentControl9
             // 
             this.segmentControl9.Location = new System.Drawing.Point(300, 43);
+            this.segmentControl9.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.segmentControl9.MaximumSize = new System.Drawing.Size(280, 25);
             this.segmentControl9.MinimumSize = new System.Drawing.Size(280, 25);
             this.segmentControl9.Name = "segmentControl9";
@@ -120,6 +127,7 @@
             // segmentControl8
             // 
             this.segmentControl8.Location = new System.Drawing.Point(300, 12);
+            this.segmentControl8.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.segmentControl8.MaximumSize = new System.Drawing.Size(280, 25);
             this.segmentControl8.MinimumSize = new System.Drawing.Size(280, 25);
             this.segmentControl8.Name = "segmentControl8";
@@ -130,6 +138,7 @@
             // segmentControl7
             // 
             this.segmentControl7.Location = new System.Drawing.Point(14, 229);
+            this.segmentControl7.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.segmentControl7.MaximumSize = new System.Drawing.Size(280, 25);
             this.segmentControl7.MinimumSize = new System.Drawing.Size(280, 25);
             this.segmentControl7.Name = "segmentControl7";
@@ -140,6 +149,7 @@
             // segmentControl6
             // 
             this.segmentControl6.Location = new System.Drawing.Point(14, 198);
+            this.segmentControl6.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.segmentControl6.MaximumSize = new System.Drawing.Size(280, 25);
             this.segmentControl6.MinimumSize = new System.Drawing.Size(280, 25);
             this.segmentControl6.Name = "segmentControl6";
@@ -150,6 +160,7 @@
             // segmentControl5
             // 
             this.segmentControl5.Location = new System.Drawing.Point(14, 167);
+            this.segmentControl5.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.segmentControl5.MaximumSize = new System.Drawing.Size(280, 25);
             this.segmentControl5.MinimumSize = new System.Drawing.Size(280, 25);
             this.segmentControl5.Name = "segmentControl5";
@@ -160,6 +171,7 @@
             // segmentControl4
             // 
             this.segmentControl4.Location = new System.Drawing.Point(14, 136);
+            this.segmentControl4.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.segmentControl4.MaximumSize = new System.Drawing.Size(280, 25);
             this.segmentControl4.MinimumSize = new System.Drawing.Size(280, 25);
             this.segmentControl4.Name = "segmentControl4";
@@ -170,6 +182,7 @@
             // segmentControl3
             // 
             this.segmentControl3.Location = new System.Drawing.Point(14, 105);
+            this.segmentControl3.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.segmentControl3.MaximumSize = new System.Drawing.Size(280, 25);
             this.segmentControl3.MinimumSize = new System.Drawing.Size(280, 25);
             this.segmentControl3.Name = "segmentControl3";
@@ -180,6 +193,7 @@
             // segmentControl2
             // 
             this.segmentControl2.Location = new System.Drawing.Point(14, 74);
+            this.segmentControl2.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.segmentControl2.MaximumSize = new System.Drawing.Size(280, 25);
             this.segmentControl2.MinimumSize = new System.Drawing.Size(280, 25);
             this.segmentControl2.Name = "segmentControl2";
@@ -190,6 +204,7 @@
             // segmentControl1
             // 
             this.segmentControl1.Location = new System.Drawing.Point(14, 43);
+            this.segmentControl1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.segmentControl1.MaximumSize = new System.Drawing.Size(280, 25);
             this.segmentControl1.MinimumSize = new System.Drawing.Size(280, 25);
             this.segmentControl1.Name = "segmentControl1";
@@ -200,6 +215,7 @@
             // segmentControl0
             // 
             this.segmentControl0.Location = new System.Drawing.Point(14, 12);
+            this.segmentControl0.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.segmentControl0.MaximumSize = new System.Drawing.Size(280, 25);
             this.segmentControl0.MinimumSize = new System.Drawing.Size(280, 25);
             this.segmentControl0.Name = "segmentControl0";

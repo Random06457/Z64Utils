@@ -45,8 +45,8 @@
             this.listBox_routines = new System.Windows.Forms.ListBox();
             this.routineContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.AddRoutineMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.RemoveRoutineMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.EditRoutineMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.RemoveRoutineMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             this.renderContextMenuStrip.SuspendLayout();
@@ -178,19 +178,19 @@
             this.AddRoutineMenuItem.Text = "Add";
             this.AddRoutineMenuItem.Click += new System.EventHandler(this.AddRoutineMenuItem_Click);
             // 
-            // RemoveRoutineMenuItem
-            // 
-            this.RemoveRoutineMenuItem.Name = "RemoveRoutineMenuItem";
-            this.RemoveRoutineMenuItem.Size = new System.Drawing.Size(117, 22);
-            this.RemoveRoutineMenuItem.Text = "Remove";
-            this.RemoveRoutineMenuItem.Click += new System.EventHandler(this.RemoveRoutineMenuItem_Click);
-            // 
             // EditRoutineMenuItem
             // 
             this.EditRoutineMenuItem.Name = "EditRoutineMenuItem";
             this.EditRoutineMenuItem.Size = new System.Drawing.Size(117, 22);
             this.EditRoutineMenuItem.Text = "Edit";
             this.EditRoutineMenuItem.Click += new System.EventHandler(this.EditRoutineMenuItem_Click);
+            // 
+            // RemoveRoutineMenuItem
+            // 
+            this.RemoveRoutineMenuItem.Name = "RemoveRoutineMenuItem";
+            this.RemoveRoutineMenuItem.Size = new System.Drawing.Size(117, 22);
+            this.RemoveRoutineMenuItem.Text = "Remove";
+            this.RemoveRoutineMenuItem.Click += new System.EventHandler(this.RemoveRoutineMenuItem_Click);
             // 
             // DListViewerForm
             // 

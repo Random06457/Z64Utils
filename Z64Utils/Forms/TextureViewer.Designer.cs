@@ -129,7 +129,7 @@
             // 
             // textBoxTexAddr
             // 
-            this.textBoxTexAddr.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.textBoxTexAddr.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.textBoxTexAddr.Location = new System.Drawing.Point(82, 27);
             this.textBoxTexAddr.Name = "textBoxTexAddr";
             this.textBoxTexAddr.Size = new System.Drawing.Size(81, 20);
@@ -175,7 +175,7 @@
             // 
             // textBoxTlutAddr
             // 
-            this.textBoxTlutAddr.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.textBoxTlutAddr.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.textBoxTlutAddr.Location = new System.Drawing.Point(172, 26);
             this.textBoxTlutAddr.Name = "textBoxTlutAddr";
             this.textBoxTlutAddr.Size = new System.Drawing.Size(81, 20);
