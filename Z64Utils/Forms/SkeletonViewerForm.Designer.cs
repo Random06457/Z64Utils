@@ -170,6 +170,7 @@ namespace Z64.Forms
             // 
             this.trackBar_anim.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.trackBar_anim.Enabled = false;
             this.trackBar_anim.Location = new System.Drawing.Point(86, 557);
             this.trackBar_anim.Name = "trackBar_anim";
             this.trackBar_anim.Size = new System.Drawing.Size(608, 45);
@@ -191,6 +192,7 @@ namespace Z64.Forms
             this.button_playAnim.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.button_playAnim.BackgroundImage = global::Z64.Properties.Resources.play_icon;
             this.button_playAnim.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
+            this.button_playAnim.Enabled = false;
             this.button_playAnim.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             this.button_playAnim.Location = new System.Drawing.Point(44, 553);
             this.button_playAnim.Name = "button_playAnim";
@@ -204,6 +206,7 @@ namespace Z64.Forms
             this.button_playbackAnim.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.button_playbackAnim.BackgroundImage = global::Z64.Properties.Resources.playback_icon;
             this.button_playbackAnim.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.button_playbackAnim.Enabled = false;
             this.button_playbackAnim.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             this.button_playbackAnim.Location = new System.Drawing.Point(4, 553);
             this.button_playbackAnim.Name = "button_playbackAnim";
@@ -250,9 +253,7 @@ namespace Z64.Forms
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.ToolStrip toolStrip1;
         private System.Windows.Forms.ToolStripButton toolStripRenderCfgBtn;
-        private System.Windows.Forms.ToolStripButton toolStripButton3;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
-        private System.Windows.Forms.ToolStripButton toolStripSegmentsButton;
         private System.Windows.Forms.ToolStrip toolStrip2;
         private System.Windows.Forms.ToolStripLabel toolStripErrorLabel;
         private System.Windows.Forms.ToolStripButton toolStripDisassemblyBtn;
