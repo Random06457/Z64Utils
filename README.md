@@ -34,7 +34,7 @@ Note that currently only standart limbs are supported (no SkinLimb/LodLimb)
 
 Currently, the only requirement is `.NET 5.0.5` (Not to be confused with `.NET Core` or `.NET Framework`).
 
-The general purpouse download link for `.NET` is [this](https://dotnet.microsoft.com/download), and the direct download is [here](https://dotnet.microsoft.com/download/dotnet/thank-you/sdk-5.0.202-windows-x64-installer).
+The general purpose download link for `.NET` is [this](https://dotnet.microsoft.com/download), and the direct download is [here](https://dotnet.microsoft.com/download/dotnet/thank-you/sdk-5.0.202-windows-x64-installer).
 
 ## Wine / Linux
 
