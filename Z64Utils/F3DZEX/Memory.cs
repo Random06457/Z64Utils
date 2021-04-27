@@ -73,9 +73,7 @@ namespace F3DZEX
             // read data
             try
             {
-                if (!addr.Segmented)
-                    return _game.Memory.ReadBytes(vaddr, count);
-                else
+                if (addr.Segmented)
                 {
                     var seg = Segments[addr.SegmentId];
                     switch (seg.Type)
@@ -104,11 +102,17 @@ namespace F3DZEX
                             }
                             break;
                         case SegmentType.Vram:
-                            return _game.Memory.ReadBytes(seg.Address + addr.SegmentOff, count);
+                            if (_game != null)
+                                return _game.Memory.ReadBytes(seg.Address + addr.SegmentOff, count);
+                            break;
                         case SegmentType.Empty:
                         default:
                             break;
                     }
+                }
+                else if (_game != null)
+                {
+                    return _game.Memory.ReadBytes(vaddr, count);
                 }
             }
             catch

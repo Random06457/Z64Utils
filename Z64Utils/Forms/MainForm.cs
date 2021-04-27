@@ -72,7 +72,7 @@ namespace Z64.Forms
             tabControl1.Enabled = !inTask;
 
             tabControl1.Enabled = _game != null;
-            openObjectToolStripMenuItem.Enabled = _game != null;
+            //openObjectToolStripMenuItem.Enabled = _game != null;
             exportFSToolStripMenuItem.Enabled = _game != null;
             saveToolStripMenuItem.Enabled = _game != null;
             ROMRAMConversionsToolStripMenuItem.Enabled = _game != null;
