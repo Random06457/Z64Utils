@@ -20,7 +20,7 @@ namespace Z64
         {
             Thread.CurrentThread.CurrentCulture = CultureInfo.CreateSpecificCulture("en-US");
 
-            Z64Version.LoadRessources();   
+            Z64Version.LoadResources();   
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new MainForm());

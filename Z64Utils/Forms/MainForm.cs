@@ -132,13 +132,6 @@ namespace Z64.Forms
                     try
                     {
                         _game = new Z64Game(openFileDialog1.FileName, ProcessCallback);
-                        if (!Z64Version.ContainsConfig(_game.Version))
-                        {
-                            Invoke(new Action(() =>
-                            {
-                                MessageBox.Show($"No config file found for this version!\r\n(should be versions/{_game.Version}.json)", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                            }));
-                        }
                     }
                     catch(Exception ex)
                     {
@@ -152,7 +145,7 @@ namespace Z64.Forms
                     {
                         if (_game != null)
                         {
-                            Text = $"Z64 Utils - {Path.GetFileName(openFileDialog1.FileName)} [ver. {_game.Version} ({_game.BuildID})]";
+                            Text = $"Z64 Utils - {Path.GetFileName(openFileDialog1.FileName)} [ver. {_game.Version.VersionName} ({_game.BuildID})]";
 
                             _fileItemsText = new string[_game.GetFileCount()];
                             for (int i = 0; i < _game.GetFileCount(); i++)

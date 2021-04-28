@@ -130,7 +130,7 @@ namespace Z64
         public Z64Memory Memory { get; private set; }
         public N64Rom Rom { get; private set; }
         public string BuildID { get; private set; }
-        public Z64VersionEnum Version { get; private set; }
+        public Z64Version Version { get; set; }
 
         private List<Z64File> _files;
 
@@ -141,20 +141,14 @@ namespace Z64
             if (!N64CheckSum.Validate(Rom, 6105))
                 throw new Exception("Invalid CRC");
 
-            int off = FindBuildNameOffset();
-            if (off == -1)
-                throw new Exception("Invalid ROM");
+            Version = Z64Version.IdentifyRom(rom, out int fileTableOff);
+            if (Version == null)
+                throw new Z64GameException("Invalid or unknown build name");
 
             using (MemoryStream ms = new MemoryStream(rom.RawRom))
             {
                 BinaryStream br = new BinaryStream(ms, ByteConverter.Big);
-                br.Position = off;
-                BuildID = br.ReadString(0x30, Encoding.ASCII).TrimEnd('\0').Replace("\0", " ");
-                
-                if (Z64Version.BuildIds.ContainsKey(BuildID))
-                    Version = Z64Version.BuildIds[BuildID];
-                else throw new Z64GameException("Invalid or unknown build name");
-                
+                br.Position = fileTableOff;
 
                 GetFs(br, progressCalback);
             }
@@ -168,56 +162,21 @@ namespace Z64
         }
 
 
-        public bool IsOot() => Version.ToString().StartsWith("Oot");
-        public bool IsMm() => Version.ToString().StartsWith("Mm");
-        public bool IsKnown() => IsOot() || IsMm();
+        public string GetFileName(int vrom) => Version.GetFileName(vrom) ?? "";
 
+        public Z64FileType GetFileType(int vrom) => Version.GetFileType(vrom);
 
-        public string GetFileName(int vrom)
-        {
-            if (Z64Version.FileTable.ContainsKey(Version) && Z64Version.FileTable[Version].ContainsKey(vrom))
-                return Z64Version.FileTable[Version][vrom].Item1;
-            return "";
-        }
-        public Z64FileType GetFileType(int vrom)
-        {
-            if (Z64Version.FileTable.ContainsKey(Version) && Z64Version.FileTable[Version].ContainsKey(vrom))
-                return Z64Version.FileTable[Version][vrom].Item2;
-            return Z64FileType.Unknow;
-        }
         public bool GetVrom(string name, out int vrom)
         {
-            if (Z64Version.FileTable.ContainsKey(Version))
-            {
-                foreach (var entry in Z64Version.FileTable[Version])
-                {
-                    if (entry.Value.Item1 == name)
-                    {
-                        vrom = entry.Key;
-                        return true;
-                    }
-                }
-            }
-            vrom = 0;
-            return false;
+            var fileVrom = Version.GetVrom(name);
+            vrom = fileVrom ?? 0;
+            return fileVrom.HasValue;
         }
-        public int GetVrom(string name)
-        {
-            if (GetVrom(name, out int vrom))
-                return vrom;
+        public int GetVrom(string name) => Version.GetVrom(name) ?? throw new Exception();
 
-            throw new Exception();
-        }
+        public Z64File GetFile(int vrom) => _files.Find((f) => f.VRomStart == vrom);
 
-        public Z64File GetFile(int vrom)
-        {
-            return _files.Find((f) => f.VRomStart == vrom);
-        }
-
-        public Z64File GetFileFromIndex(int index)
-        {
-            return _files[index];
-        }
+        public Z64File GetFileFromIndex(int index) => _files[index];
 
         public void InjectFile(int vrom, byte[] data)
         {
@@ -324,26 +283,6 @@ namespace Z64
             N64CheckSum.Update(Rom, 6105);
         }
 
-        private int FindBuildNameOffset()
-        {
-            string pattern = "zelda@srd";
-            for (int i = 0x1000; i < Rom.RawRom.Length - pattern.Length; i++)
-            {
-                bool valid = true;
-                for (int j = 0; j < pattern.Length; j++)
-                {
-                    if (Rom.RawRom[i + j] != (byte)pattern[j])
-                    {
-                        valid = false;
-                        break;
-                    }
-                }
-                if (valid)
-                    return i;
-            }
-
-            return -1;
-        }
         private void GetFs(BinaryStream br, Action<float, string> progressCalback = null)
         {
             _files = new List<Z64File>();

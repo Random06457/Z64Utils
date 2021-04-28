@@ -10,37 +10,10 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Buffers;
 using System.Buffers.Text;
+using N64;
 
 namespace Z64
 {
-    public enum Z64VersionEnum
-    {
-        Unknow,
-        MmJapan10,
-        MmJapan11,
-        MmEurope10,
-        MmEurope11,
-        MmEurope11Debug,
-        MmUSA10,
-        MmUSADebug,
-        MmUSADemo,
-
-        OotJPUS10,
-        OotJPUS11,
-        OotEurope10,
-        OotJPUS12,
-        OotEurope11,
-        OotJapanGC,
-        OotJapanMq,
-        OotUSAGC,
-        OotUSAMq,
-        OotEuropeMqDbg,
-        OotEuropeGC,
-        OotEuropeGCDbg,
-        OotEuropeMq,
-        OotJapanGcZeldaCollection,
-    }
-
     public enum Z64FileType
     {
         Unknow,
@@ -50,10 +23,18 @@ namespace Z64
         Scene,
     }
 
-
-
-    public static class Z64Version
+    public enum Z64GameType
     {
+        Unknow,
+        Oot,
+        Mm,
+    }
+
+
+    public class Z64Version
+    {
+        #region JSON Data Type
+
         private class AddrToStringConverter : JsonConverter<uint?>
         {
             
@@ -75,20 +56,25 @@ namespace Z64
             }
         }
 
-        private class FileEntry
+        public class VersionIdentifier
         {
-            [JsonConverter(typeof(AddrToStringConverter))]
-            public uint? vrom { get; set; }
-            public string name { get; set; }
-            [JsonConverter(typeof(JsonStringEnumConverter))]
-            public Z64FileType type { get; set; }
+            [JsonPropertyName("build_team")]
+            public string BuildTeam { get; set; }
+
+            [JsonPropertyName("build_date")]
+            public string BuildDate { get; set; }
+
+            [JsonPropertyName("rom_name")]
+            public string RomName { get; set; }
+
+            [JsonPropertyName("rom_code")]
+            public string RomCode { get; set; }
+
+            [JsonPropertyName("rom_version")]
+            public byte? RomVersion { get; set; }
+
         }
-        private class Z64VersionJson
-        {
-            public CodeInfo memory { get; set; }
-            public List<FileEntry> files { get; set; }
-        }
-        public class CodeInfo
+        public class MemoryInfo
         {
             [JsonPropertyName("code")]
             [JsonConverter(typeof(AddrToStringConverter))]
@@ -112,80 +98,118 @@ namespace Z64
             [JsonConverter(typeof(AddrToStringConverter))]
             public uint? FBDemoTable { get; set; } // specific to mm
         }
-
-
-        public static readonly Dictionary<string, Z64VersionEnum> BuildIds = new Dictionary<string, Z64VersionEnum>()
+        public class FileEntry
         {
-            //source : https://wiki.cloudmodding.com/mm/Build_Dates
-
-            // TODO : split team/date
-            //mm
-            { "zelda@srd44 00-03-31 02:22:11", Z64VersionEnum.MmJapan10 },
-            { "zelda@srd44 00-04-04 09:34:16", Z64VersionEnum.MmJapan11 },
-            { "zelda@srd44 00-07-06 16:46:35", Z64VersionEnum.MmUSADebug },
-            { "zelda@srd44 00-07-12 16:14:06", Z64VersionEnum.MmUSADemo },
-            { "zelda@srd44 00-07-31 17:04:16", Z64VersionEnum.MmUSA10 },
-            { "zelda@srd44 00-09-25 11:16:53", Z64VersionEnum.MmEurope10 },
-            { "zelda@srd44 00-09-29 09:29:05", Z64VersionEnum.MmEurope11Debug },
-            { "zelda@srd44 00-09-29 09:29:41", Z64VersionEnum.MmEurope11 },
-            //oot
-            { "zelda@srd44 98-10-21 04:56:31", Z64VersionEnum.OotJPUS10 },
-            { "zelda@srd44 98-10-26 10:58:45", Z64VersionEnum.OotJPUS11 },
-            { "zelda@srd44 98-11-10 14:34:22", Z64VersionEnum.OotEurope10 },
-            { "zelda@srd44 98-11-12 18:17:03", Z64VersionEnum.OotJPUS12 },
-            { "zelda@srd44 98-11-18 17:36:49", Z64VersionEnum.OotEurope11 },
-            { "zelda@srd022j   02-10-29 23:49:53", Z64VersionEnum.OotJapanGC },
-            { "zelda@srd022j   02-10-30 00:15:15", Z64VersionEnum.OotJapanMq },
-            { "zelda@srd022j   02-12-19 13:28:09", Z64VersionEnum.OotUSAGC },
-            { "zelda@srd022j   02-12-19 14:05:42", Z64VersionEnum.OotUSAMq },
-            { "zelda@srd022j   03-02-21 00:16:31", Z64VersionEnum.OotEuropeMqDbg },
-            { "zelda@srd022j   03-02-21 20:12:23", Z64VersionEnum.OotEuropeGC },
-            { "zelda@srd022j   03-02-21 00:49:18", Z64VersionEnum.OotEuropeGCDbg },
-            { "zelda@srd022j   03-02-21 20:37:19", Z64VersionEnum.OotEuropeMq },
-            { "zelda@srd022j   03-10-08 21:53:00", Z64VersionEnum.OotJapanGcZeldaCollection },
-        };
-        
-        public static Dictionary<Z64VersionEnum, Dictionary<int, Tuple<string, Z64FileType>>> FileTable { get; private set; }
-        public static Dictionary<Z64VersionEnum, CodeInfo> CodeInfos { get; private set; }
-
-        public static void LoadRessources()
-        {
-            FileTable = new Dictionary<Z64VersionEnum, Dictionary<int, Tuple<string, Z64FileType>>>();
-            CodeInfos = new Dictionary<Z64VersionEnum, CodeInfo>();
-
-            var versions = Enum.GetValues(typeof(Z64VersionEnum)).Cast<Z64VersionEnum>().ToList();
-            foreach (var v in versions)
-            {
-                if (v == Z64VersionEnum.Unknow) continue;
-
-                string path = $"versions/{v}.json";
-
-                if (File.Exists(path))
-                {
-                    var dict = new Dictionary<int, Tuple<string, Z64FileType>>();
-                    string json = File.ReadAllText(path);
-
-                    Z64VersionJson ver = JsonSerializer.Deserialize<Z64VersionJson>(json, new JsonSerializerOptions() { IgnoreNullValues=true,});
-
-                    // memory
-                    CodeInfos.Add(v, ver.memory);
-
-                    // files
-                    foreach (var file in ver.files)
-                    {
-                        if (!file.vrom.HasValue)
-                            throw new Exception("Invalid vrom");
-                        dict.Add((int)file.vrom, new Tuple<string, Z64FileType>(file.name, file.type));
-                    }
-
-                    FileTable.Add(v, dict);
-                }
-            }
+            [JsonConverter(typeof(AddrToStringConverter))]
+            [JsonPropertyName("vrom")]
+            public uint? Vrom { get; set; }
+            [JsonPropertyName("name")]
+            public string Fileame { get; set; }
+            [JsonConverter(typeof(JsonStringEnumConverter))]
+            [JsonPropertyName("type")]
+            public Z64FileType FileType { get; set; }
         }
 
-        public static bool ContainsConfig(Z64VersionEnum v)
+        #endregion JSON Data Type
+       
+
+
+        [JsonPropertyName("version_name")]
+        public string VersionName { get; set; }
+        [JsonPropertyName("version_game")]
+        public Z64GameType Game { get; set; }
+
+        [JsonPropertyName("identifier")]
+        public VersionIdentifier Identifier { get; set; }
+        [JsonPropertyName("memory")]
+        public MemoryInfo Memory { get; set; }
+        [JsonPropertyName("files")]
+        public List<FileEntry> Files { get; set; }
+
+
+        public int? GetVrom(string filename) => (int)Files.Find(f => f.Fileame == filename).Vrom;
+        public string GetFileName(int vrom) => Files.Find(f => f.Vrom == vrom).Fileame;
+        public Z64FileType GetFileType(int vrom) => Files.Find(f => f.Vrom == vrom).FileType;
+
+        private int FindBuildTeam(N64Rom rom)
         {
-            return File.Exists($"versions/{v}.json");
+            string team = Identifier.BuildTeam;
+            int start = 0x1000;
+            int end = 0x20000 - team.Length - Identifier.BuildDate.Length;
+
+            for (int i = start; i < end; i += 4)
+            {
+                int count = 0;
+                while (count < team.Length && i + count < end && rom.RawRom[i + count] == team[count])
+                    count++;
+
+                if (count >= team.Length)
+                    return i;
+            }
+            return -1;
+        }
+        public bool Match(N64Rom rom, out int fileTableOff)
+        {
+            fileTableOff = 0;
+
+            // search team
+            int teamOff = FindBuildTeam(rom);
+            if (teamOff < 0)
+                return false;
+
+            int dateOff = (teamOff + Identifier.BuildTeam.Length) + 3 & ~3;
+
+            // check date
+            string date = Identifier.BuildDate;
+            int count = 0;
+            while (dateOff + count < rom.RawRom.Length && count < date.Length && date[count] == rom.RawRom[dateOff + count++])
+                count++;
+
+            if (count < date.Length)
+                return false;
+
+            fileTableOff = teamOff + 0x30;
+            return true;
+        }
+
+        public static List<Z64Version> Versions { get; private set; }
+        
+        public static void LoadResources()
+        {
+            var files = Directory.GetFiles("versions", "*.json");
+
+            Versions = new List<Z64Version>();
+            var options = new JsonSerializerOptions()
+            {
+                IgnoreNullValues = true,
+                PropertyNameCaseInsensitive = true,
+            };
+            options.Converters.Add(new JsonStringEnumConverter());
+
+            foreach (var file in files)
+            {
+                string json = File.ReadAllText(file);
+                var ver = JsonSerializer.Deserialize<Z64Version>(json, options);
+                if (ver.Identifier == null || ver.Identifier.BuildDate == null || ver.Identifier.BuildTeam == null)
+                    throw new InvalidDataException($"Error loading \"{file}\": identifier.build_date or identifier.build_team missing");
+                Versions.Add(ver);
+            }
+
+
+        }
+
+        public static Z64Version IdentifyRom(N64Rom rom, out int fileTableOff)
+        {
+            foreach (var ver in Versions)
+            {
+                if (ver.Match(rom, out fileTableOff))
+                {
+                    return ver;
+                }
+            }
+
+            fileTableOff = 0;
+            return null;
         }
     }
 }
