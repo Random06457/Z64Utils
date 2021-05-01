@@ -64,19 +64,23 @@ namespace Z64.Forms
 
         private void UpdateControls(bool inTask = false)
         {
-            mainToolStrip.Enabled = !inTask;
+            mainToolStrip.Enabled = 
             tabControl1.Enabled = !inTask;
 
-            tabControl1.Enabled = _game != null;
-            //openObjectToolStripMenuItem.Enabled = _game != null;
-            romExportFsItem.Enabled = _game != null;
-            romSaveItem.Enabled = _game != null;
-            ROMRAMConversionsToolStripMenuItem.Enabled = _game != null;
+            tabControl1.Enabled = 
+            romExportFsItem.Enabled = 
+            romSaveItem.Enabled = 
+            romImportNamesItem.Enabled = 
+            romExportNamesItem.Enabled = 
+            ROMRAMConversionsToolStripMenuItem.Enabled = 
             textureViewerToolStripMenuItem.Enabled = _game != null;
         }
 
-        private void UpdateFileList()
+        private void UpdateFileList(bool forceReload)
         {
+            if (forceReload)
+                _lastSearch = null;
+
             listView_files.BeginUpdate();
             string search = textBox_fileFilter.Text.ToLower();
             if (_lastSearch != null && search.Contains(_lastSearch))
@@ -154,8 +158,7 @@ namespace Z64.Forms
                                 _fileItemsText[i] = ($"{_game.GetFileName(file.VRomStart).ToLower()} {file.VRomStart:x8} {file.VRomEnd:x8}");
                             }
 
-                            _lastSearch = null;
-                            UpdateFileList();
+                            UpdateFileList(true);
                         }
                         UpdateControls();
                         GC.Collect();
@@ -202,11 +205,21 @@ namespace Z64.Forms
         private void RomImportNamesItem_Click(object sender, EventArgs e)
         {
             openFileDialog1.FileName = "";
-            openFileDialog1.Filter = Filters.ALL;
+            openFileDialog1.Filter = $"{Filters.TXT}|{Filters.ALL}";
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
                 Z64Version.ImportFileList(_game, openFileDialog1.FileName);
-                UpdateFileList();
+                UpdateFileList(true);
+            }
+        }
+
+        private void RomExportNamesItem_Click(object sender, EventArgs e)
+        {
+            saveFileDialog1.FileName = "";
+            saveFileDialog1.Filter = $"{Filters.TXT}|{Filters.ALL}";
+            if (saveFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                Z64Version.ExportFileList(_game, saveFileDialog1.FileName);
             }
         }
 
@@ -319,7 +332,7 @@ namespace Z64.Forms
 
         private void TextBox_fileFilter_TextChanged(object sender, EventArgs e)
         {
-            UpdateFileList();
+            UpdateFileList(false);
         }
 
         private void OpenDlistViewerToolStripMenuItem_Click(object sender, EventArgs e)

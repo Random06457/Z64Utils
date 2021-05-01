@@ -338,10 +338,8 @@ namespace Z64
 
         public static void ProcessGame(Z64Game game)
         {
-#if DEBUG
             ExportHashes(game);
             ImportHashes(game);
-#endif
         }
 
         private static Z64FileType GuessFileType(string name)
@@ -373,21 +371,37 @@ namespace Z64
                 if (!file.Valid())
                     continue;
 
-                game.Version.Files.Add(new FileEntry()
+                if (!string.IsNullOrEmpty(lines[i]))
                 {
-                    Filename = lines[i],
-                    FileType = GuessFileType(lines[i]),
-                    Vrom = (uint)file.VRomStart,
-                });
+                    game.Version.Files.Add(new FileEntry()
+                    {
+                        Filename = lines[i],
+                        FileType = GuessFileType(lines[i]),
+                        Vrom = (uint)file.VRomStart,
+                    });
+                }
             }
 
             game.Version.Save();
-            return;
+            ExportHashes(game);
+        }
+        public static void ExportFileList(Z64Game game, string path)
+        {
+            StringWriter sw = new StringWriter();
 
+            for (int i = 0; i < game.GetFileCount(); i++)
+            {
+                var file = game.GetFileFromIndex(i);
+
+                sw.WriteLine(game.Version.GetFileName(file.VRomStart));
+            }
+
+            File.WriteAllText(path, sw.ToString());
         }
 
         private static void ExportHashes(Z64Game game)
         {
+#if DEBUG
             string hashPath = "hashes.txt";
             var entries = FileHashEntry.ReadEntries(hashPath);
             int addCount = 0;
@@ -437,9 +451,11 @@ namespace Z64
             FileHashEntry.WriteEntries(hashPath, entries);
 
             Debug.WriteLine($"{addCount} hash exported and {modifCount} hashes modifed!");
+#endif
         }
         private static void ImportHashes(Z64Game game)
         {
+#if DEBUG
             var entries = FileHashEntry.ReadEntries("hashes.txt");
 
             int foundCount = 0;
@@ -486,6 +502,9 @@ namespace Z64
             }
 
             Debug.WriteLine($"{foundCount} hashes imported!");
+
+            game.Version.Save();
+#endif
         }
     }
 }

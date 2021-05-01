@@ -55,6 +55,7 @@ namespace Z64.Forms
             this.romExportFsItem = new System.Windows.Forms.ToolStripMenuItem();
             this.romSaveItem = new System.Windows.Forms.ToolStripMenuItem();
             this.romImportNamesItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.romExportNamesItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolsToolStripButton = new System.Windows.Forms.ToolStripDropDownButton();
             this.openObjectToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.f3DEXDisassemblerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -232,7 +233,8 @@ namespace Z64.Forms
             this.romOpenItem,
             this.romExportFsItem,
             this.romSaveItem,
-            this.romImportNamesItem});
+            this.romImportNamesItem,
+            this.romExportNamesItem});
             this.romToolStripButton.Image = global::Z64.Properties.Resources.file;
             this.romToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.romToolStripButton.Name = "romToolStripButton";
@@ -269,6 +271,13 @@ namespace Z64.Forms
             this.romImportNamesItem.Size = new System.Drawing.Size(187, 22);
             this.romImportNamesItem.Text = "Import File Name List";
             this.romImportNamesItem.Click += new System.EventHandler(this.RomImportNamesItem_Click);
+            // 
+            // romExportNamesItem
+            // 
+            this.romExportNamesItem.Name = "romExportNamesItem";
+            this.romExportNamesItem.Size = new System.Drawing.Size(187, 22);
+            this.romExportNamesItem.Text = "Export File Name List";
+            this.romExportNamesItem.Click += new System.EventHandler(this.RomExportNamesItem_Click);
             // 
             // toolsToolStripButton
             // 
@@ -400,6 +409,7 @@ namespace Z64.Forms
         private System.Windows.Forms.ToolStripMenuItem romImportNamesItem;
         private System.Windows.Forms.ToolStripDropDownButton toolsToolStripButton;
         private System.Windows.Forms.ToolStripDropDownButton helpToolStripButton;
+        private System.Windows.Forms.ToolStripMenuItem romExportNamesItem;
     }
 }
 
