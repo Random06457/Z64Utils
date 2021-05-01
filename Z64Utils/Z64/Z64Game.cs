@@ -8,6 +8,8 @@ using Syroot.BinaryData;
 using N64;
 using System.Windows.Forms;
 using System.Collections;
+using System.Diagnostics;
+using Common;
 
 namespace Z64
 {
@@ -121,15 +123,15 @@ namespace Z64
                 int romEnd = RomStart + data.Length;
 
                 if (Compressed())
-                    data = Yaz0.Decompress(data);
+                    data = game.Decompress(data, VRomEnd - VRomStart);
 
                 return new Z64File(data, VRomStart, RomStart, romEnd, Compressed());
             }
+
         }
 
         public Z64Memory Memory { get; private set; }
         public N64Rom Rom { get; private set; }
-        public string BuildID { get; private set; }
         public Z64Version Version { get; set; }
 
         private List<Z64File> _files;
@@ -138,12 +140,12 @@ namespace Z64
         {
             Rom = rom;
 
-            if (!N64CheckSum.Validate(Rom, 6105))
-                throw new Exception("Invalid CRC");
-
             Version = Z64Version.IdentifyRom(rom, out int fileTableOff);
             if (Version == null)
                 throw new Z64GameException("Invalid or unknown build name");
+
+            if (!N64CheckSum.Validate(Rom, Version.Cic))
+                throw new Exception("Invalid CRC");
 
             using (MemoryStream ms = new MemoryStream(rom.RawRom))
             {
@@ -153,12 +155,28 @@ namespace Z64
                 GetFs(br, progressCalback);
             }
 
+            Z64Version.ProcessGame(this);
+
             Memory = new Z64Memory(this);
 
         }
         public Z64Game(string path, Action<float, string> progressCalback = null) : this(new N64Rom(path), progressCalback)
         {
 
+        }
+
+        
+        public byte[] Compress(byte[] data)
+        {
+            return Version.Compression == Z64FileCompression.Yaz0
+                ? Yaz0.Compress(data)
+                : throw new NotImplementedException();
+        }
+        public byte[] Decompress(byte[] data, int decSize)
+        {
+            return Version.Compression == Z64FileCompression.Yaz0
+                ? Yaz0.Decompress(data)
+                : Utils.ZlibDecompress(data, decSize);
         }
 
 
@@ -208,7 +226,7 @@ namespace Z64
             byte[] rest = new byte[restEnd - restStart];
             Buffer.BlockCopy(Rom.RawRom, restStart, rest, 0, rest.Length);
 
-            var encData = file.Compressed ? Yaz0.Compress(data) : data;
+            var encData = file.Compressed ? Compress(data) : data;
             int off = encData.Length - oldSize;
 
             //copy new file in rom
@@ -280,7 +298,7 @@ namespace Z64
         public void FixRom()
         {
             FixDmaDataTable();
-            N64CheckSum.Update(Rom, 6105);
+            N64CheckSum.Update(Rom, Version.Cic);
         }
 
         private void GetFs(BinaryStream br, Action<float, string> progressCalback = null)

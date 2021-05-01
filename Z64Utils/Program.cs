@@ -7,6 +7,7 @@ using Z64.Forms;
 using Z64;
 using System.Globalization;
 using System.Threading;
+using System.IO;
 
 namespace Z64
 {
@@ -20,7 +21,6 @@ namespace Z64
         {
             Thread.CurrentThread.CurrentCulture = CultureInfo.CreateSpecificCulture("en-US");
 
-            Z64Version.LoadResources();   
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new MainForm());

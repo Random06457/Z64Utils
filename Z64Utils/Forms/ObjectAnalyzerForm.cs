@@ -12,7 +12,6 @@ using System.Windows.Forms;
 using RDP;
 using Be.Windows.Forms;
 using Common;
-using Z64.Common;
 
 namespace Z64.Forms
 {

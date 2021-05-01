@@ -104,6 +104,17 @@ namespace Common
             return true;
         }
 
+        public static byte[] ZlibDecompress(byte[] input, int decSize)
+        {
+            using (MemoryStream inStream = new MemoryStream(input))
+            using (MemoryStream outStream = new MemoryStream(decSize))
+            using (var decompStream = new System.IO.Compression.DeflateStream(inStream, System.IO.Compression.CompressionMode.Decompress))
+            {
+                decompStream.CopyTo(outStream);
+                return outStream.GetBuffer();
+            }
+        }
+
     }
 
 
