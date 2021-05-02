@@ -362,10 +362,10 @@ namespace Z64.Forms
 
         private void checkNewReleasesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            string newTag = UpdateChecker.GetLatestTag();
-            if (UpdateChecker.CurrentTag != newTag)
+            var release = UpdateChecker.GetLatestRelease();
+            if (UpdateChecker.CurrentTag != release.TagName)
             {
-                var res = MessageBox.Show($"A new release is available on github (tag {newTag}).\r\nWould you like to open the release page?", "New Release Available", MessageBoxButtons.YesNo);
+                var res = MessageBox.Show($"A new release is available on github (tag {release.TagName}).\r\nWould you like to open the release page?", "New Release Available", MessageBoxButtons.YesNo);
                 if (res == DialogResult.Yes)
                     Utils.OpenBrowser(UpdateChecker.ReleaseURL);
             }

@@ -12,19 +12,21 @@ using F3DZEX.Render;
 
 namespace Z64.Forms
 {
-    public partial class RenderSettingsForm : MicrosoftFontForm
+    public partial class SettingsForm : MicrosoftFontForm
     {
         public event EventHandler SettingsChanged;
 
         Renderer.Config _rendererCfg;
 
-        public RenderSettingsForm(Renderer.Config cfg)
+        public SettingsForm(Renderer.Config cfg, string title = "Settings")
         {
             InitializeComponent();
 
             _rendererCfg = cfg;
 
             propertyGrid1.SelectedObject = _rendererCfg;
+
+            Text = title;
         }
 
         private void UpdateSettings(object sender, EventArgs e)

@@ -49,7 +49,7 @@ namespace Z64.Forms
         F3DZEX.Render.Renderer _renderer;
         SegmentEditorForm _segForm;
         DisasmForm _disasForm;
-        RenderSettingsForm _settingsForm;
+        SettingsForm _settingsForm;
         F3DZEX.Render.Renderer.Config _rendererCfg;
 
         List<RenderRoutine> _routines;
@@ -254,7 +254,7 @@ namespace Z64.Forms
             }
             else
             {
-                _settingsForm = new RenderSettingsForm(_rendererCfg);
+                _settingsForm = new SettingsForm(_rendererCfg);
                 _settingsForm.FormClosed += (sender, e) => _settingsForm = null;
                 _settingsForm.SettingsChanged += (sender, e) => { modelViewer.Render(); };
                 _settingsForm.Show();
