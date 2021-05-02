@@ -30,10 +30,6 @@ namespace Z64.Forms
         public MainForm()
         {
             InitializeComponent();
-
-            toolStrip1.DataBindings.Clear();
-            tabControl1.DataBindings.Clear();
-
             UpdateControls();
         }
 
@@ -68,19 +64,23 @@ namespace Z64.Forms
 
         private void UpdateControls(bool inTask = false)
         {
-            toolStrip1.Enabled = !inTask;
+            mainToolStrip.Enabled = 
             tabControl1.Enabled = !inTask;
 
-            tabControl1.Enabled = _game != null;
-            openObjectToolStripMenuItem.Enabled = _game != null;
-            exportFSToolStripMenuItem.Enabled = _game != null;
-            saveToolStripMenuItem.Enabled = _game != null;
-            ROMRAMConversionsToolStripMenuItem.Enabled = _game != null;
+            tabControl1.Enabled = 
+            romExportFsItem.Enabled = 
+            romSaveItem.Enabled = 
+            romImportNamesItem.Enabled = 
+            romExportNamesItem.Enabled = 
+            ROMRAMConversionsToolStripMenuItem.Enabled = 
             textureViewerToolStripMenuItem.Enabled = _game != null;
         }
 
-        private void UpdateFileList()
+        private void UpdateFileList(bool forceReload)
         {
+            if (forceReload)
+                _lastSearch = null;
+
             listView_files.BeginUpdate();
             string search = textBox_fileFilter.Text.ToLower();
             if (_lastSearch != null && search.Contains(_lastSearch))
@@ -103,7 +103,7 @@ namespace Z64.Forms
                         string name = _game.GetFileName(file.VRomStart);
                         string vrom = $"{file.VRomStart:X8}-{file.VRomEnd:X8}";
                         string rom = $"{file.RomStart:X8}-{file.RomEnd:X8}";
-                        string type = "Unknow";
+                        string type = $"{_game.GetFileType(file.VRomStart)}";
 
                         var item = listView_files.Items.Add(name);
                         item.SubItems.AddRange(new string[] { vrom, rom, type });
@@ -115,7 +115,7 @@ namespace Z64.Forms
             listView_files.EndUpdate();
         }
 
-        private void OpenToolStripMenuItem_Click(object sender, EventArgs e)
+        private void RomOpenItem_Click(object sender, EventArgs e)
         {
             openFileDialog1.FileName = "";
             openFileDialog1.Filter = $"{Filters.N64}|{Filters.ALL}";
@@ -129,17 +129,10 @@ namespace Z64.Forms
                 });
 
                 StartTask(() => {
-                    try
-                    {
+                    //try
+                    //{
                         _game = new Z64Game(openFileDialog1.FileName, ProcessCallback);
-                        if (!Z64Version.ContainsConfig(_game.Version))
-                        {
-                            Invoke(new Action(() =>
-                            {
-                                MessageBox.Show($"No config file found for this version!\r\n(should be versions/{_game.Version}.json)", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                            }));
-                        }
-                    }
+                    /*}
                     catch(Exception ex)
                     {
                         Invoke(new Action(() =>
@@ -147,12 +140,13 @@ namespace Z64.Forms
                             MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         }));
                     }
+                    */
 
                     Invoke(new Action(() =>
                     {
                         if (_game != null)
                         {
-                            Text = $"Z64 Utils - {Path.GetFileName(openFileDialog1.FileName)} [ver. {_game.Version} ({_game.BuildID})]";
+                            Text = $"Z64 Utils - {Path.GetFileName(openFileDialog1.FileName)} [ver. {_game.Version.VersionName} ({_game.Version.Identifier.BuildTeam} {_game.Version.Identifier.BuildDate})]";
 
                             _fileItemsText = new string[_game.GetFileCount()];
                             for (int i = 0; i < _game.GetFileCount(); i++)
@@ -164,8 +158,7 @@ namespace Z64.Forms
                                 _fileItemsText[i] = ($"{_game.GetFileName(file.VRomStart).ToLower()} {file.VRomStart:x8} {file.VRomEnd:x8}");
                             }
 
-                            _lastSearch = null;
-                            UpdateFileList();
+                            UpdateFileList(true);
                         }
                         UpdateControls();
                         GC.Collect();
@@ -174,7 +167,7 @@ namespace Z64.Forms
             }
         }
 
-        private void SaveToolStripMenuItem_Click(object sender, EventArgs e)
+        private void RomSaveItem_Click(object sender, EventArgs e)
         {
             saveFileDialog1.FileName = "";
             saveFileDialog1.Filter = $"{Filters.N64}|{Filters.ALL}";
@@ -187,7 +180,7 @@ namespace Z64.Forms
         }
 
 
-        private void ExportFSToolStripMenuItem_Click(object sender, EventArgs e)
+        private void RomExportFsItem_Click(object sender, EventArgs e)
         {
             folderBrowserDialog1.SelectedPath = "";
             if (folderBrowserDialog1.ShowDialog() == DialogResult.OK)
@@ -208,6 +201,28 @@ namespace Z64.Forms
                 });
             }
         }
+
+        private void RomImportNamesItem_Click(object sender, EventArgs e)
+        {
+            openFileDialog1.FileName = "";
+            openFileDialog1.Filter = $"{Filters.TXT}|{Filters.ALL}";
+            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                Z64Version.ImportFileList(_game, openFileDialog1.FileName);
+                UpdateFileList(true);
+            }
+        }
+
+        private void RomExportNamesItem_Click(object sender, EventArgs e)
+        {
+            saveFileDialog1.FileName = "";
+            saveFileDialog1.Filter = $"{Filters.TXT}|{Filters.ALL}";
+            if (saveFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                Z64Version.ExportFileList(_game, saveFileDialog1.FileName);
+            }
+        }
+
 
         private void InjectToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -283,7 +298,7 @@ namespace Z64.Forms
             else if (fileName.StartsWith("gameplay_"))
                 defaultValue = "5";
 
-            var valueForm = new EditValueForm("Choose Segment", "Plase enter a segment id", (v) =>
+            var valueForm = new EditValueForm("Choose Segment", "Plase enter a segment id.", (v) =>
             {
                 return (int.TryParse(v, out int ret) && ret >= 0 && ret < 16)
                 ? null
@@ -297,9 +312,27 @@ namespace Z64.Forms
             }
         }
 
+        private void renameToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (listView_files.SelectedIndices.Count != 1)
+                return;
+            var item = listView_files.SelectedItems[0];
+            var file = _game.GetFileFromIndex((int)item.Tag);
+
+            var valueForm = new EditValueForm("Rename File", "Please enter the new file name.",
+                v => v.IndexOfAny(Path.GetInvalidFileNameChars()) == -1 ? null : "Invalid File Name",
+                _game.GetFileName(file.VRomStart));
+            if (valueForm.ShowDialog() == DialogResult.OK)
+            {
+                _game.Version.RenameFile(file.VRomStart, valueForm.Result);
+                listView_files.SelectedItems[0].Text = valueForm.Result;
+            }
+
+        }
+
         private void TextBox_fileFilter_TextChanged(object sender, EventArgs e)
         {
-            UpdateFileList();
+            UpdateFileList(false);
         }
 
         private void OpenDlistViewerToolStripMenuItem_Click(object sender, EventArgs e)
@@ -339,5 +372,6 @@ namespace Z64.Forms
             else
                 MessageBox.Show("No new release available.");
         }
+
     }
 }

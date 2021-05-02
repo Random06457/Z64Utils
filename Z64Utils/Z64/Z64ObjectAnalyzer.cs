@@ -8,7 +8,6 @@ using F3DZEX;
 using N64;
 using System.Text.RegularExpressions;
 using System.IO;
-using Z64.Common;
 using F3DZEX.Command;
 using RDP;
 

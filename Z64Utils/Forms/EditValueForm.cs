@@ -42,7 +42,7 @@ namespace Z64.Forms
 
         private void textBox1_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Enter)
+            if (buttonOK.Enabled && e.KeyCode == Keys.Enter)
             {
                 buttonOK_Click(null, null);
             }

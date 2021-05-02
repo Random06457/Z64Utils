@@ -1,4 +1,6 @@
-﻿namespace Z64.Forms
+﻿using System;
+
+namespace Z64.Forms
 {
     partial class MainForm
     {
@@ -46,17 +48,20 @@
             this.openObjectViewerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.injectToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStrip1 = new System.Windows.Forms.ToolStrip();
-            this.toolStripButton1 = new System.Windows.Forms.ToolStripDropDownButton();
-            this.openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.exportFSToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripDropDownButton1 = new System.Windows.Forms.ToolStripDropDownButton();
+            this.renameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.mainToolStrip = new System.Windows.Forms.ToolStrip();
+            this.romToolStripButton = new System.Windows.Forms.ToolStripDropDownButton();
+            this.romOpenItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.romExportFsItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.romSaveItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.romImportNamesItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.romExportNamesItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolsToolStripButton = new System.Windows.Forms.ToolStripDropDownButton();
             this.openObjectToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.f3DEXDisassemblerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ROMRAMConversionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.textureViewerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripDropDownButton2 = new System.Windows.Forms.ToolStripDropDownButton();
+            this.helpToolStripButton = new System.Windows.Forms.ToolStripDropDownButton();
             this.checkNewReleasesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
@@ -64,7 +69,7 @@
             this.tabControl1.SuspendLayout();
             this.tabPage5.SuspendLayout();
             this.contextMenuStrip_fs.SuspendLayout();
-            this.toolStrip1.SuspendLayout();
+            this.mainToolStrip.SuspendLayout();
             this.SuspendLayout();
             // 
             // openFileDialog1
@@ -176,9 +181,10 @@
             this.contextMenuStrip_fs.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.openObjectViewerToolStripMenuItem,
             this.injectToolStripMenuItem,
-            this.saveToolStripMenuItem1});
+            this.saveToolStripMenuItem1,
+            this.renameToolStripMenuItem});
             this.contextMenuStrip_fs.Name = "contextMenuStrip_fs";
-            this.contextMenuStrip_fs.Size = new System.Drawing.Size(203, 70);
+            this.contextMenuStrip_fs.Size = new System.Drawing.Size(203, 92);
             // 
             // openObjectViewerToolStripMenuItem
             // 
@@ -201,67 +207,90 @@
             this.saveToolStripMenuItem1.Text = "Save";
             this.saveToolStripMenuItem1.Click += new System.EventHandler(this.SaveToolStripMenuItem1_Click);
             // 
-            // toolStrip1
+            // renameToolStripMenuItem
             // 
-            this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripButton1,
-            this.toolStripDropDownButton1,
-            this.toolStripDropDownButton2});
-            this.toolStrip1.Location = new System.Drawing.Point(0, 0);
-            this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(576, 25);
-            this.toolStrip1.TabIndex = 8;
-            this.toolStrip1.Text = "toolStrip1";
+            this.renameToolStripMenuItem.Name = "renameToolStripMenuItem";
+            this.renameToolStripMenuItem.Size = new System.Drawing.Size(202, 22);
+            this.renameToolStripMenuItem.Text = "Rename";
+            this.renameToolStripMenuItem.Click += new System.EventHandler(this.renameToolStripMenuItem_Click);
             // 
-            // toolStripButton1
+            // mainToolStrip
             // 
-            this.toolStripButton1.AutoToolTip = false;
-            this.toolStripButton1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.openToolStripMenuItem,
-            this.exportFSToolStripMenuItem,
-            this.saveToolStripMenuItem});
-            this.toolStripButton1.Image = global::Z64.Properties.Resources.file;
-            this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButton1.Name = "toolStripButton1";
-            this.toolStripButton1.Size = new System.Drawing.Size(63, 22);
-            this.toolStripButton1.Text = "ROM";
+            this.mainToolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.romToolStripButton,
+            this.toolsToolStripButton,
+            this.helpToolStripButton});
+            this.mainToolStrip.Location = new System.Drawing.Point(0, 0);
+            this.mainToolStrip.Name = "mainToolStrip";
+            this.mainToolStrip.Size = new System.Drawing.Size(576, 25);
+            this.mainToolStrip.TabIndex = 8;
+            this.mainToolStrip.Text = "mainToolStrip";
             // 
-            // openToolStripMenuItem
+            // romToolStripButton
             // 
-            this.openToolStripMenuItem.Image = global::Z64.Properties.Resources.open;
-            this.openToolStripMenuItem.Name = "openToolStripMenuItem";
-            this.openToolStripMenuItem.Size = new System.Drawing.Size(123, 22);
-            this.openToolStripMenuItem.Text = "Open";
-            this.openToolStripMenuItem.Click += new System.EventHandler(this.OpenToolStripMenuItem_Click);
+            this.romToolStripButton.AutoToolTip = false;
+            this.romToolStripButton.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.romOpenItem,
+            this.romExportFsItem,
+            this.romSaveItem,
+            this.romImportNamesItem,
+            this.romExportNamesItem});
+            this.romToolStripButton.Image = global::Z64.Properties.Resources.file;
+            this.romToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.romToolStripButton.Name = "romToolStripButton";
+            this.romToolStripButton.Size = new System.Drawing.Size(63, 22);
+            this.romToolStripButton.Text = "ROM";
             // 
-            // exportFSToolStripMenuItem
+            // romOpenItem
             // 
-            this.exportFSToolStripMenuItem.Image = global::Z64.Properties.Resources.multiple_files;
-            this.exportFSToolStripMenuItem.Name = "exportFSToolStripMenuItem";
-            this.exportFSToolStripMenuItem.Size = new System.Drawing.Size(123, 22);
-            this.exportFSToolStripMenuItem.Text = "Export FS";
-            this.exportFSToolStripMenuItem.Click += new System.EventHandler(this.ExportFSToolStripMenuItem_Click);
+            this.romOpenItem.Image = global::Z64.Properties.Resources.open;
+            this.romOpenItem.Name = "romOpenItem";
+            this.romOpenItem.Size = new System.Drawing.Size(187, 22);
+            this.romOpenItem.Text = "Open";
+            this.romOpenItem.Click += new System.EventHandler(this.RomOpenItem_Click);
             // 
-            // saveToolStripMenuItem
+            // romExportFsItem
             // 
-            this.saveToolStripMenuItem.Image = global::Z64.Properties.Resources.save;
-            this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
-            this.saveToolStripMenuItem.Size = new System.Drawing.Size(123, 22);
-            this.saveToolStripMenuItem.Text = "Save As";
-            this.saveToolStripMenuItem.Click += new System.EventHandler(this.SaveToolStripMenuItem_Click);
+            this.romExportFsItem.Image = global::Z64.Properties.Resources.multiple_files;
+            this.romExportFsItem.Name = "romExportFsItem";
+            this.romExportFsItem.Size = new System.Drawing.Size(187, 22);
+            this.romExportFsItem.Text = "Export FS";
+            this.romExportFsItem.Click += new System.EventHandler(this.RomExportFsItem_Click);
             // 
-            // toolStripDropDownButton1
+            // romSaveItem
             // 
-            this.toolStripDropDownButton1.AutoToolTip = false;
-            this.toolStripDropDownButton1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.romSaveItem.Image = global::Z64.Properties.Resources.save;
+            this.romSaveItem.Name = "romSaveItem";
+            this.romSaveItem.Size = new System.Drawing.Size(187, 22);
+            this.romSaveItem.Text = "Save As";
+            this.romSaveItem.Click += new System.EventHandler(this.RomSaveItem_Click);
+            // 
+            // romImportNamesItem
+            // 
+            this.romImportNamesItem.Name = "romImportNamesItem";
+            this.romImportNamesItem.Size = new System.Drawing.Size(187, 22);
+            this.romImportNamesItem.Text = "Import File Name List";
+            this.romImportNamesItem.Click += new System.EventHandler(this.RomImportNamesItem_Click);
+            // 
+            // romExportNamesItem
+            // 
+            this.romExportNamesItem.Name = "romExportNamesItem";
+            this.romExportNamesItem.Size = new System.Drawing.Size(187, 22);
+            this.romExportNamesItem.Text = "Export File Name List";
+            this.romExportNamesItem.Click += new System.EventHandler(this.RomExportNamesItem_Click);
+            // 
+            // toolsToolStripButton
+            // 
+            this.toolsToolStripButton.AutoToolTip = false;
+            this.toolsToolStripButton.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.openObjectToolStripMenuItem,
             this.f3DEXDisassemblerToolStripMenuItem,
             this.ROMRAMConversionsToolStripMenuItem,
             this.textureViewerToolStripMenuItem});
-            this.toolStripDropDownButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripDropDownButton1.Name = "toolStripDropDownButton1";
-            this.toolStripDropDownButton1.Size = new System.Drawing.Size(47, 22);
-            this.toolStripDropDownButton1.Text = "Tools";
+            this.toolsToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolsToolStripButton.Name = "toolsToolStripButton";
+            this.toolsToolStripButton.Size = new System.Drawing.Size(47, 22);
+            this.toolsToolStripButton.Text = "Tools";
             // 
             // openObjectToolStripMenuItem
             // 
@@ -295,17 +324,17 @@
             this.textureViewerToolStripMenuItem.Text = "Texture Viewer";
             this.textureViewerToolStripMenuItem.Click += new System.EventHandler(this.textureViewerToolStripMenuItem_Click);
             // 
-            // toolStripDropDownButton2
+            // helpToolStripButton
             // 
-            this.toolStripDropDownButton2.AutoToolTip = false;
-            this.toolStripDropDownButton2.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.toolStripDropDownButton2.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.helpToolStripButton.AutoToolTip = false;
+            this.helpToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.helpToolStripButton.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.checkNewReleasesToolStripMenuItem,
             this.aboutToolStripMenuItem});
-            this.toolStripDropDownButton2.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripDropDownButton2.Name = "toolStripDropDownButton2";
-            this.toolStripDropDownButton2.Size = new System.Drawing.Size(45, 22);
-            this.toolStripDropDownButton2.Text = "Help";
+            this.helpToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.helpToolStripButton.Name = "helpToolStripButton";
+            this.helpToolStripButton.Size = new System.Drawing.Size(45, 22);
+            this.helpToolStripButton.Text = "Help";
             // 
             // checkNewReleasesToolStripMenuItem
             // 
@@ -326,7 +355,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(576, 507);
-            this.Controls.Add(this.toolStrip1);
+            this.Controls.Add(this.mainToolStrip);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.label_loadProgress);
             this.Controls.Add(this.progressBar1);
@@ -339,8 +368,8 @@
             this.tabPage5.ResumeLayout(false);
             this.tabPage5.PerformLayout();
             this.contextMenuStrip_fs.ResumeLayout(false);
-            this.toolStrip1.ResumeLayout(false);
-            this.toolStrip1.PerformLayout();
+            this.mainToolStrip.ResumeLayout(false);
+            this.mainToolStrip.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -351,14 +380,9 @@
         private System.Windows.Forms.ProgressBar progressBar1;
         private System.Windows.Forms.Label label_loadProgress;
         private System.Windows.Forms.TabControl tabControl1;
-        private System.Windows.Forms.ToolStrip toolStrip1;
-        private System.Windows.Forms.ToolStripDropDownButton toolStripButton1;
-        private System.Windows.Forms.ToolStripMenuItem openToolStripMenuItem;
-        private System.Windows.Forms.ToolStripDropDownButton toolStripDropDownButton1;
-        private System.Windows.Forms.ToolStripMenuItem saveToolStripMenuItem;
+        private System.Windows.Forms.ToolStripDropDownButton romToolStripButton;
         private System.Windows.Forms.SaveFileDialog saveFileDialog1;
         private System.Windows.Forms.TabPage tabPage5;
-        private System.Windows.Forms.ToolStripMenuItem exportFSToolStripMenuItem;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip_fs;
         private System.Windows.Forms.ToolStripMenuItem openObjectViewerToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem injectToolStripMenuItem;
@@ -374,10 +398,18 @@
         private System.Windows.Forms.ToolStripMenuItem f3DEXDisassemblerToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem ROMRAMConversionsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem textureViewerToolStripMenuItem;
-        private System.Windows.Forms.ToolStripDropDownButton toolStripDropDownButton2;
         private System.Windows.Forms.ToolStripMenuItem checkNewReleasesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
         private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
+        private System.Windows.Forms.ToolStripMenuItem renameToolStripMenuItem;
+        private System.Windows.Forms.ToolStrip mainToolStrip;
+        private System.Windows.Forms.ToolStripMenuItem romOpenItem;
+        private System.Windows.Forms.ToolStripMenuItem romExportFsItem;
+        private System.Windows.Forms.ToolStripMenuItem romSaveItem;
+        private System.Windows.Forms.ToolStripMenuItem romImportNamesItem;
+        private System.Windows.Forms.ToolStripDropDownButton toolsToolStripButton;
+        private System.Windows.Forms.ToolStripDropDownButton helpToolStripButton;
+        private System.Windows.Forms.ToolStripMenuItem romExportNamesItem;
     }
 }
 
