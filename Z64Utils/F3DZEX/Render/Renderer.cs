@@ -45,6 +45,194 @@ namespace F3DZEX.Render
             public Color BackColor { get; set; } = Color.DodgerBlue;
         }
 
+        public class Tile
+        {
+            public bool on;
+            public ushort scaleS;
+            public ushort scaleT;
+            public int level;
+
+            public FixedPoint uls;
+            public FixedPoint ult;
+            public FixedPoint lrs;
+            public FixedPoint lrt;
+
+            public G_IM_FMT fmt;
+            public G_IM_SIZ siz;
+            public int line;
+            public int tmem;
+            public int palette;
+            public G_TX_TEXWRAP cmT;
+            public G_TX_TEXWRAP cmS;
+            public int maskS;
+            public int maskT;
+            public int shiftS;
+            public int shiftT;
+
+            public void SetTile(GSetTile tile)
+            {
+                fmt = tile.fmt;
+                siz = tile.siz;
+                line = tile.line;
+                tmem = tile.tmem;
+                palette = tile.palette;
+                cmT = tile.cmT;
+                cmS = tile.cmS;
+                maskS = tile.maskS;
+                maskT = tile.maskT;
+                shiftS = tile.shiftS;
+                shiftT = tile.shiftT;
+            }
+
+            public void SetTileSize(GLoadTile tileSize)
+            {
+                uls = tileSize.uls;
+                ult = tileSize.ult;
+                lrs = tileSize.lrs;
+                lrt = tileSize.lrt;
+            }
+
+            public void Texture(GTexture tex)
+            {
+                on = tex.on.HasFlag(G_TEX_ENABLE.G_ON);
+                if (on)
+                {
+                    scaleS = tex.scaleS;
+                    scaleT = tex.scaleT;
+                    level = tex.level;
+                }
+            }
+
+            public Tuple<int, int> GetTextureWrap()
+            {
+                var mirrorV = cmT.HasFlag(G_TX_TEXWRAP.G_TX_MIRROR);
+                var mirrorH = cmS.HasFlag(G_TX_TEXWRAP.G_TX_MIRROR);
+
+                var wrapS = cmS.HasFlag(G_TX_TEXWRAP.G_TX_CLAMP)
+                    ? TextureWrapMode.ClampToEdge
+                    : (mirrorH ? TextureWrapMode.MirroredRepeat : TextureWrapMode.Repeat);
+
+                var wrapT = cmT.HasFlag(G_TX_TEXWRAP.G_TX_CLAMP)
+                    ? TextureWrapMode.ClampToEdge
+                    : (mirrorV ? TextureWrapMode.MirroredRepeat : TextureWrapMode.Repeat);
+
+                return new Tuple<int, int>((int)wrapS, (int)wrapT);
+            }
+
+            public int Width => (int)(lrs.Float() + 1);
+            public int Height => (int)(lrt.Float() + 1);
+
+            public int GetTexelCount()
+            {
+                int w = (int)(lrs.Float() - uls.Float() + 1);
+                int h = (int)(lrt.Float() - ult.Float() + 1);
+                return w * h;
+            }
+            public int GetTextureSize()
+            {
+                return N64Texture.GetTexSize(GetTexelCount(), siz);
+            }
+        }
+
+        public class ColorCombiner
+        {
+            public struct ColorInfo
+            {
+                public G_CCMUX c1;
+                public G_ACMUX a1;
+                public G_CCMUX c2;
+                public G_ACMUX a2;
+            }
+
+            public ColorInfo a;
+            public ColorInfo b;
+            public ColorInfo c;
+            public ColorInfo d;
+
+            public ColorInfo this[int idx]
+            {
+                get
+                {
+                    return idx switch
+                    {
+                        0 => a,
+                        1 => b,
+                        2 => c,
+                        3 => d,
+                        _ => throw new ArgumentOutOfRangeException(),
+                    };
+                }
+            }
+
+            public void SetCombine(GSetCombine combine)
+            {
+                a.c1 = combine.a0;
+                a.a1 = combine.Aa0;
+                b.c1 = combine.b0;
+                b.a1 = combine.Ab0;
+                c.c1 = combine.c0;
+                c.a1 = combine.Ac0;
+                d.c1 = combine.d0;
+                d.a1 = combine.Ad0;
+
+                a.c2 = combine.a1;
+                a.a2 = combine.Aa1;
+                b.c2 = combine.b1;
+                b.a2 = combine.Ab1;
+                c.c2 = combine.c1;
+                c.a2 = combine.Ac1;
+                d.c2 = combine.d1;
+                d.a2 = combine.Ad1;
+            }
+
+            public bool UsesTex1()
+            {
+                int i = 0;
+                while (i < 4 && 
+                    this[i].a1 != G_ACMUX.G_ACMUX_TEXEL1 &&
+                    this[i].a2 != G_ACMUX.G_ACMUX_TEXEL1 &&
+                    this[i].c1 != G_CCMUX.G_CCMUX_TEXEL1 && 
+                    this[i].c1 != G_CCMUX.G_CCMUX_TEXEL1)
+                {
+                    i++;
+                }
+
+                return i < 4;
+            }
+        }
+
+        public class ChromaKey
+        {
+            public struct Comp
+            {
+                public byte center;
+                public byte scale;
+                public FixedPoint width;
+            }
+
+            public Comp r;
+            public Comp g;
+            public Comp b;
+
+            public Vector3 Center => new Vector3(r.center, g.center, b.center);
+            public Vector3 Scale => new Vector3(r.scale, g.scale, b.scale);
+
+            public void SetKeyGB(GSetKeyGB cmd)
+            {
+                g.center = cmd.centerG;
+                g.scale = cmd.scaleG;
+                g.width = cmd.widthG;
+                b.center = cmd.centerB;
+                b.scale = cmd.scaleB;
+                b.width = cmd.widthB;
+            }
+            public void SetKeyR(GSetKeyR cmd)
+            {
+                r.center = cmd.centerR;
+                r.scale = cmd.scaleR;
+                r.width = cmd.widthR;
+            }
+        }
 
         public uint RenderErrorAddr { get; private set; } = 0xFFFFFFFF;
         public string ErrorMsg { get; private set; } = null;
@@ -56,18 +244,28 @@ namespace F3DZEX.Render
         public MatrixStack ModelMtxStack { get; }
 
 
-        G_IM_SIZ _loadTexSiz;
-        G_IM_FMT _renderTexFmt;
-        G_IM_SIZ _renderTexSiz;
+        //G_IM_SIZ _loadTexSiz;
+        //G_IM_FMT _renderTexFmt;
+        //G_IM_SIZ _renderTexSiz;
         uint _curImgAddr;
-        byte[] _loadTexData;
-        byte[] _renderTexData;
-        byte[] _curTLUT;
-        int _curTexW;
-        int _curTexH;
-        bool _mirrorV;
-        bool _mirrorH;
+        //byte[] _loadTexData;
+        //byte[] _renderTexData;
+        //byte[] _curTLUT;
+        //int _curTexW;
+        //int _curTexH;
+        //bool _mirrorV;
+        //bool _mirrorH;
         bool _reqDecodeTex = false;
+        Tile[] _tiles = new Tile[8];
+        byte[] _tmem = new byte[0x1000];
+        int _tlutTmem;
+        int _tlutSize;
+        int _selectedTile = 0;
+        ColorCombiner _combiner;
+        uint _otherModeHI = 0;
+        uint _otherModeLO = 0;
+        uint _geoMode = 0;
+        ChromaKey _chromaKey;
 
         bool _initialized;
         RdpVertexDrawer _rdpVtxDrawer;
@@ -91,6 +289,14 @@ namespace F3DZEX.Render
             ModelMtxStack = new MatrixStack();
 
             ModelMtxStack.OnTopMatrixChanged += (sender, e) => _rdpVtxDrawer.SendModelMatrix(e.newTop);
+
+            _tiles = new Tile[8];
+            for (int i = 0; i < _tiles.Length; i++)
+            {
+                _tiles[i] = new Tile();
+            }
+            _combiner = new ColorCombiner();
+            _chromaKey = new ChromaKey();
         }
         
         public void ClearErrors() => ErrorMsg = null;
@@ -240,14 +446,48 @@ namespace F3DZEX.Render
 
 
         static int TexDecodeCount = 0;
+
+        private void DecodeTex(Tile tile, byte[] tlut)
+        {
+            int w = tile.Width;
+            int h = tile.Height;
+
+            // copy from dmem
+            int size = tile.GetTextureSize();
+            byte[] data = new byte[size];
+            System.Buffer.BlockCopy(_tmem, tile.tmem * 8, data, 0, size);
+
+            // decode data
+            byte[] dec = N64Texture.Decode(w * h, tile.fmt, tile.siz, data, tlut);
+            _curTex.SetDataRGBA(dec, w, h);
+
+
+            // texture wrap
+            var wrap = tile.GetTextureWrap();
+            _curTex.SetTextureWrap(wrap.Item1, wrap.Item2);
+        }
         private void DecodeTexIfRequired()
         {
             if (_reqDecodeTex)
             {
                 //Debug.WriteLine($"Decoding texture... {TexDecodeCount++}");
 
-                _renderTexData = N64Texture.Decode(_curTexW * _curTexH, _renderTexFmt, _renderTexSiz, _loadTexData, _curTLUT);                
-                _curTex.SetDataRGBA(_renderTexData, _curTexW, _curTexH);
+                var tex0 = _tiles[_selectedTile];
+
+                // todo
+                if (_combiner.UsesTex1())
+                    throw new NotImplementedException();
+
+
+                byte[] tlut = null;
+                if (tex0.fmt == G_IM_FMT.G_IM_FMT_CI)
+                {
+                    tlut = new byte[_tlutSize];
+                    System.Buffer.BlockCopy(_tmem, _tlutTmem, tlut, 0, tlut.Length);
+                }
+
+                DecodeTex(tex0, tlut);
+                
                 _reqDecodeTex = false;
             }
         }
@@ -256,13 +496,75 @@ namespace F3DZEX.Render
         {
             switch (info.ID)
             {
+                case CmdID.G_SETOTHERMODE_L:
+                case CmdID.G_SETOTHERMODE_H:
+                    {
+                        var cmd = info.Convert<GSetOtherMode>();
+
+                        ref uint x = ref _otherModeLO;
+                        if (info.ID == CmdID.G_SETOTHERMODE_H)
+                            x = ref _otherModeHI;
+
+                        x = x & ~((uint)((1 << cmd.len) - 1) << cmd.shift) | cmd.data;
+
+                        _rdpVtxDrawer.SendOtherMode(info.ID, x);
+                        break;
+                    }
+                case CmdID.G_GEOMETRYMODE:
+                    {
+                        var cmd = info.Convert<GGeometryMode>();
+
+                        _geoMode = (_geoMode & (uint)cmd.clearbits) | (uint)cmd.setbits;
+                        _rdpVtxDrawer.SendGeometryMode(_geoMode);
+                        
+                        break;
+                    }
+
+                case CmdID.G_SETKEYR:
+                    {
+                        var cmd = info.Convert<GSetKeyR>();
+                        _chromaKey.SetKeyR(cmd);
+
+                        _rdpVtxDrawer.SendChromaKey(_chromaKey);
+                        break;
+                    }
+                case CmdID.G_SETKEYGB:
+                    {
+                        var cmd = info.Convert<GSetKeyGB>();
+                        _chromaKey.SetKeyGB(cmd);
+
+                        _rdpVtxDrawer.SendChromaKey(_chromaKey);
+                        break;
+                    }
+
+
                 case CmdID.G_SETPRIMCOLOR:
                     {
                         var cmd = info.Convert<GSetPrimColor>();
 
-                        _rdpVtxDrawer.SendPrimColor(Color.FromArgb(cmd.A, cmd.R, cmd.G, cmd.B));
+                        _rdpVtxDrawer.SendPrimColor(cmd);
+                        
+                        break;
                     }
-                    break;
+                case CmdID.G_SETBLENDCOLOR:
+                case CmdID.G_SETENVCOLOR:
+                case CmdID.G_SETFOGCOLOR:
+                    {
+                        var cmd = info.Convert<GSetColor>();
+                        _rdpVtxDrawer.SendColor(info.ID, cmd);
+                        break;
+                    }
+                case CmdID.G_SETCOMBINE:
+                    {
+                        var cmd = info.Convert<GSetCombine>();
+                        
+                        _combiner.SetCombine(cmd);
+                        _rdpVtxDrawer.SendCombiner(_combiner);
+                        break;
+                    }
+
+
+
 
                 case CmdID.G_VTX:
                     {
@@ -321,7 +623,15 @@ namespace F3DZEX.Render
                     }
                     break;
 
+                case CmdID.G_TEXTURE:
+                    {
+                        var cmd = info.Convert<GTexture>();
 
+                        _selectedTile = (int)cmd.tile;
+
+                        _tiles[(int)cmd.tile].Texture(cmd);
+                        break;
+                    }
                 case CmdID.G_SETTILESIZE:
                     {
                         if (CurrentConfig.RenderMode != RdpVertexDrawer.ModelRenderMode.Textured)
@@ -329,15 +639,7 @@ namespace F3DZEX.Render
 
                         var cmd = info.Convert<GLoadTile>();
 
-                        int w = (int)(cmd.lrs.Float() + 1 - cmd.uls.Float());
-                        int h = (int)(cmd.lrt.Float() + 1 - cmd.ult.Float());
-
-                        if (N64Texture.GetTexSize(w * h, _renderTexSiz) != _loadTexData.Length)
-                            return; // ??? (see object_en_warp_uzu)
-
-                        _curTexW = w;
-                        _curTexH = h;
-
+                        _tiles[(int)cmd.tile].SetTileSize(cmd);
                         _reqDecodeTex = true;
                     }
                     break;
@@ -348,12 +650,16 @@ namespace F3DZEX.Render
 
                         var cmd = info.Convert<GLoadBlock>();
 
-                        if (cmd.tile != G_TX_TILE.G_TX_LOADTILE)
-                            throw new Exception("??");
-                        int texels = cmd.texels + 1;
+                        if (cmd.uls.Float() != 0 || cmd.ult.Float() != 0)
+                            throw new NotImplementedException();
 
-                        _loadTexData = Memory.ReadBytes(_curImgAddr, N64Texture.GetTexSize(texels, _loadTexSiz)); //w*h*bpp
                         _reqDecodeTex = true;
+
+                        int texels = cmd.texels + 1;
+                        var tile = _tiles[(int)cmd.tile];
+                        int size = N64Texture.GetTexSize(texels, tile.siz);
+                        byte[] data = Memory.ReadBytes(_curImgAddr, size);
+                        System.Buffer.BlockCopy(data, 0, _tmem, tile.tmem * 8, data.Length);
                     }
                     break;
                 case CmdID.G_LOADTLUT:
@@ -362,7 +668,13 @@ namespace F3DZEX.Render
                             return;
 
                         var cmd = info.Convert<GLoadTlut>();
-                        _curTLUT = Memory.ReadBytes(_curImgAddr, (cmd.count + 1) * 2);
+
+                        var tile = _tiles[(int)cmd.tile];
+                        _tlutSize = (cmd.count + 1) * 2;
+                        _tlutTmem = tile.tmem * 8;
+                        byte[] data = Memory.ReadBytes(_curImgAddr, _tlutSize);
+                        System.Buffer.BlockCopy(data, 0, _tmem, _tlutTmem, data.Length);
+
                         _reqDecodeTex = true;
                     }
                     break;
@@ -380,30 +692,9 @@ namespace F3DZEX.Render
 
                         var settile = info.Convert<GSetTile>();
 
-                        _mirrorV = settile.cmT.HasFlag(G_TX_TEXWRAP.G_TX_MIRROR);
-                        _mirrorH = settile.cmS.HasFlag(G_TX_TEXWRAP.G_TX_MIRROR);
-
-                        var wrapS = settile.cmS.HasFlag(G_TX_TEXWRAP.G_TX_CLAMP)
-                            ? TextureWrapMode.ClampToEdge
-                            : (_mirrorH ? TextureWrapMode.MirroredRepeat : TextureWrapMode.Repeat);
-
-                        var wrapT = settile.cmT.HasFlag(G_TX_TEXWRAP.G_TX_CLAMP)
-                            ? TextureWrapMode.ClampToEdge
-                            : (_mirrorV ? TextureWrapMode.MirroredRepeat : TextureWrapMode.Repeat);
-
-  
-                        _curTex.SetTextureWrap((int)wrapS, (int)wrapT);
-
-                        if (settile.tile == G_TX_TILE.G_TX_LOADTILE)
-                        {
-                            _loadTexSiz = settile.siz;
-                        }
-                        else if (settile.tile == G_TX_TILE.G_TX_RENDERTILE)
-                        {
-                            _renderTexFmt = settile.fmt;
-                            _renderTexSiz = settile.siz;
-                        }
                         _reqDecodeTex = true;
+
+                        _tiles[(int)settile.tile].SetTile(settile);
                     }
                     break;
 

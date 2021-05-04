@@ -131,6 +131,11 @@ namespace F3DZEX.Render
             using (TempUse())
                 GL.Uniform1(GetUniformLocation(name), data);
         }
+        public void Send(string name, uint data)
+        {
+            using (TempUse())
+                GL.Uniform1(GetUniformLocation(name), data);
+        }
         public void Send(string name, float x, float y)
         {
             using (TempUse())
@@ -142,6 +147,11 @@ namespace F3DZEX.Render
                 GL.Uniform3(GetUniformLocation(name), x, y, z);
         }
         public void Send(string name, float x, float y, float z, float w)
+        {
+            using (TempUse())
+                GL.Uniform4(GetUniformLocation(name), x, y, z, w);
+        }
+        public void Send(string name, int x, int y, int z, int w)
         {
             using (TempUse())
                 GL.Uniform4(GetUniformLocation(name), x, y, z, w);

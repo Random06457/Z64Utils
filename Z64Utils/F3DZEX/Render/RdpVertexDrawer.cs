@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Text;
+using F3DZEX.Command;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 
@@ -67,8 +68,7 @@ namespace F3DZEX.Render
         }
         public void SendTexture(int tex)
         {
-            _shader.Send("u_Tex", tex);
-            _wireframeShader.Send("u_Tex", tex);
+            _shader.Send("u_Tex0", tex);
         }
         public void SendHighlightEnabled(bool enabled)
         {
@@ -80,11 +80,54 @@ namespace F3DZEX.Render
             _shader.Send("u_HighlightColor", color);
             _wireframeShader.Send("u_HighlightColor", color);
         }
-        public void SendPrimColor(Color color)
+
+        public void SendPrimColor(GSetPrimColor cmd)
         {
-            _shader.Send("u_PrimColor", color);
-            _wireframeShader.Send("u_PrimColor", color);
+            _shader.Send("u_PrimColor", Color.FromArgb(cmd.A, cmd.R, cmd.G, cmd.B));
+            _shader.Send("u_PrimLod", cmd.lodfrac / 255.0f);
         }
+        public void SendColor(CmdID id, GSetColor setColor)
+        {
+            string name = id switch
+            {
+                CmdID.G_SETBLENDCOLOR => "u_BlendColor",
+                CmdID.G_SETENVCOLOR => "u_EnvColor",
+                CmdID.G_SETFOGCOLOR => "u_FogColor",
+                _ => throw new ArgumentException($"Invalid Command for {nameof(SendColor)} : {id}"),
+            };
+            _shader.Send(name, Color.FromArgb(setColor.A, setColor.R, setColor.G, setColor.B));
+        }
+
+        public void SendChromaKey(Renderer.ChromaKey key)
+        {
+            _shader.Send("u_ChromaKeyCenter", key.r.center / 255.0f, key.g.center / 255.0f, key.b.center / 255.0f);
+            _shader.Send("u_ChromaKeyScale", key.r.scale / 255.0f, key.g.scale / 255.0f, key.b.scale / 255.0f);
+        }
+
+        public void SendCombiner(Renderer.ColorCombiner combiner)
+        {
+            _shader.Send("u_CombinerC1", (int)combiner.a.c1, (int)combiner.b.c1, (int)combiner.c.c1, (int)combiner.d.c1);
+            _shader.Send("u_CombinerC2", (int)combiner.a.c2, (int)combiner.b.c2, (int)combiner.c.c2, (int)combiner.d.c2);
+            _shader.Send("u_CombinerA1", (int)combiner.a.a1, (int)combiner.b.a1, (int)combiner.c.a1, (int)combiner.d.a1);
+            _shader.Send("u_CombinerA2", (int)combiner.a.a2, (int)combiner.b.a2, (int)combiner.c.a2, (int)combiner.d.a2);
+        }
+
+        public void SendGeometryMode(uint mode)
+        {
+            _shader.Send("u_GeoMode", mode);
+        }
+
+        public void SendOtherMode(CmdID id, uint word)
+        {
+            string name = id switch
+            {
+                CmdID.G_SETOTHERMODE_H => "u_OtherModeHi",
+                CmdID.G_SETOTHERMODE_L => "u_OtherModeLo",
+                _ => throw new ArgumentException($"Invalid Command for {nameof(SendOtherMode)} : {id}"),
+            };
+            _shader.Send(name, word);
+        }
+
         public void SendWireFrameColor(Color color)
         {
             _wireframeShader.Send("u_WireFrameColor", color);

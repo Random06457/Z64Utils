@@ -78,6 +78,23 @@ namespace F3DZEX.Command
         public CmdID ID { get => id; }
     }
 
+    [Cmd(CmdID.G_TEXTURE)]
+    public struct GTexture
+    {
+        public int level { get; set; }
+        public G_TX_TILE tile { get; set; }
+        public G_TEX_ENABLE on { get; set; }
+        public ushort scaleS { get; set; }
+        public ushort scaleT { get; set; }
+    }
+
+    [Cmd(CmdID.G_GEOMETRYMODE)]
+    public struct GGeometryMode
+    {
+        public int clearbits { get; set; }
+        public int setbits { get; set; }
+    }
+
     [Cmd(CmdID.G_VTX)]
     public struct GVtx
     {
