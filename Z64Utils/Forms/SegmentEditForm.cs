@@ -141,7 +141,7 @@ namespace Z64.Forms
                     break;
 
                 case SRC_EMPTY_DLIST:
-                    ResultSegment = Memory.Segment.FromBytes("Empty Dlist", new byte[] { 0xDF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 });
+                    ResultSegment = Memory.Segment.FromFill("Empty Dlist", new byte[] { 0xDF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 });
                     break;
 
                 default:

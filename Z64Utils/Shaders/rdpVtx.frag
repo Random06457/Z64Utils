@@ -127,17 +127,25 @@ float rand(vec2 co){
 
 
 /* Color Blender */ 
-vec4 blendFormula(vec4 P, float A, vec4 M, float B)
+
+vec4 blendFormula(vec4 P, float A, vec4 M, float B, bool first)
 {
-    return (P * A + M * B) / (A + B);
+    vec4 x = (P * A + M * B);
+    if (!first)
+        x /= (A + B);
+    return x;
 }
 
-vec4 blendCycle(vec4 x, uint flags)
+vec4 blendCycle(vec4 x, bool first)
 {
-    uint pFlag = flags >> 12 & 3u;
-    uint aFlag = flags >> 8 & 3u;
-    uint mFlag = flags >> 4 & 3u;
-    uint bFlag = flags >> 0 & 3u;
+    uint settings = u_OtherModeLo >> 16;
+    if (first)
+        settings >>= 2;
+
+    uint pFlag = settings >> 12 & 3u;
+    uint aFlag = settings >> 8 & 3u;
+    uint mFlag = settings >> 4 & 3u;
+    uint bFlag = settings >> 0 & 3u;
 
     vec4 p, m;
     float a, b;
@@ -197,7 +205,7 @@ vec4 blendCycle(vec4 x, uint flags)
     switch (bFlag)
     {
         case G_BL_1MA:
-            b = 1.0 - x.a;
+            b = 1.0 - a;
             break;
         case G_BL_A_MEM :
             b = 0; // todo
@@ -210,7 +218,7 @@ vec4 blendCycle(vec4 x, uint flags)
             break;
     }
     
-    return blendFormula(p, a, m, b);
+    return blendFormula(p, a, m, b, first);
 }
 
 /* Color Combiner */ 
@@ -375,8 +383,6 @@ vec4 combineCycle(vec4 x, ivec4 cFlag, ivec4 aFlag)
 // CC1 -> CC2 -> BL1 -> BL2
 vec4 calcColor()
 {
-    uint settings = u_OtherModeLo >> 16;
-    
     vec4 x = vec4(0);
 
     // CC1
@@ -384,9 +390,9 @@ vec4 calcColor()
     // CC2
     x = combineCycle(x, u_CombinerC2, u_CombinerA2);
     // BL1
-    x = blendCycle(x, settings >> 2);
+    //x = blendCycle(x, true);
     // BL2
-    //x = blendCycle(x, settings >> 0);
+    //x = blendCycle(x, false);
 
     vec4 red = vec4(1, 0, 0, 1);
     vec4 green = vec4(0, 1, 0, 1);

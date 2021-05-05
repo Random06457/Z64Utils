@@ -9,6 +9,8 @@ namespace F3DZEX.Render
     {
         int _texId;
 
+        public int TexID => _texId;
+
         public TextureHandler()
         {
             GL.GenTextures(1, out _texId);

@@ -66,10 +66,15 @@ namespace F3DZEX.Render
             _nrmShader.Send("u_Model", model);
             _wireframeShader.Send("u_Model", model);
         }
-        public void SendTexture(int tex)
+        public void SendTex0(int tex)
         {
             _shader.Send("u_Tex0", tex);
         }
+        public void SendTex1(int tex)
+        {
+            _shader.Send("u_Tex1", tex);
+        }
+
         public void SendHighlightEnabled(bool enabled)
         {
             _shader.Send("u_HighlightEnabled", enabled);
@@ -96,6 +101,13 @@ namespace F3DZEX.Render
                 _ => throw new ArgumentException($"Invalid Command for {nameof(SendColor)} : {id}"),
             };
             _shader.Send(name, Color.FromArgb(setColor.A, setColor.R, setColor.G, setColor.B));
+        }
+        public void SendInitialColors(Renderer.Config cfg)
+        {
+            _shader.Send("u_PrimColor", cfg.InitialPrimColor);
+            _shader.Send("u_BlendColor", cfg.InitialBlendColor);
+            _shader.Send("u_EnvColor", cfg.InitialEnvColor);
+            _shader.Send("u_FogColor", cfg.InitialFogColor);
         }
 
         public void SendChromaKey(Renderer.ChromaKey key)

@@ -86,7 +86,7 @@ namespace F3DZEX
                                 while (rest > 0)
                                 {
                                     int srcOff = ((int)addr.SegmentOff + dstOff) % seg.Data.Length;
-                                    int curCount = seg.Data.Length - srcOff;
+                                    int curCount = Math.Min(seg.Data.Length - srcOff, rest);
                                     System.Buffer.BlockCopy(seg.Data, srcOff, buff, count - rest, curCount);
                                     rest -= curCount;
                                     dstOff += curCount;

@@ -355,7 +355,7 @@ namespace Z64
                     Buffer.BlockCopy(data, (int)segment.SegmentOff, limbsData, 0, nLimbs * 4);
                     // check for limbs array ending at the start of the skeleton header,
                     // check for limbs array's segmented addresses being 0xC apart from one another
-                    if (segment.SegmentOff + nLimbs * 4 == i &&
+                    if (nLimbs > 1 && segment.SegmentOff + nLimbs * 4 == i &&
                         ArrayUtil.ReadUint32BE(limbsData, 4) - ArrayUtil.ReadUint32BE(limbsData, 0) == Z64Object.SkeletonLimbHolder.ENTRY_SIZE)
                     {
                         int nNonNullDlists = 0;

@@ -43,6 +43,10 @@ namespace F3DZEX.Render
             public Color HighlightColor { get; set; } = Color.Red;
             public Color WireframeColor { get; set; } = Color.Black;
             public Color BackColor { get; set; } = Color.DodgerBlue;
+            public Color InitialPrimColor { get; set; } = Color.White;
+            public Color InitialEnvColor { get; set; } = Color.White;
+            public Color InitialFogColor { get; set; } = Color.Transparent;
+            public Color InitialBlendColor { get; set; } = Color.White;
         }
 
         public class Tile
@@ -272,7 +276,8 @@ namespace F3DZEX.Render
         SimpleVertexDrawer _gridDrawer;
         ColoredVertexDrawer _axisDrawer;
         TextDrawer _textDrawer;
-        TextureHandler _curTex;
+        TextureHandler _tex0;
+        TextureHandler _tex1;
 
         public bool RenderFailed() => ErrorMsg != null;
 
@@ -327,7 +332,8 @@ namespace F3DZEX.Render
             /* Init Texture */
             GL.Hint(HintTarget.PerspectiveCorrectionHint, HintMode.Nicest);
 
-            _curTex = new TextureHandler();
+            _tex0 = new TextureHandler();
+            _tex1 = new TextureHandler();
 
             /* Init Drawers */
             _rdpVtxDrawer = new RdpVertexDrawer();
@@ -371,6 +377,7 @@ namespace F3DZEX.Render
             _gridDrawer.SendProjViewMatrices(ref proj, ref view);
             _axisDrawer.SendProjViewMatrices(ref proj, ref view);
             _rdpVtxDrawer.SendProjViewMatrices(ref proj, ref view);
+            _rdpVtxDrawer.SendInitialColors(CurrentConfig);
             Matrix4 id = Matrix4.Identity;
             _textDrawer.SendProjViewMatrices(ref id, ref id);
 
@@ -447,7 +454,7 @@ namespace F3DZEX.Render
 
         static int TexDecodeCount = 0;
 
-        private void DecodeTex(Tile tile, byte[] tlut)
+        private void DecodeTex(TextureHandler tex, Tile tile, byte[] tlut)
         {
             int w = tile.Width;
             int h = tile.Height;
@@ -459,12 +466,12 @@ namespace F3DZEX.Render
 
             // decode data
             byte[] dec = N64Texture.Decode(w * h, tile.fmt, tile.siz, data, tlut);
-            _curTex.SetDataRGBA(dec, w, h);
+            tex.SetDataRGBA(dec, w, h);
 
 
             // texture wrap
             var wrap = tile.GetTextureWrap();
-            _curTex.SetTextureWrap(wrap.Item1, wrap.Item2);
+            tex.SetTextureWrap(wrap.Item1, wrap.Item2);
         }
         private void DecodeTexIfRequired()
         {
@@ -472,24 +479,26 @@ namespace F3DZEX.Render
             {
                 //Debug.WriteLine($"Decoding texture... {TexDecodeCount++}");
 
-                var tex0 = _tiles[_selectedTile];
-
-                // todo
-                if (_combiner.UsesTex1())
-                    throw new NotImplementedException();
+                var tile0 = _tiles[_selectedTile];
+                var tile1 =  _combiner.UsesTex1() ? _tiles[_selectedTile + 1] : null;
 
 
                 byte[] tlut = null;
-                if (tex0.fmt == G_IM_FMT.G_IM_FMT_CI)
+                if (tile0.fmt == G_IM_FMT.G_IM_FMT_CI || (tile1 != null && tile1.fmt == G_IM_FMT.G_IM_FMT_CI))
                 {
                     tlut = new byte[_tlutSize];
                     System.Buffer.BlockCopy(_tmem, _tlutTmem, tlut, 0, tlut.Length);
                 }
 
-                DecodeTex(tex0, tlut);
-                
+                DecodeTex(_tex0, tile0, tlut);
+                if (tile1 != null)
+                    DecodeTex(_tex1, tile1, tlut);
+
                 _reqDecodeTex = false;
             }
+
+            _rdpVtxDrawer.SendTex0(0);
+            _rdpVtxDrawer.SendTex1(1);
         }
 
         private unsafe void ProcessInstruction(CmdInfo info)
@@ -598,7 +607,6 @@ namespace F3DZEX.Render
                         if (CurrentConfig.RenderMode == RdpVertexDrawer.ModelRenderMode.Textured)
                         {
                             DecodeTexIfRequired();
-                            _rdpVtxDrawer.SendTexture(0);
                         }
 
                         byte[] indices = new byte[] { cmd.v0, cmd.v1, cmd.v2 };
@@ -613,7 +621,6 @@ namespace F3DZEX.Render
                         if (CurrentConfig.RenderMode == RdpVertexDrawer.ModelRenderMode.Textured)
                         {
                             DecodeTexIfRequired();
-                            _rdpVtxDrawer.SendTexture(0);
                         }
 
                         byte[] indices = new byte[] { cmd.v00, cmd.v01, cmd.v02, cmd.v10, cmd.v11, cmd.v12 };
