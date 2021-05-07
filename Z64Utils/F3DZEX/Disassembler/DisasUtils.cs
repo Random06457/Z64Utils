@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Common;
 using F3DZEX.Command;
 
 namespace F3DZEX
@@ -141,14 +142,73 @@ namespace F3DZEX
 
             }
 
+            private static readonly BitFlag _renderModeFlags = new BitFlag(
+                new BitFlag.BoolField("AA_EN", 0),
+                new BitFlag.BoolField("Z_CMP", 1),
+                new BitFlag.BoolField("Z_UPD", 2),
+                new BitFlag.BoolField("IM_RD", 3),
+                new BitFlag.BoolField("CLR_ON_CVG", 4),
+                BitFlag.EnumField.FromBits(5, "CVG_DST_CLAMP", "CVG_DST_WRAP", "CVG_DST_FULL", "CVG_DST_SAVE"),
+                BitFlag.EnumField.FromBits(7, "ZMODE_OPA", "ZMODE_INTER", "ZMODE_XLU", "ZMODE_DEC"),
+                new BitFlag.BoolField("CVG_X_ALPHA", 9),
+                new BitFlag.BoolField("ALPHA_CVG_SEL", 10),
+                new BitFlag.BoolField("FORCE_BL", 11)
+                );
+
+
+
             public bool Match(GSetOtherMode cmd)
             {
                 return cmd.shift == shift && cmd.len == len;
             }
+
+            private static Tuple<string, string> GetCycleDepRenderFlags(uint x)
+            {
+                string[] pmValues = new string[]
+                {
+                    "G_BL_CLR_IN",
+                    "G_BL_CLR_MEM",
+                    "G_BL_CLR_BL",
+                    "G_BL_CLR_FOG"
+                };
+
+                string[] aValues = new string[]
+                {
+                    "G_BL_A_IN",
+                    "G_BL_A_FOG",
+                    "G_BL_A_SHADE",
+                    "G_BL_0",
+                };
+
+                string[] bValues = new string[]
+                {
+                    "G_BL_1MA",
+                    "G_BL_A_MEM",
+                    "G_BL_1",
+                    "G_BL_0"
+                };
+
+                string c1 = $"GBL_c1({pmValues[x >> 14 & 3]}, {aValues[x >> 10 & 3]}, {pmValues[x >> 6 & 3]}, {bValues[x >> 2 & 3]})";
+                string c2 = $"GBL_c2({pmValues[x >> 12 & 3]}, {aValues[x >> 8 & 3]}, {pmValues[x >> 4 & 3]}, {bValues[x >> 0 & 3]})";
+                return new Tuple<string, string>(c1, c2);
+            }
+
+            public static string DisasRenderMode(GSetOtherMode cmd)
+            {
+                uint cyclIndep = BitUtils.GetBits(cmd.data, 3, 13);
+                uint cyclDep = BitUtils.GetBits(cmd.data, 16, 16);
+
+                List<string> flags = _renderModeFlags.GetFlags(cyclIndep);
+                var depFlags = GetCycleDepRenderFlags(cyclDep);
+                flags.Insert(0, depFlags.Item2);
+
+                string c0 = depFlags.Item1;
+                string c1 = string.Join(" | ", flags);
+                //flags.Add($"0x{cyclDep:X}<<16");
+
+                return $"gsDPSetRenderMode({c0}, {c1})";
+            }
         }
-
-
-
 
         // These 2 functions are reimps of oot's code
         private static string DisCCM(G_CCMUX value, int idx)

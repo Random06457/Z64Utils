@@ -44,6 +44,7 @@ out vec4 FragColor;
 
 // Geometry Mode
 #define G_SHADE     4u
+#define G_FOG       0x10000u
 #define G_LIGHTING  0x20000u
 
 // Color Combiner 
@@ -136,7 +137,7 @@ vec4 blendFormula(vec4 P, float A, vec4 M, float B, bool first)
     return x;
 }
 
-vec4 blendCycle(vec4 x, bool first)
+vec4 blendCycle(vec4 x, bool first, float shadeAlpha)
 {
     uint settings = u_OtherModeLo >> 16;
     if (first)
@@ -177,7 +178,7 @@ vec4 blendCycle(vec4 x, bool first)
             a = u_FogColor.a;
             break;
         case G_BL_A_SHADE:
-            a = v_VtxColor.a;
+            a = shadeAlpha;
             break;
         case G_BL_0:
             a = 0;
@@ -280,7 +281,7 @@ vec3 combineB(vec4 x, int flag)
     return ret;
 }
 
-vec3 combineC(vec4 x, int flag)
+vec3 combineC(vec4 x, int flag, float shadeAlpha)
 {
     vec3 ret = combineColorAny(x, flag);
     switch (flag)
@@ -288,17 +289,17 @@ vec3 combineC(vec4 x, int flag)
         case G_CCMUX_SCALE:
             return u_ChromaKeyScale;
         case G_CCMUX_COMBINED_ALPHA:
-            return vec3(x.a);
+            return x.aaa;
         case G_CCMUX_TEXEL0_ALPHA:
             return vec3(texture(u_Tex0, v_VtxTexCoords).a);
         case G_CCMUX_TEXEL1_ALPHA:
             return vec3(texture(u_Tex1, v_VtxTexCoords).a);
         case G_CCMUX_PRIMITIVE_ALPHA:
-            return vec3(u_PrimColor.a);
+            return u_PrimColor.aaa;
         case G_CCMUX_SHADE_ALPHA:
-            return vec3(v_VtxColor.a);
+            return vec3(shadeAlpha);
         case G_CCMUX_ENV_ALPHA:
-            return vec3(u_EnvColor.a);
+            return u_EnvColor.aaa;
         case G_CCMUX_LOD_FRACTION:
             return vec3(u_PrimLod);
         // G_CCMUX_PRIM_LOD_FRAC
@@ -321,7 +322,7 @@ vec3 combineD(vec4 x, int flag)
     return ret;
 }
 
-float combineAlphaAny(vec4 x, int flag)
+float combineAlphaAny(vec4 x, int flag, float shadeAlpha)
 {
     switch (flag)
     {
@@ -332,7 +333,7 @@ float combineAlphaAny(vec4 x, int flag)
         case G_ACMUX_PRIMITIVE:
             return u_PrimColor.a;
         case G_ACMUX_SHADE:
-            return v_VtxColor.a;
+            return shadeAlpha;
         case G_ACMUX_ENVIRONMENT:
             return u_EnvColor.a;
         case G_ACMUX_0:
@@ -341,9 +342,9 @@ float combineAlphaAny(vec4 x, int flag)
     return 0;
 }
 
-float combineAlphaABD(vec4 x, int flag)
+float combineAlphaABD(vec4 x, int flag, float shadeAlpha)
 {
-    float ret = combineAlphaAny(x, flag);
+    float ret = combineAlphaAny(x, flag, shadeAlpha);
     switch (flag)
     {
         case G_ACMUX_COMBINED:
@@ -354,9 +355,9 @@ float combineAlphaABD(vec4 x, int flag)
     return ret;
 }
 
-float combineAlphaC(vec4 x, int flag)
+float combineAlphaC(vec4 x, int flag, float shadeAlpha)
 {
-    float ret = combineAlphaAny(x, flag);
+    float ret = combineAlphaAny(x, flag, shadeAlpha);
     switch (flag)
     {
         case G_ACMUX_LOD_FRACTION:
@@ -368,14 +369,14 @@ float combineAlphaC(vec4 x, int flag)
 
 
 
-vec4 combineCycle(vec4 x, ivec4 cFlag, ivec4 aFlag)
+vec4 combineCycle(vec4 x, ivec4 cFlag, ivec4 aFlag, float shadeAlpha)
 {
     vec4 a, b, c, d;
 
-    a = vec4(combineA(x, cFlag.x), combineAlphaABD(x, aFlag.x));
-    b = vec4(combineB(x, cFlag.y), combineAlphaABD(x, aFlag.y));
-    c = vec4(combineC(x, cFlag.z), combineAlphaC(x, aFlag.z));
-    d = vec4(combineD(x, cFlag.w), combineAlphaABD(x, aFlag.w));
+    a = vec4(combineA(x, cFlag.x), combineAlphaABD(x, aFlag.x, shadeAlpha));
+    b = vec4(combineB(x, cFlag.y), combineAlphaABD(x, aFlag.y, shadeAlpha));
+    c = vec4(combineC(x, cFlag.z, shadeAlpha), combineAlphaC(x, aFlag.z, shadeAlpha));
+    d = vec4(combineD(x, cFlag.w), combineAlphaABD(x, aFlag.w, shadeAlpha));
 
     return combineFormula(a, b, c, d);
 }
@@ -385,14 +386,18 @@ vec4 calcColor()
 {
     vec4 x = vec4(0);
 
+    float shadeAlpha = v_VtxColor.a;
+    if ((u_GeoMode & G_FOG) != 0u)
+        shadeAlpha = 0.0;
+
     // CC1
-    x = combineCycle(x, u_CombinerC1, u_CombinerA1);
+    x = combineCycle(x, u_CombinerC1, u_CombinerA1, shadeAlpha);
     // CC2
-    x = combineCycle(x, u_CombinerC2, u_CombinerA2);
+    x = combineCycle(x, u_CombinerC2, u_CombinerA2, shadeAlpha);
     // BL1
-    //x = blendCycle(x, true);
+    x = blendCycle(x, true, shadeAlpha);
     // BL2
-    //x = blendCycle(x, false);
+    x = blendCycle(x, false, shadeAlpha);
 
     vec4 red = vec4(1, 0, 0, 1);
     vec4 green = vec4(0, 1, 0, 1);

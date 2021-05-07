@@ -129,4 +129,9 @@ namespace F3DZEX.Command
         G_TEXTURE_GEN_LINEAR = 0x00080000,
         G_LOD = 0x00100000
     }
+
+    public enum G_BLR_SET
+    {
+
+    }
 }

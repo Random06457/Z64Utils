@@ -168,6 +168,13 @@ namespace F3DZEX
                             return $"gsDP{macro.Name}({value?.Item1??("0x" +cmd.data.ToString("X"))})";
                         }
 
+                        
+                        if (cmd.shift == (int)G_MDSFT_L.G_MDSFT_RENDERMODE && cmd.len == 29)
+                        {
+                            return OtherModeMacro.DisasRenderMode(cmd);
+                        }
+                        
+
                         return $"gsSPSetOtherMode(G_SETOTHERMODE_L, {(G_MDSFT_L)cmd.shift}, {cmd.len}, 0x{cmd.data:X})";
                     }
                 case CmdID.G_SETOTHERMODE_H:

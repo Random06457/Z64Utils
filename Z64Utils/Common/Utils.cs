@@ -116,37 +116,4 @@ namespace Common
         }
 
     }
-
-
-    public class BitFlag<T>
-        where T : Enum
-    {
-        public T Value { get; set; }
-
-        public override string ToString()
-        {
-            var values = Enum.GetValues(typeof(T)).Cast<T>().ToList();
-            string ret = "";
-            int count = 0;
-            foreach (var v in values)
-            {
-                if (Value.HasFlag(v))
-                {
-                    var name = Enum.GetName(typeof(T), v);
-                    if (count == 0) ret = name;
-                    else ret += $" | {name}";
-                    count++;
-                }
-            }
-            if (count == 0)
-                return Enum.GetName(typeof(T), 0);
-
-            return ret;
-        }
-
-        public BitFlag(T v)
-        {
-            Value = v;
-        }
-    }
 }
