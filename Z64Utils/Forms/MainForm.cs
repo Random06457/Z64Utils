@@ -291,7 +291,7 @@ namespace Z64.Forms
             }, defaultValue);
             if (valueForm.ShowDialog() == DialogResult.OK)
             {
-                var form = new ObjectAnalyzerForm(_game, file.Data, int.Parse(valueForm.Result));
+                var form = new ObjectAnalyzerForm(_game, file, int.Parse(valueForm.Result));
                 form.Text += $" - \"{_game.GetFileName(file.VRomStart)}\" ({file.VRomStart:X8}-{file.VRomEnd:X8})";
                 form.Show();
             }

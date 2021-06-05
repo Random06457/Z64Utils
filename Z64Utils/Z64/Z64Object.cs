@@ -41,7 +41,10 @@ namespace Z64
             SkeletonHeader,
             FlexSkeletonHeader,
             SkeletonLimbs,
-            SkeletonLimb,
+            StandardLimb,
+            LODLimb,
+            SkinLimb,
+            LinkAnimationHeader,
             Unknown,
         }
 
@@ -207,22 +210,34 @@ namespace Z64
         }
         public class SkeletonLimbHolder : ObjectHolder
         {
-            public const int ENTRY_SIZE = 0xC;
+            public const int STANDARD_LIMB_SIZE = 0xC;
+            public const int LOD_LIMB_SIZE = 0x10;
+            public const int SKIN_LIMB_SIZE = 0x10;
+
+            public EntryType Type { get; set; } // For internal use only
 
             public short JointX { get; set; }
             public short JointY { get; set; }
             public short JointZ { get; set; }
             public byte Child { get; set; }
             public byte Sibling { get; set; }
-            public SegmentedAddress DListSeg { get; set; }
 
-            public SkeletonLimbHolder(string name, byte[] data) : base(name)
+            // Standard and LOD Limb Only
+            public SegmentedAddress DListSeg { get; set; }
+            // LOD Limb Only
+            public SegmentedAddress DListFarSeg { get; set; }
+            // Skin Limb Only
+            public int SegmentType { get; set; } // indicates the type of data pointed to by SkinSeg
+            public SegmentedAddress SkinSeg { get; set; }
+
+            public SkeletonLimbHolder(string name, byte[] data, EntryType type) : base(name)
             {
+                Type = type;
                 SetData(data);
             }
 
-            public override EntryType GetEntryType() => EntryType.SkeletonLimb;
-
+            public override EntryType GetEntryType() => Type;
+            
             public override byte[] GetData()
             {
                 using (var ms = new MemoryStream())
@@ -233,7 +248,16 @@ namespace Z64
                     bw.Write(JointZ);
                     bw.Write(Child);
                     bw.Write(Sibling);
-                    bw.Write(DListSeg.VAddr);
+
+                    if (Type != EntryType.SkinLimb)
+                        bw.Write(DListSeg.VAddr);
+                    if (Type == EntryType.LODLimb)
+                        bw.Write(DListFarSeg.VAddr);
+                    else if (Type == EntryType.SkinLimb)
+                    {
+                        bw.Write(SegmentType);
+                        bw.Write(SkinSeg.VAddr);
+                    }
                     return ms.ToArray().Take((int)ms.Length).ToArray();
                 }
             }
@@ -248,10 +272,21 @@ namespace Z64
                     JointZ = br.ReadInt16();
                     Child = br.Read1Byte();
                     Sibling = br.Read1Byte();
-                    DListSeg = new SegmentedAddress(br.ReadUInt32());
+
+                    if (Type != EntryType.SkinLimb)
+                        DListSeg = new SegmentedAddress(br.ReadUInt32());
+                    if (Type == EntryType.LODLimb)
+                        DListFarSeg = new SegmentedAddress(br.ReadUInt32());
+                    else if (Type == EntryType.SkinLimb)
+                    {
+                        SegmentType = br.ReadInt32();
+                        SkinSeg = new SegmentedAddress(br.ReadUInt32());
+                    }
                 }
             }
-            public override int GetSize() => ENTRY_SIZE;
+            public override int GetSize() => (Type == EntryType.StandardLimb) ? STANDARD_LIMB_SIZE :
+                                            ((Type == EntryType.LODLimb) ? LOD_LIMB_SIZE : 
+                                              SKIN_LIMB_SIZE);
         }
         public class SkeletonLimbsHolder : ObjectHolder
         {
@@ -416,6 +451,44 @@ namespace Z64
             }
             public override int GetSize() => HEADER_SIZE;
         }
+        public class LinkAnimationHolder : ObjectHolder
+        {
+            public const int SIZE = 0x8;
+
+            public short FrameCount { get; set; }
+            public SegmentedAddress LinkAnimationSegment { get; set; }
+
+            public LinkAnimationHolder(string name, byte[] data) : base(name)
+            {
+                SetData(data);
+            }
+
+            public override EntryType GetEntryType() => EntryType.LinkAnimationHeader;
+
+            public override byte[] GetData()
+            {
+                using (var ms = new MemoryStream())
+                {
+                    BinaryStream bw = new BinaryStream(ms, ByteConverter.Big);
+                    bw.Write(FrameCount);
+                    bw.Write(new byte[2]); // padding
+                    bw.Write(LinkAnimationSegment.VAddr);
+                    return ms.ToArray().Take((int)ms.Length).ToArray();
+                }
+            }
+
+            public override void SetData(byte[] data)
+            {
+                using (var ms = new MemoryStream(data))
+                {
+                    BinaryStream br = new BinaryStream(ms, ByteConverter.Big);
+                    FrameCount = br.ReadInt16();
+                    br.ReadBytes(2); // padding
+                    LinkAnimationSegment = new SegmentedAddress(br.ReadUInt32());
+                }
+            }
+            public override int GetSize() => SIZE;
+        }
         public class AnimationFrameDataHolder : ObjectHolder
         {
             public short[] FrameData { get; set; }
@@ -509,17 +582,29 @@ namespace Z64
             public override int GetSize() => JointIndices.Length * ENTRY_SIZE;
         }
 
+        public Z64Game Game;
+        public Z64File File;
         public List<ObjectHolder> Entries { get; set; }
 
         public Z64Object()
         {
+            Game = null;
             Entries = new List<ObjectHolder>();
         }
-        public Z64Object(byte[] data) : this()
+        public Z64Object(Z64Game game, Z64File file) : this()
         {
-            AddUnknow(data.Length);
-            SetData(data);
+            Game = game;
+            File = file;
+
+            AddUnknow(file.Data.Length);
+            SetData(file.Data);
         }
+
+        public string GetName()
+        {
+            return Game.GetFileName(File.VRomStart);
+        }
+
         private bool HolderOverlaps(ObjectHolder holder, int holderOff)
         {
             int entryOff = 0;
@@ -733,10 +818,16 @@ namespace Z64
             var holder = new MtxHolder(name ?? $"mtx_{off:X8}", new byte[mtxCount * Mtx.SIZE]);
             return (MtxHolder)AddHolder(holder, off);
         }
-        public SkeletonLimbHolder AddSkeletonLimb(string name = null, int off = -1, int skel_off = -1)
+        public SkeletonLimbHolder AddSkeletonLimb(EntryType type, string name = null, int off = -1, int skel_off = -1)
         {
             if (off == -1) off = GetSize();
-            var holder = new SkeletonLimbHolder(name?? $"skel_{skel_off:X8}_limb_{off:X8}", new byte[SkeletonLimbHolder.ENTRY_SIZE]);
+            var limbTypeName = 
+                    (type == EntryType.StandardLimb) ? "standardlimb" : ((type == EntryType.LODLimb) ? "lodlimb" : "skinlimb");
+            var limbTypeSize = 
+                    (type == EntryType.StandardLimb) ? SkeletonLimbHolder.STANDARD_LIMB_SIZE : 
+                    ((type == EntryType.LODLimb) ? SkeletonLimbHolder.LOD_LIMB_SIZE : 
+                    SkeletonLimbHolder.SKIN_LIMB_SIZE);
+            var holder = new SkeletonLimbHolder(name?? $"skel_{skel_off:X8}_{limbTypeName}_{off:X8}", new byte[limbTypeSize], type);
             return (SkeletonLimbHolder)AddHolder(holder, off);
         }
         public SkeletonLimbsHolder AddSkeletonLimbs(int count, string name = null, int off = -1, int skel_off = -1)
@@ -756,6 +847,12 @@ namespace Z64
             if (off == -1) off = GetSize();
             var holder = new FlexSkeletonHolder(name ?? $"skel_{off:X8}", new byte[FlexSkeletonHolder.HEADER_SIZE]);
             return (FlexSkeletonHolder)AddHolder(holder, off);
+        }
+        public LinkAnimationHolder AddLinkAnimation(string name = null, int off = -1)
+        {
+            if (off == -1) off = GetSize();
+            var holder = new LinkAnimationHolder(name ?? $"linkanim_{off:X8}", new byte[LinkAnimationHolder.SIZE]);
+            return (LinkAnimationHolder)AddHolder(holder, off);
         }
         public AnimationHolder AddAnimation(string name = null, int off = -1)
         {
@@ -783,6 +880,9 @@ namespace Z64
             {
                 switch (entry.GetEntryType())
                 {
+                    case EntryType.LinkAnimationHeader:
+                        entry.Name = "linkanim_" + entryOff.ToString("X8");
+                        break;
                     case EntryType.AnimationHeader:
                         entry.Name = "anim_" + entryOff.ToString("X8");
                         break;
@@ -799,8 +899,14 @@ namespace Z64
                     case EntryType.SkeletonLimbs:
                         entry.Name = "limbs_" + entryOff.ToString("X8");
                         break;
-                    case EntryType.SkeletonLimb:
-                        entry.Name = "limb_" + entryOff.ToString("X8");
+                    case EntryType.StandardLimb:
+                        entry.Name = "standardlimb_" + entryOff.ToString("X8");
+                        break;
+                    case EntryType.LODLimb:
+                        entry.Name = "lodlimb_" + entryOff.ToString("X8");
+                        break;
+                    case EntryType.SkinLimb:
+                        entry.Name = "skinlimb_" + entryOff.ToString("X8");
                         break;
                     case EntryType.DList:
                         entry.Name = "dlist_" + entryOff.ToString("X8");
@@ -1023,8 +1129,11 @@ namespace Z64
                     case EntryType.Mtx:
                     case EntryType.SkeletonHeader:
                     case EntryType.FlexSkeletonHeader:
-                    case EntryType.SkeletonLimb:
+                    case EntryType.StandardLimb:
+                    case EntryType.LODLimb:
+                    case EntryType.SkinLimb:
                     case EntryType.AnimationHeader:
+                    case EntryType.LinkAnimationHeader:
                         {
                             list.Add(new JsonObjectHolder()
                             {
@@ -1083,14 +1192,21 @@ namespace Z64
                             obj.AddFlexSkeleton();
                             break;
                         }
-                    case EntryType.SkeletonLimb:
+                    case EntryType.StandardLimb:
+                    case EntryType.LODLimb:
+                    case EntryType.SkinLimb:
                         {
-                            obj.AddSkeletonLimb();
+                            obj.AddSkeletonLimb(type);
                             break;
                         }
                     case EntryType.AnimationHeader:
                         {
                             obj.AddAnimation();
+                            break;
+                        }
+                    case EntryType.LinkAnimationHeader:
+                        {
+                            obj.AddLinkAnimation();
                             break;
                         }
                     case EntryType.SkeletonLimbs:

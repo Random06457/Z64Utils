@@ -23,7 +23,7 @@ namespace Z64.Forms
         int _segment;
         Z64Game _game;
 
-        public ObjectAnalyzerForm(Z64Game game, byte[] data, int segmentId)
+        public ObjectAnalyzerForm(Z64Game game, Z64File file, int segmentId)
         {
             InitializeComponent();
 
@@ -31,11 +31,11 @@ namespace Z64.Forms
                 segmentId = 15;
             if (segmentId < 0)
                 segmentId = 0;
-
-            _data = data;
-            _obj = new Z64Object(_data);
-            _segment = segmentId;
+            
             _game = game;
+            _data = file.Data;
+            _obj = new Z64Object(_game, file);
+            _segment = segmentId;
 
             tabControl1.ItemSize = new Size(0, 1);
             tabControl1.SizeMode = TabSizeMode.Fixed;
@@ -246,7 +246,9 @@ namespace Z64.Forms
                         textBox_holderInfo.Text = sw.ToString();
                         break;
                     }
-                case Z64Object.EntryType.SkeletonLimb:
+                case Z64Object.EntryType.StandardLimb:
+                case Z64Object.EntryType.LODLimb:
+                case Z64Object.EntryType.SkinLimb:
                     {
                         tabControl1.SelectedTab = tabPage_text;
                         var limb = (Z64Object.SkeletonLimbHolder)holder;
@@ -255,7 +257,27 @@ namespace Z64.Forms
                         sw.WriteLine($"Position: {{ {limb.JointX}, {limb.JointY}, {limb.JointZ} }}");
                         sw.WriteLine($"Child: 0x{limb.Child:X2}");
                         sw.WriteLine($"Sibling: 0x{limb.Sibling:X2}");
-                        sw.WriteLine($"DList : 0x{limb.DListSeg.VAddr:X8}");
+                        if (limb.Type != Z64Object.EntryType.SkinLimb)
+                            sw.WriteLine($"DList : 0x{limb.DListSeg.VAddr:X8}");
+                        if (limb.Type == Z64Object.EntryType.LODLimb)
+                            sw.WriteLine($"Far DList : 0x{limb.DListFarSeg.VAddr:X8}");
+                        else if (limb.Type == Z64Object.EntryType.SkinLimb)
+                        {
+                            sw.WriteLine($"Data Type : {limb.SegmentType}"); // TODO describe data instead of printing number?
+                            sw.WriteLine($"Data Segment : 0x{limb.SkinSeg.VAddr:X8}");
+                        }
+                        
+                        textBox_holderInfo.Text = sw.ToString();
+                        break;
+                    }
+                case Z64Object.EntryType.LinkAnimationHeader:
+                    {
+                        tabControl1.SelectedTab = tabPage_text;
+                        var anim = (Z64Object.LinkAnimationHolder)holder;
+
+                        StringWriter sw = new StringWriter();
+                        sw.WriteLine($"Frame Count: {anim.FrameCount}");
+                        sw.WriteLine($"Animation Data Segment: 0x{anim.LinkAnimationSegment.VAddr:X8}");
 
                         textBox_holderInfo.Text = sw.ToString();
                         break;
@@ -505,6 +527,12 @@ namespace Z64.Forms
                                 sw.WriteLine("};");
                                 break;
                             }
+                        case Z64Object.EntryType.LinkAnimationHeader:
+                            {
+                                var holder = (Z64Object.LinkAnimationHolder)entry;
+                                sw.WriteLine($"LinkAnimationHeader {entry.Name} = {{ {{ {holder.FrameCount} }}, 0x{holder.LinkAnimationSegment} }};");
+                                break;
+                            }
                         case Z64Object.EntryType.AnimationHeader:
                             {
                                 var holder = (Z64Object.AnimationHolder)entry;
@@ -545,10 +573,22 @@ namespace Z64.Forms
                                 sw.WriteLine($"FlexSkeletonHeader {entry.Name} = {{ {{ 0x{holder.LimbsSeg.VAddr}, {holder.LimbCount} }}, {holder.DListCount} }};");
                                 break;
                             }
-                        case Z64Object.EntryType.SkeletonLimb:
+                        case Z64Object.EntryType.StandardLimb:
                             {
                                 var holder = (Z64Object.SkeletonLimbHolder)entry;
                                 sw.WriteLine($"StandardLimb {entry.Name} = {{ {{ {holder.JointX}, {holder.JointY}, {holder.JointZ} }}, {holder.Child}, {holder.Sibling}, 0x{holder.DListSeg.VAddr:X8} }};");
+                                break;
+                            }
+                        case Z64Object.EntryType.LODLimb:
+                            {
+                                var holder = (Z64Object.SkeletonLimbHolder)entry;
+                                sw.WriteLine($"LodLimb {entry.Name} = {{ {{ {holder.JointX}, {holder.JointY}, {holder.JointZ} }}, {holder.Child}, {holder.Sibling}, 0x{holder.DListSeg.VAddr:X8}, 0x{holder.DListFarSeg.VAddr:X8} }};");
+                                break;
+                            }
+                        case Z64Object.EntryType.SkinLimb:
+                            {
+                                var holder = (Z64Object.SkeletonLimbHolder)entry;
+                                sw.WriteLine($"SkinLimb {entry.Name} = {{ {{ {holder.JointX}, {holder.JointY}, {holder.JointZ} }}, {holder.Child}, {holder.Sibling}, 0x{holder.SegmentType}, 0x{holder.SkinSeg.VAddr:X8} }};");
                                 break;
                             }
                         case Z64Object.EntryType.SkeletonLimbs:

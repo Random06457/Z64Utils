@@ -354,38 +354,86 @@ namespace Z64
                     int nLimbs = data[i + 4];
                     byte[] limbsData = new byte[nLimbs * 4];
                     Buffer.BlockCopy(data, (int)segment.SegmentOff, limbsData, 0, nLimbs * 4);
+
                     // check for limbs array ending at the start of the skeleton header,
-                    // check for limbs array's segmented addresses being 0xC apart from one another
-                    if (segment.SegmentOff + nLimbs * 4 == i &&
-                        ArrayUtil.ReadUint32BE(limbsData, 4) - ArrayUtil.ReadUint32BE(limbsData, 0) == Z64Object.SkeletonLimbHolder.ENTRY_SIZE)
+                    if (segment.SegmentOff + nLimbs * 4 != i)
+                        continue;
+
+                    // find the type of limb
+                    // the checks are not very rigorous as they do not appear to need to be
+                    Z64Object.EntryType limbType;
+                    
+                    var firstLimbSeg = new SegmentedAddress(ArrayUtil.ReadUint32BE(limbsData, 0));
+                    var secondLimbSeg = new SegmentedAddress(ArrayUtil.ReadUint32BE(limbsData, 4));
+
+                    if (secondLimbSeg.VAddr - firstLimbSeg.VAddr == Z64Object.SkeletonLimbHolder.STANDARD_LIMB_SIZE)
                     {
-                        int nNonNullDlists = 0;
-                        obj.AddSkeletonLimbs(nLimbs, off: (int)segment.SegmentOff);
+                        limbType = Z64Object.EntryType.StandardLimb;
+                        goto found_limb_type;
+                    }
+                    // The difference in structure size resolves most of these, however skin and lod limbs have the same
+                    // size, so one of these needs a more in-depth test to differentiate them.
+                    if (secondLimbSeg.VAddr - firstLimbSeg.VAddr == Z64Object.SkeletonLimbHolder.SKIN_LIMB_SIZE)
+                    {
+                        bool limbsTest = true;
+
                         for (int j = 0; j < nLimbs * 4; j += 4)
                         {
-                            SegmentedAddress limbSeg = new SegmentedAddress(ArrayUtil.ReadUint32BE(limbsData, j));
-                            if (limbSeg.SegmentId != segmentId)
-                                throw new Z64ObjectAnalyzerException(
-                                    $"Limb segment {limbSeg.Segmented} is not the correct segment id, mis-detected SkeletonHeader?");
-                            obj.AddSkeletonLimb(off: (int)limbSeg.SegmentOff);
-                            // check if dlist is non-null (dlists may be null in general, this is only for FlexSkeletonHeader detection)
-                            if (ArrayUtil.ReadUint32BE(data, (int)(limbSeg.SegmentOff + 0x8)) != 0)
-                                nNonNullDlists++;
+                            var limbSeg = new SegmentedAddress(ArrayUtil.ReadUint32BE(limbsData, j));
+                            
+                            var value08 = ArrayUtil.ReadUint32BE(data, (int)limbSeg.SegmentOff + 0x8);
+                            var segment0C = new SegmentedAddress(ArrayUtil.ReadUint32BE(data, (int)limbSeg.SegmentOff + 0xC));
+
+                            if (value08 > 255 ||
+                                !(segment0C.SegmentId == segmentId || segment0C.VAddr == 0) || segment0C.VAddr % 4 != 0)
+                            {
+                                limbsTest = false;
+                                break;
+                            }
                         }
-                        // try to detect flex headers over normal headers
-                        // check for the existence of extra bytes beyond standard header size,
-                        // check if nothing is already assumed to occupy that space,
-                        // check if the number of dlists is equal to the actual number of non-null dlists,
-                        // check struct padding
-                        if (i <= data.Length - Z64Object.FlexSkeletonHolder.HEADER_SIZE && obj.IsOffsetFree(i + Z64Object.SkeletonHolder.HEADER_SIZE) &&
-                            data[i + 8] == nNonNullDlists && data[i + 9] == 0 && data[i + 10] == 0 && data[i + 11] == 0)
+                        
+                        if (limbsTest)
                         {
-                            obj.AddFlexSkeleton(off: i);
+                            limbType = Z64Object.EntryType.SkinLimb;
+                            goto found_limb_type;
                         }
-                        else
-                        {
-                            obj.AddSkeleton(off: i);
-                        }
+                    }
+                    if (secondLimbSeg.VAddr - firstLimbSeg.VAddr == Z64Object.SkeletonLimbHolder.LOD_LIMB_SIZE)
+                    {
+                        limbType = Z64Object.EntryType.LODLimb;
+                        goto found_limb_type;
+                    }
+                    // failed to find any valid limb type
+                    continue;
+found_limb_type:
+                    int nNonNullDlists = 0;
+                    
+                    obj.AddSkeletonLimbs(nLimbs, off: (int)segment.SegmentOff);
+
+                    for (int j = 0; j < nLimbs * 4; j += 4)
+                    {
+                        var limbSeg = new SegmentedAddress(ArrayUtil.ReadUint32BE(limbsData, j));
+                        if (limbSeg.SegmentId != segmentId)
+                            throw new Z64ObjectAnalyzerException(
+                                $"Limb segment {limbSeg.Segmented} is not the correct segment id, mis-detected SkeletonHeader?");
+                        obj.AddSkeletonLimb(limbType, off: (int)limbSeg.SegmentOff);
+                        // check if dlist is non-null (dlists may be null in general, this is only for FlexSkeletonHeader detection)
+                        if (ArrayUtil.ReadUint32BE(data, (int)(limbSeg.SegmentOff + 0x8)) != 0)
+                            nNonNullDlists++;
+                    }
+                    // try to detect flex headers over normal headers
+                    // check for the existence of extra bytes beyond standard header size,
+                    // check if nothing is already assumed to occupy that space,
+                    // check if the number of dlists is equal to the actual number of non-null dlists,
+                    // check struct padding
+                    if (i <= data.Length - Z64Object.FlexSkeletonHolder.HEADER_SIZE && obj.IsOffsetFree(i + Z64Object.SkeletonHolder.HEADER_SIZE) &&
+                        data[i + 8] == nNonNullDlists && data[i + 9] == 0 && data[i + 10] == 0 && data[i + 11] == 0)
+                    {
+                        obj.AddFlexSkeleton(off: i);
+                    }
+                    else
+                    {
+                        obj.AddSkeleton(off: i);
                     }
                 }
             }
@@ -394,7 +442,7 @@ namespace Z64
         {
             // Search for Animation Headers
             // Structure: FF FF 00 00 SS OO OO OO SS OO OO OO II II 00 00
-            for (int i = 0; i < data.Length - Z64Object.AnimationHolder.HEADER_SIZE; i += 4)
+            for (int i = 0; i <= data.Length - Z64Object.AnimationHolder.HEADER_SIZE; i += 4)
             {
                 var frameCount = ArrayUtil.ReadInt16BE(data, i);
                 // check positive nonzero frame count, check struct padding zeroes
@@ -444,6 +492,42 @@ namespace Z64
                         obj.AddAnimation(off: i);
                         obj.AddFrameData(frameDataSize/2, off:(int)frameDataSeg.SegmentOff);
                         obj.AddJointIndices(jointIndicesSize/Z64Object.AnimationJointIndicesHolder.ENTRY_SIZE, off:(int)jointIndicesSeg.SegmentOff);
+                    }
+                }
+            }
+        }
+        public static void FindLinkAnimations(Z64Object obj, byte[] data, int segmentId)
+        {
+            // only search in gameplay_keep
+            if (obj.GetName() != "gameplay_keep")
+                return;
+
+            Z64File linkAnimetion = obj.Game.GetFileForName("link_animetion");
+            // only search if the link_animetion file is known
+            if (linkAnimetion == null)
+                return;
+
+            int linkAnimetionSize = linkAnimetion.VRomEnd - linkAnimetion.VRomStart;
+
+            for (int i = 0; i <= data.Length - Z64Object.LinkAnimationHolder.SIZE; i += 4)
+            {
+                var frameCount = ArrayUtil.ReadInt16BE(data, i);
+
+                // Check frame count > 0 and struct padding
+                if (frameCount > 0 && data[i + 2] == 0 && data[i + 3] == 0)
+                {
+                    var animationSeg = new SegmentedAddress(ArrayUtil.ReadUint32BE(data, i + 4));
+
+                    // Check if the segment address is a valid pointer into link_animetion
+                    if (animationSeg.SegmentId == 7 && animationSeg.SegmentOff < linkAnimetionSize)
+                    {
+                        // Check if free
+                        if (!(obj.IsOffsetFree(i) && obj.IsOffsetFree(i + Z64Object.LinkAnimationHolder.SIZE - 1)))
+                            continue;
+
+                        // Check if the data pointed to in link_animetion is valid? TODO
+
+                        obj.AddLinkAnimation(off: i);
                     }
                 }
             }
@@ -624,6 +708,7 @@ namespace Z64
             // Having lots of the object already mapped out reduces possible mis-identifications.
             FindSkeletons(obj, data, segmentId);
             FindAnimations(obj, data, segmentId);
+            FindLinkAnimations(obj, data, segmentId);
             
             obj.GroupUnkEntries();
             obj.FixNames();

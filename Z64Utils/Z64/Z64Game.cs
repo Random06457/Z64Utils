@@ -214,6 +214,11 @@ namespace Z64
             return _files.Find((f) => f.VRomStart == vrom);
         }
 
+        public Z64File GetFileForName(string fileName)
+        {
+            return _files.Find((f) => GetFileName(f.VRomStart) == fileName);
+        }
+
         public Z64File GetFileFromIndex(int index)
         {
             return _files[index];
