@@ -532,6 +532,110 @@ found_limb_type:
                 }
             }
         }
+        public static void FindCollisionData(Z64Object obj, byte[] data, int segmentId)
+        {
+            // Search for Collision Headers
+            // Structure: XX XX YY YY ZZ ZZ XX XX YY YY ZZ ZZ NN NN 00 00
+            //            SS OO OO OO NN NN 00 00 SS OO OO OO SS OO OO OO
+            //            SS OO OO OO NN NN 00 00 SS OO OO OO
+            for (int i = 0; i < data.Length - Z64Object.ColHeaderHolder.COLHEADER_SIZE; i += 4)
+            {
+                // check free and skip whole region if occupied
+                if (!obj.IsOffsetFree(i))
+                {
+                    Z64Object.ObjectHolder holder = obj.HolderAtOffset(i);
+                    i = obj.OffsetOf(holder) + holder.GetSize();
+                    if (i % 4 != 0)
+                        i += (4 - i % 4);
+                    continue;
+                }
+
+                // check struct padding zeroes and that MinBounds <= MaxBounds
+                if (data[i + 14] == 0 && data[i + 15] == 0 && data[i + 22] == 0 && data[i + 23] == 0 &&
+                    data[i + 38] == 0 && data[i + 39] == 0 &&
+                    ArrayUtil.ReadInt16BE(data, i + 0) <= ArrayUtil.ReadInt16BE(data, i + 6 + 0) &&
+                    ArrayUtil.ReadInt16BE(data, i + 2) <= ArrayUtil.ReadInt16BE(data, i + 6 + 2) &&
+                    ArrayUtil.ReadInt16BE(data, i + 4) <= ArrayUtil.ReadInt16BE(data, i + 6 + 4))
+                {
+                    var verticesSeg = new SegmentedAddress(ArrayUtil.ReadUint32BE(data, i + 0x10));
+                    var polygonsSeg = new SegmentedAddress(ArrayUtil.ReadUint32BE(data, i + 0x18));
+                    var surfaceTypesSeg = new SegmentedAddress(ArrayUtil.ReadUint32BE(data, i + 0x1C));
+                    var camDataSeg = new SegmentedAddress(ArrayUtil.ReadUint32BE(data, i + 0x20));
+                    var waterBoxesSeg = new SegmentedAddress(ArrayUtil.ReadUint32BE(data, i + 0x28));
+
+                    var nVertices = ArrayUtil.ReadInt16BE(data, i + 0xC);
+                    var nPolygons = ArrayUtil.ReadInt16BE(data, i + 0x14);
+                    var nWaterBoxes = ArrayUtil.ReadInt16BE(data, i + 0x24);
+
+                    int surfaceTypesSize = (int)(polygonsSeg.SegmentOff - surfaceTypesSeg.SegmentOff);
+                    int camDataSize = (int)(surfaceTypesSeg.SegmentOff - camDataSeg.SegmentOff);
+                    if (camDataSeg.VAddr == 0)
+                        camDataSize = 0;
+
+                    int surfaceTypesPadLen = surfaceTypesSize % Z64Object.CollisionSurfaceTypesHolder.ENTRY_SIZE;
+                    int camDataPadLen = camDataSize % Z64Object.CollisionCamDataHolder.ENTRY_SIZE;
+
+                    surfaceTypesSize -= surfaceTypesPadLen;
+                    camDataSize -= camDataPadLen;
+
+                    // check segment address validity
+                    // (same segment number and points to in-bounds free space or null with 0 count, has suitable alignment)
+                    Func<SegmentedAddress, int, int, bool, bool> validSegmentAddr = (seg, num, align, allowNull) =>
+                        ((seg.SegmentId == segmentId && seg.SegmentOff < data.Length &&
+                          obj.IsOffsetFree((int)seg.SegmentOff) && seg.SegmentOff % align == 0) ||
+                         (allowNull && num == 0 && seg.VAddr == 0));
+
+                    if (validSegmentAddr(verticesSeg, nVertices, 2, false) &&
+                        validSegmentAddr(polygonsSeg, nPolygons, 2, false) &&
+                        validSegmentAddr(surfaceTypesSeg, surfaceTypesSize / Z64Object.CollisionSurfaceTypesHolder.ENTRY_SIZE, 4, false) &&
+                        validSegmentAddr(camDataSeg, camDataSize / Z64Object.CollisionCamDataHolder.ENTRY_SIZE, 2, true) &&
+                        validSegmentAddr(waterBoxesSeg, nWaterBoxes, 4, true))
+                    {
+                        // check padding between surface types and polygons
+                        if (surfaceTypesSize != 0 && surfaceTypesPadLen != 0)
+                        {
+                            byte[] possiblePadding = new byte[surfaceTypesPadLen];
+
+                            // 'Offset and length were out of bounds for the array or count is greater than the number of
+                            // elements from index to the end of the source collection.'
+                            Buffer.BlockCopy(data, (int)surfaceTypesSeg.SegmentOff + surfaceTypesSize, possiblePadding,
+                                0, surfaceTypesPadLen);
+                            // if assumed struct padding is nonzero, consider invalid
+                            if (possiblePadding.Any(b => b != 0))
+                                continue;
+                        }
+                        // check padding between cam data and surface types
+                        if (camDataSeg.VAddr != 0 && camDataSize != 0 && camDataPadLen != 0)
+                        {
+                            byte[] possiblePadding = new byte[camDataPadLen];
+                            Buffer.BlockCopy(data, (int)surfaceTypesSeg.SegmentOff + camDataSize, possiblePadding,
+                                0, camDataPadLen);
+                            // if assumed struct padding is nonzero, consider invalid
+                            if (possiblePadding.Any(b => b != 0))
+                                continue;
+                        }
+
+                        Z64Object.ColHeaderHolder colHeader = obj.AddCollisionHeader(off: i);
+
+                        colHeader.VerticesHolder = obj.AddCollisionVertices(nVertices, off: (int)verticesSeg.SegmentOff);
+                        colHeader.PolygonsHolder = obj.AddCollisionPolygons(nPolygons, off: (int)polygonsSeg.SegmentOff);
+                        colHeader.SurfaceTypesHolder = obj.AddCollisionSurfaceTypes(
+                            surfaceTypesSize / Z64Object.CollisionSurfaceTypesHolder.ENTRY_SIZE,
+                            off: (int)surfaceTypesSeg.SegmentOff);
+
+                        if (camDataSeg.VAddr != 0)
+                            colHeader.CamDataHolder = obj.AddCollisionCamData(
+                                camDataSize / Z64Object.CollisionCamDataHolder.ENTRY_SIZE,
+                                off: (int)camDataSeg.SegmentOff);
+
+                        if (waterBoxesSeg.VAddr != 0)
+                            colHeader.WaterBoxHolder = obj.AddWaterBoxes(nWaterBoxes, off: (int)waterBoxesSeg.SegmentOff);
+
+                        i += Z64Object.ColHeaderHolder.COLHEADER_SIZE;
+                    }
+                }
+            }
+        }
 
         public static void FindDlists(Z64Object obj, byte[] data, int segmentId, Config cfg)
         {
@@ -708,6 +812,7 @@ found_limb_type:
             // Having lots of the object already mapped out reduces possible mis-identifications.
             FindSkeletons(obj, data, segmentId);
             FindAnimations(obj, data, segmentId);
+            FindCollisionData(obj, data, segmentId);
             FindLinkAnimations(obj, data, segmentId);
             
             obj.GroupUnkEntries();
