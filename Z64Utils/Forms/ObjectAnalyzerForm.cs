@@ -184,6 +184,177 @@ namespace Z64.Forms
                         }
                         break;
                     }
+                case Z64Object.EntryType.CollisionHeader:
+                    {
+                        tabControl1.SelectedTab = tabPage_text;
+                        var colHdr = (Z64Object.ColHeaderHolder)holder;
+
+                        StringWriter sw = new StringWriter();
+                        sw.WriteLine($"Bounds: " +
+                            $"( {colHdr.MinBounds.X}, {colHdr.MinBounds.Y}, {colHdr.MinBounds.Z} ) : " +
+                            $"( {colHdr.MaxBounds.X}, {colHdr.MaxBounds.Y}, {colHdr.MaxBounds.Z} )");
+                        sw.WriteLine($"Vertices Count: {colHdr.NbVertices}");
+                        sw.WriteLine($"Vertices: 0x{colHdr.VertexListSeg.VAddr:X8}");
+                        sw.WriteLine($"Polygons Count: {colHdr.NbPolygons}");
+                        sw.WriteLine($"Polygons: 0x{colHdr.PolyListSeg.VAddr:X8}");
+                        sw.WriteLine($"SurfaceTypes: 0x{colHdr.SurfaceTypeSeg.VAddr:X8}");
+                        sw.WriteLine($"CamData: 0x{colHdr.CamDataSeg.VAddr:X8}");
+                        sw.WriteLine($"WaterBoxes Count: {colHdr.NbWaterBoxes}");
+                        sw.WriteLine($"WaterBoxes: 0x{colHdr.WaterBoxSeg.VAddr:X8}");
+                        textBox_holderInfo.Text = sw.ToString();
+                        break;
+                    }
+                case Z64Object.EntryType.CollisionVertices:
+                    {
+                        tabControl1.SelectedTab = tabPage_text;
+                        var vertices = (Z64Object.CollisionVerticesHolder)holder;
+
+                        StringWriter sw = new StringWriter();
+                        sw.WriteLine($"Vertices:");
+                        foreach (var vertex in vertices.Points)
+                            sw.WriteLine($"{{ {vertex.X}, {vertex.Y}, {vertex.Z} }}");
+
+                        textBox_holderInfo.Text = sw.ToString();
+                        break;
+                    }
+                case Z64Object.EntryType.CollisionPolygons:
+                    {
+                        tabControl1.SelectedTab = tabPage_text;
+                        var polygons = (Z64Object.CollisionPolygonsHolder)holder;
+
+                        StringWriter sw = new StringWriter();
+                        sw.WriteLine($"Polygons:");
+                        foreach (var poly in polygons.CollisionPolys)
+                            sw.WriteLine($"{{ {poly.Type:4}, " +
+                                $"{{ 0x{poly.Data[0]:X04}, 0x{poly.Data[1]:X04}, 0x{poly.Data[2]:X04} }}, " +
+                                $"{{ {poly.Normal.X}, {poly.Normal.Y}, {poly.Normal.Z} }}, " +
+                                $"{poly.Dist} }}");
+
+                        textBox_holderInfo.Text = sw.ToString();
+                        break;
+                    }
+                case Z64Object.EntryType.CollisionSurfaceTypes:
+                    {
+                        tabControl1.SelectedTab = tabPage_text;
+                        var surfaceTypes = (Z64Object.CollisionSurfaceTypesHolder)holder;
+
+                        StringWriter sw = new StringWriter();
+                        sw.WriteLine($"Surface Types:");
+                        foreach (var surfType in surfaceTypes.SurfaceTypes)
+                            sw.WriteLine($"{{ 0x{surfType[0]:X08} , 0x{surfType[1]:X08} }}");
+
+                        textBox_holderInfo.Text = sw.ToString();
+                        break;
+                    }
+                case Z64Object.EntryType.CollisionCamData:
+                    {
+                        tabControl1.SelectedTab = tabPage_text;
+                        var camData = (Z64Object.CollisionCamDataHolder)holder;
+
+                        StringWriter sw = new StringWriter();
+                        sw.WriteLine($"Camera Data:");
+                        foreach (var data in camData.CamData)
+                        {
+                            sw.WriteLine($"{{");
+                            sw.WriteLine($"    Camera Type: 0x{data.CameraSType:X02}");
+                            sw.WriteLine($"    Number of Cameras: {data.NumCameras}");
+                            sw.WriteLine($"    Data: 0x{data.CamPosData.VAddr:X08}");
+                            sw.WriteLine($"}}");
+                        }
+                        textBox_holderInfo.Text = sw.ToString();
+                        break;
+                    }
+                case Z64Object.EntryType.WaterBox:
+                    {
+                        tabControl1.SelectedTab = tabPage_text;
+                        var waterBoxes = (Z64Object.WaterBoxHolder)holder;
+
+                        StringWriter sw = new StringWriter();
+                        sw.WriteLine($"Waterboxes:");
+                        foreach (var waterBox in waterBoxes.WaterBoxes)
+                        {
+                            sw.WriteLine($"{{");
+                            sw.WriteLine($"    Dimensions: {waterBox.XLength}x{waterBox.ZLength}");
+                            sw.WriteLine($"    Height: {waterBox.YSurface}");
+                            sw.WriteLine($"    Points: " +
+                                $"({waterBox.XMin}, {waterBox.ZMin}), " +
+                                $"({waterBox.XMin + waterBox.XLength}, {waterBox.ZMin}), " +
+                                $"({waterBox.XMin}, {waterBox.ZMin + waterBox.ZLength}), " +
+                                $"({waterBox.XMin + waterBox.XLength}, {waterBox.ZMin + waterBox.ZLength})");
+                            sw.WriteLine($"    Properties: {waterBox.Properties:X08}");
+                            sw.WriteLine($"}}");
+                        }
+                        textBox_holderInfo.Text = sw.ToString();
+                        break;
+                    }
+                case Z64Object.EntryType.MatAnimHeader:
+                    {
+                        tabControl1.SelectedTab = tabPage_text;
+                        var header = (Z64Object.MatAnimHeaderHolder)holder;
+                        StringWriter sw = new StringWriter();
+
+                        var signedSegId = (sbyte)header.SegmentId;
+                        var trueSeg = ((signedSegId < 0) ? -signedSegId : signedSegId) + 7;
+                        var typeStr = "INVALID";
+                        switch (header.Type)
+                        {
+                            case 0: typeStr = "Single Tex Scroll"; break;
+                            case 1: typeStr = "Two Tex Scroll"; break;
+                            case 2: typeStr = "Color No Interpolation"; break;
+                            case 3: typeStr = "Color Linear Interpolation"; break;
+                            case 4: typeStr = "Color Lagrange Interpolation"; break;
+                            case 5: typeStr = "Tex Cycle"; break;
+                        }
+                        
+                        sw.WriteLine($"Segment: 0x{header.SegmentId:X2} (0x{trueSeg:X2})");
+                        sw.WriteLine($"Type: {typeStr}");
+                        sw.WriteLine($"Params Seg: 0x{header.ParamsSeg.VAddr:X8}");
+
+                        textBox_holderInfo.Text = sw.ToString();
+                        break;
+                    }
+                case Z64Object.EntryType.MatAnimTexScrollParams:
+                    {
+                        tabControl1.SelectedTab = tabPage_text;
+                        var scrollParams = (Z64Object.MatAnimTexScrollParamsHolder)holder;
+                        StringWriter sw = new StringWriter();
+
+                        sw.WriteLine($"StepX  : 0x{scrollParams.StepX:X2}");
+                        sw.WriteLine($"StepY  : 0x{scrollParams.StepY:X2}");
+                        sw.WriteLine($"Width  : 0x{scrollParams.Width:X2}");
+                        sw.WriteLine($"Height : 0x{scrollParams.Height:X2}");
+                        
+                        textBox_holderInfo.Text = sw.ToString();
+                        break;
+                    }
+                case Z64Object.EntryType.MatAnimColorParams:
+                    {
+                        tabControl1.SelectedTab = tabPage_text;
+                        var colorParams = (Z64Object.MatAnimColorParamsHolder)holder;
+                        StringWriter sw = new StringWriter();
+
+                        sw.WriteLine($"KeyFrame Length : 0x{colorParams.KeyFrameLength:X4}");
+                        sw.WriteLine($"KeyFrame Count  : 0x{colorParams.KeyFrameCount:X4}");
+                        sw.WriteLine($"Prim Colors Seg : 0x{colorParams.PrimColors.VAddr:X8}");
+                        sw.WriteLine($"Env Colors Seg  : 0x{colorParams.EnvColors.VAddr:X8}");
+                        sw.WriteLine($"KeyFrames Seg   : 0x{colorParams.KeyFrames.VAddr:X8}");
+
+                        textBox_holderInfo.Text = sw.ToString();
+                        break;
+                    }
+                case Z64Object.EntryType.MatAnimTexCycleParams:
+                    {
+                        tabControl1.SelectedTab = tabPage_text;
+                        var cycleParams = (Z64Object.MatAnimTexCycleParamsHolder)holder;
+                        StringWriter sw = new StringWriter();
+
+                        sw.WriteLine($"KeyFrame Length  : 0x{cycleParams.KeyFrameLength:X4}");
+                        sw.WriteLine($"Texture List Seg : 0x{cycleParams.TextureList.VAddr:X8}");
+                        sw.WriteLine($"Texture Index List Seg : 0x{cycleParams.TextureIndexList.VAddr:X8}");
+
+                        textBox_holderInfo.Text = sw.ToString();
+                        break;
+                    }
                 case Z64Object.EntryType.Mtx:
                     {
                         tabControl1.SelectedTab = tabPage_text;

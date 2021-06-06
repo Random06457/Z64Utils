@@ -56,6 +56,10 @@ namespace Z64
             CollisionSurfaceTypes,
             CollisionCamData,
             WaterBox,
+            MatAnimHeader,
+            MatAnimTexScrollParams,
+            MatAnimColorParams,
+            MatAnimTexCycleParams,
             Unknown,
         }
 
@@ -963,6 +967,183 @@ namespace Z64
             }
             public override int GetSize() => WaterBoxes.Length * ENTRY_SIZE;
         }
+        public class MatAnimHeaderHolder : ObjectHolder
+        {
+            public const int SIZE = 8;
+            
+            public byte SegmentId { get; set; }
+            public short Type { get; set; }
+            public SegmentedAddress ParamsSeg { get; set; }
+
+            public MatAnimHeaderHolder(string name, byte[] data) : base(name)
+            {
+                SetData(data);
+            }
+            public override EntryType GetEntryType() => EntryType.MatAnimHeader;
+
+            public override byte[] GetData()
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    BinaryStream bw = new BinaryStream(ms, ByteConverter.Big);
+
+                    bw.Write(SegmentId);
+                    bw.Write((byte)0);
+                    bw.Write(Type);
+                    bw.Write(ParamsSeg.VAddr);
+
+                    return ms.GetBuffer().Take((int)ms.Length).ToArray();
+                }
+            }
+
+            public override void SetData(byte[] data)
+            {
+                using (MemoryStream ms = new MemoryStream(data))
+                {
+                    BinaryStream br = new BinaryStream(ms, ByteConverter.Big);
+
+                    SegmentId = br.Read1Byte();
+                    br.Read1Byte();
+                    Type = br.ReadInt16();
+                    ParamsSeg = new SegmentedAddress(br.ReadUInt32());
+                }
+            }
+            public override int GetSize() => SIZE;
+        }
+        public class MatAnimTexScrollParamsHolder : ObjectHolder
+        {
+            public const int SIZE = 4;
+
+            public byte StepX { get; set; }
+            public byte StepY { get; set; }
+            public byte Width { get; set; }
+            public byte Height { get; set; }
+
+            public MatAnimTexScrollParamsHolder(string name, byte[] data) : base(name)
+            {
+                SetData(data);
+            }
+            public override EntryType GetEntryType() => EntryType.MatAnimTexScrollParams;
+
+            public override byte[] GetData()
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    BinaryStream bw = new BinaryStream(ms, ByteConverter.Big);
+
+                    bw.Write(StepX);
+                    bw.Write(StepY);
+                    bw.Write(Width);
+                    bw.Write(Height);
+
+                    return ms.GetBuffer().Take((int)ms.Length).ToArray();
+                }
+            }
+
+            public override void SetData(byte[] data)
+            {
+                using (MemoryStream ms = new MemoryStream(data))
+                {
+                    BinaryStream br = new BinaryStream(ms, ByteConverter.Big);
+
+                    StepX = br.Read1Byte();
+                    StepY = br.Read1Byte();
+                    Width = br.Read1Byte();
+                    Height = br.Read1Byte();
+                }
+            }
+            public override int GetSize() => SIZE;
+        }
+        public class MatAnimColorParamsHolder : ObjectHolder
+        {
+            public const int SIZE = 0x10;
+
+            public ushort KeyFrameLength { get; set; }
+            public ushort KeyFrameCount { get; set; }
+            public SegmentedAddress PrimColors { get; set; }
+            public SegmentedAddress EnvColors { get; set; }
+            public SegmentedAddress KeyFrames { get; set; }
+
+            public MatAnimColorParamsHolder(string name, byte[] data) : base(name)
+            {
+                SetData(data);
+            }
+            public override EntryType GetEntryType() => EntryType.MatAnimColorParams;
+
+            public override byte[] GetData()
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    BinaryStream bw = new BinaryStream(ms, ByteConverter.Big);
+
+                    bw.Write(KeyFrameLength);
+                    bw.Write(KeyFrameCount);
+                    bw.Write(PrimColors.VAddr);
+                    bw.Write(EnvColors.VAddr);
+                    bw.Write(KeyFrames.VAddr);
+
+                    return ms.GetBuffer().Take((int)ms.Length).ToArray();
+                }
+            }
+
+            public override void SetData(byte[] data)
+            {
+                using (MemoryStream ms = new MemoryStream(data))
+                {
+                    BinaryStream br = new BinaryStream(ms, ByteConverter.Big);
+
+                    KeyFrameLength = br.ReadUInt16();
+                    KeyFrameCount = br.ReadUInt16();
+                    PrimColors = new SegmentedAddress(br.ReadUInt32());
+                    EnvColors = new SegmentedAddress(br.ReadUInt32());
+                    KeyFrames = new SegmentedAddress(br.ReadUInt32());
+                }
+            }
+            public override int GetSize() => SIZE;
+        }
+        public class MatAnimTexCycleParamsHolder : ObjectHolder
+        {
+            public const int SIZE = 0xC;
+
+            public ushort KeyFrameLength { get; set; }
+            public SegmentedAddress TextureList { get; set; }
+            public SegmentedAddress TextureIndexList { get; set; }
+            
+            public MatAnimTexCycleParamsHolder(string name, byte[] data) : base(name)
+            {
+                SetData(data);
+            }
+            public override EntryType GetEntryType() => EntryType.MatAnimTexCycleParams;
+
+            public override byte[] GetData()
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    BinaryStream bw = new BinaryStream(ms, ByteConverter.Big);
+
+                    bw.Write(KeyFrameLength);
+                    bw.WriteUInt16(0);
+                    bw.Write(TextureList.VAddr);
+                    bw.Write(TextureIndexList.VAddr);
+
+                    return ms.GetBuffer().Take((int)ms.Length).ToArray();
+                }
+            }
+
+            public override void SetData(byte[] data)
+            {
+                using (MemoryStream ms = new MemoryStream(data))
+                {
+                    BinaryStream br = new BinaryStream(ms, ByteConverter.Big);
+
+                    KeyFrameLength = br.ReadUInt16();
+                    br.ReadUInt16();
+                    TextureList = new SegmentedAddress(br.ReadUInt32());
+                    TextureIndexList = new SegmentedAddress(br.ReadUInt32());
+                }
+            }
+            public override int GetSize() => SIZE;
+        }
 
         public Z64Game Game;
         public Z64File File;
@@ -1290,6 +1471,30 @@ namespace Z64
             var holder = new WaterBoxHolder(name ?? $"waterbox_{off:X8}", new byte[count * WaterBoxHolder.ENTRY_SIZE]);
             return (WaterBoxHolder)AddHolder(holder, off);
         }
+        public MatAnimHeaderHolder AddMatAnimHeader(string name = null, int off = -1)
+        {
+            if (off == -1) off = GetSize();
+            var holder = new MatAnimHeaderHolder(name ?? $"matanimheader_{off:X8}", new byte[MatAnimHeaderHolder.SIZE]);
+            return (MatAnimHeaderHolder)AddHolder(holder, off);
+        }
+        public MatAnimTexScrollParamsHolder AddMatAnimTexScrollParams(string name = null, int off = -1)
+        {
+            if (off == -1) off = GetSize();
+            var holder = new MatAnimTexScrollParamsHolder(name ?? $"texscrollparams_{off:X8}", new byte[MatAnimTexScrollParamsHolder.SIZE]);
+            return (MatAnimTexScrollParamsHolder)AddHolder(holder, off);
+        }
+        public MatAnimColorParamsHolder AddMatAnimColorParams(string name = null, int off = -1)
+        {
+            if (off == -1) off = GetSize();
+            var holder = new MatAnimColorParamsHolder(name ?? $"colorparams_{off:X8}", new byte[MatAnimColorParamsHolder.SIZE]);
+            return (MatAnimColorParamsHolder)AddHolder(holder, off);
+        }
+        public MatAnimTexCycleParamsHolder AddMatAnimTexCycleParams(string name = null, int off = -1)
+        {
+            if (off == -1) off = GetSize();
+            var holder = new MatAnimTexCycleParamsHolder(name ?? $"texcycleparams_{off:X8}", new byte[MatAnimTexCycleParamsHolder.SIZE]);
+            return (MatAnimTexCycleParamsHolder)AddHolder(holder, off);
+        }
 
         public void FixNames()
         {
@@ -1352,6 +1557,18 @@ namespace Z64
                         break;
                     case EntryType.WaterBox:
                         entry.Name = "waterbox_" + entryOff.ToString("X8");
+                        break;
+                    case EntryType.MatAnimHeader:
+                        entry.Name = "matanimheader_" + entryOff.ToString("X8");
+                        break;
+                    case EntryType.MatAnimTexScrollParams:
+                        entry.Name = "texscrollparams_" + entryOff.ToString("X8");
+                        break;
+                    case EntryType.MatAnimColorParams:
+                        entry.Name = "colorparams_" + entryOff.ToString("X8");
+                        break;
+                    case EntryType.MatAnimTexCycleParams:
+                        entry.Name = "texcycleparams_" + entryOff.ToString("X8");
                         break;
                     case EntryType.Mtx:
                         entry.Name = "mtx_" + entryOff.ToString("X8");
@@ -1637,6 +1854,10 @@ namespace Z64
                     case EntryType.AnimationHeader:
                     case EntryType.LinkAnimationHeader:
                     case EntryType.CollisionHeader:
+                    case EntryType.MatAnimHeader:
+                    case EntryType.MatAnimTexScrollParams:
+                    case EntryType.MatAnimColorParams:
+                    case EntryType.MatAnimTexCycleParams:
                         {
                             list.Add(new JsonObjectHolder()
                             {
@@ -1768,6 +1989,26 @@ namespace Z64
                         {
                             var holder = iter.ToObject<JsonArrayHolder>();
                             obj.AddWaterBoxes(holder.Count);
+                            break;
+                        }
+                    case EntryType.MatAnimHeader:
+                        {
+                            obj.AddMatAnimHeader();
+                            break;
+                        }
+                    case EntryType.MatAnimTexScrollParams:
+                        {
+                            obj.AddMatAnimTexScrollParams();
+                            break;
+                        }
+                    case EntryType.MatAnimColorParams:
+                        {
+                            obj.AddMatAnimColorParams();
+                            break;
+                        }
+                    case EntryType.MatAnimTexCycleParams:
+                        {
+                            obj.AddMatAnimTexCycleParams();
                             break;
                         }
                     default: throw new Z64ObjectException($"Invalid entry type ({type})");
