@@ -337,14 +337,14 @@ namespace Z64
         {
             // Search for Skeleton Headers
             // Structure: SS OO OO OO XX 00 00 00 [XX 00 00 00]
-            for (int i = 0; i < data.Length - Z64Object.SkeletonHolder.HEADER_SIZE; i += 4)
+            for (int i = 0; i <= data.Length - Z64Object.SkeletonHolder.HEADER_SIZE; i += 4)
             {
                 var segment = new SegmentedAddress(ArrayUtil.ReadUint32BE(data, i));
                 // check for segmentId match, check for valid segment offset,
                 // check for Limbs 0x4 alignment, check for nonzero limb count,
                 // check for zeroes in struct padding
                 if (segment.SegmentId == segmentId && segment.SegmentOff < data.Length && 
-                    (segment.SegmentOff % 4) == 0 && data[i+4] != 0 &&
+                    (segment.SegmentOff % 4) == 0 && data[i+4] > 1 && // There should be no single-limb skeletons
                     data[i + 5] == 0 && data[i + 6] == 0 && data[i + 7] == 0)
                 {
                     if (!obj.IsOffsetFree(i))
@@ -376,7 +376,7 @@ namespace Z64
                         // check if nothing is already assumed to occupy that space,
                         // check if the number of dlists is equal to the actual number of non-null dlists,
                         // check struct padding
-                        if (i < data.Length - Z64Object.FlexSkeletonHolder.HEADER_SIZE && obj.IsOffsetFree(i + Z64Object.SkeletonHolder.HEADER_SIZE) &&
+                        if (i <= data.Length - Z64Object.FlexSkeletonHolder.HEADER_SIZE && obj.IsOffsetFree(i + Z64Object.SkeletonHolder.HEADER_SIZE) &&
                             data[i + 8] == nNonNullDlists && data[i + 9] == 0 && data[i + 10] == 0 && data[i + 11] == 0)
                         {
                             obj.AddFlexSkeleton(off: i);
@@ -400,18 +400,23 @@ namespace Z64
                 if (frameCount > 0 &&
                     data[i + 2] == 0 && data[i + 3] == 0 && data[i + 14] == 0 && data[i + 15] == 0)
                 {
-                    if (!obj.IsOffsetFree(i))
+                    if (!(obj.IsOffsetFree(i) && obj.IsOffsetFree(i + Z64Object.AnimationHolder.HEADER_SIZE)))
                         continue;
                     
                     var frameDataSeg = new SegmentedAddress(ArrayUtil.ReadUint32BE(data, i+4));
                     var jointIndicesSeg = new SegmentedAddress(ArrayUtil.ReadUint32BE(data, i+8));
                     // check for segmentId match, check for valid segment offsets
                     if (frameDataSeg.SegmentId == segmentId && jointIndicesSeg.SegmentId == segmentId &&
-                        frameDataSeg.SegmentOff < data.Length && jointIndicesSeg.SegmentOff < data.Length)
+                        frameDataSeg.SegmentOff < data.Length && jointIndicesSeg.SegmentOff < data.Length &&
+                        jointIndicesSeg.SegmentOff > frameDataSeg.SegmentOff)
                     {
                         // Assumes these are all in order and end at the start of the next, which seems to be the case so far
                         int frameDataSize = (int)(jointIndicesSeg.SegmentOff - frameDataSeg.SegmentOff);
                         int jointIndicesSize = (int)(i - jointIndicesSeg.SegmentOff);
+
+                        // Require at least one entry to be considered valid
+                        if (frameDataSize < 2 || jointIndicesSize < Z64Object.AnimationJointIndicesHolder.ENTRY_SIZE)
+                            continue;
 
                         // if not a multiple of 2, check for struct padding
                         if ((frameDataSize % 2) != 0)
