@@ -12,6 +12,8 @@ using F3DZEX;
 using Syroot.BinaryData;
 using Common;
 using RDP;
+using System.Xml;
+using System.Diagnostics;
 
 namespace Z64
 {
@@ -26,7 +28,7 @@ namespace Z64
           System.Runtime.Serialization.SerializationInfo info,
           System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
-    
+
     public class Z64Object
     {
         public enum EntryType
@@ -66,8 +68,19 @@ namespace Z64
         public class DListHolder : ObjectHolder
         {
             public byte[] UCode { get; set; }
+            public bool detectSize { get; set; }
 
-            public DListHolder(string name, byte[] ucode) : base(name) => UCode = ucode;
+            public DListHolder(string name) : base(name)
+            {
+                UCode = new byte[8];
+                detectSize = true;
+            }
+
+            public DListHolder(string name, byte[] ucode) : base(name)
+            {
+                UCode = ucode;
+                detectSize = false;
+            }
 
             public override EntryType GetEntryType() => EntryType.DList;
             public override byte[] GetData() => UCode;
@@ -296,10 +309,10 @@ namespace Z64
         public class SkeletonHolder : ObjectHolder
         {
             public const int HEADER_SIZE = 0x8;
-            
+
             public byte LimbCount { get; set; }
             public SegmentedAddress LimbsSeg { get; set; }
-            
+
             public SkeletonHolder(string name, byte[] data) : base(name)
             {
                 SetData(data);
@@ -334,7 +347,7 @@ namespace Z64
         public class FlexSkeletonHolder : SkeletonHolder
         {
             public new const int HEADER_SIZE = SkeletonHolder.HEADER_SIZE + 0x4;
-            
+
             public byte DListCount { get; set; }
 
             public FlexSkeletonHolder(string name, byte[] data) : base(name, data)
@@ -601,7 +614,7 @@ namespace Z64
             {
                 var existing = Entries.Find(e => e.GetSize() == holder.GetSize() && OffsetOf(e) == holderOff);
                 if (existing != null)
-                    return  existing;
+                    return existing;
 
                 throw new Z64ObjectException($"Overlapping data (type={holder.GetEntryType()}, off=0x{holderOff:X}, size=0x{holder.GetSize():X})");
 
@@ -677,7 +690,7 @@ namespace Z64
 
                                    new VertexHolder($"vtx_{holderOff:X8}", new Vertex[endDiff/0x10].ToList()),
                                 }.FindAll(e => e.GetSize() > 0);
-                                holder = new VertexHolder($"vtx_{(entryOff + Entries[i].GetSize()):X8}", new Vertex[holder.Vertices.Count-(endDiff/0x10)].ToList());
+                                holder = new VertexHolder($"vtx_{(entryOff + Entries[i].GetSize()):X8}", new Vertex[holder.Vertices.Count - (endDiff / 0x10)].ToList());
 
                                 Entries.RemoveAt(i);
                                 Entries.InsertRange(i, newEntries);
@@ -705,25 +718,31 @@ namespace Z64
         public DListHolder AddDList(int size, string name = null, int off = -1)
         {
             if (off == -1) off = GetSize();
-            var holder = new DListHolder(name?? $"dlist_{off:X8}", new byte[size]);
+            var holder = new DListHolder(name ?? $"dlist_{off:X8}", new byte[size]);
+            return (DListHolder)AddHolder(holder, off);
+        }
+        public DListHolder AddDListUnkSize(string name = null, int off = -1)
+        {
+            if (off == -1) off = GetSize();
+            var holder = new DListHolder(name ?? $"dlist_{off:X8}");
             return (DListHolder)AddHolder(holder, off);
         }
         public UnknowHolder AddUnknow(int size, string name = null, int off = -1)
         {
             if (off == -1) off = GetSize();
-            var holder = new UnknowHolder(name?? $"unk_{off:X8}", new byte[size]);
+            var holder = new UnknowHolder(name ?? $"unk_{off:X8}", new byte[size]);
             return (UnknowHolder)AddHolder(holder, off);
         }
         public TextureHolder AddTexture(int w, int h, N64TexFormat format, string name = null, int off = -1)
         {
             if (off == -1) off = GetSize();
-            var holder = new TextureHolder(name?? $"tex_{off:X8}", w, h, format, new byte[N64Texture.GetTexSize(w*h, format)]);
+            var holder = new TextureHolder(name ?? $"tex_{off:X8}", w, h, format, new byte[N64Texture.GetTexSize(w * h, format)]);
             return (TextureHolder)AddHolder(holder, off);
         }
         public VertexHolder AddVertices(int vtxCount, string name = null, int off = -1)
         {
             if (off == -1) off = GetSize();
-            var holder = new VertexHolder(name?? $"vtx_{off:X8}", new Vertex[vtxCount].ToList());
+            var holder = new VertexHolder(name ?? $"vtx_{off:X8}", new Vertex[vtxCount].ToList());
             AddVertexHolder(holder, off);
             return holder;
         }
@@ -736,19 +755,19 @@ namespace Z64
         public SkeletonLimbHolder AddSkeletonLimb(string name = null, int off = -1, int skel_off = -1)
         {
             if (off == -1) off = GetSize();
-            var holder = new SkeletonLimbHolder(name?? $"skel_{skel_off:X8}_limb_{off:X8}", new byte[SkeletonLimbHolder.ENTRY_SIZE]);
+            var holder = new SkeletonLimbHolder(name ?? $"skel_{skel_off:X8}_limb_{off:X8}", new byte[SkeletonLimbHolder.ENTRY_SIZE]);
             return (SkeletonLimbHolder)AddHolder(holder, off);
         }
         public SkeletonLimbsHolder AddSkeletonLimbs(int count, string name = null, int off = -1, int skel_off = -1)
         {
             if (off == -1) off = GetSize();
-            var holder = new SkeletonLimbsHolder(name?? $"skel_{skel_off:X8}_limbs_{off:X8}", new byte[count * 4]);
+            var holder = new SkeletonLimbsHolder(name ?? $"skel_{skel_off:X8}_limbs_{off:X8}", new byte[count * 4]);
             return (SkeletonLimbsHolder)AddHolder(holder, off);
         }
         public SkeletonHolder AddSkeleton(string name = null, int off = -1)
         {
             if (off == -1) off = GetSize();
-            var holder = new SkeletonHolder(name?? $"skel_{off:X8}", new byte[SkeletonHolder.HEADER_SIZE]);
+            var holder = new SkeletonHolder(name ?? $"skel_{off:X8}", new byte[SkeletonHolder.HEADER_SIZE]);
             return (SkeletonHolder)AddHolder(holder, off);
         }
         public FlexSkeletonHolder AddFlexSkeleton(string name = null, int off = -1)
@@ -760,19 +779,19 @@ namespace Z64
         public AnimationHolder AddAnimation(string name = null, int off = -1)
         {
             if (off == -1) off = GetSize();
-            var holder = new AnimationHolder(name?? $"anim_{off:X8}", new byte[AnimationHolder.HEADER_SIZE]);
+            var holder = new AnimationHolder(name ?? $"anim_{off:X8}", new byte[AnimationHolder.HEADER_SIZE]);
             return (AnimationHolder)AddHolder(holder, off);
         }
         public AnimationFrameDataHolder AddFrameData(int count, string name = null, int off = -1)
         {
             if (off == -1) off = GetSize();
-            var holder = new AnimationFrameDataHolder(name ?? $"framedata_{off:X8}", new byte[count*2]);
+            var holder = new AnimationFrameDataHolder(name ?? $"framedata_{off:X8}", new byte[count * 2]);
             return (AnimationFrameDataHolder)AddHolder(holder, off);
         }
         public AnimationJointIndicesHolder AddJointIndices(int count, string name = null, int off = -1)
         {
             if (off == -1) off = GetSize();
-            var holder = new AnimationJointIndicesHolder(name ?? $"jointindices_{off:X8}", new byte[count*AnimationJointIndicesHolder.ENTRY_SIZE]);
+            var holder = new AnimationJointIndicesHolder(name ?? $"jointindices_{off:X8}", new byte[count * AnimationJointIndicesHolder.ENTRY_SIZE]);
             return (AnimationJointIndicesHolder)AddHolder(holder, off);
         }
 
@@ -835,7 +854,7 @@ namespace Z64
             int count = Entries.Count;
             for (int i = 1; i < count; i++)
             {
-                if (Entries[i].GetEntryType() == EntryType.Unknown && Entries[i-1].GetEntryType() == EntryType.Unknown)
+                if (Entries[i].GetEntryType() == EntryType.Unknown && Entries[i - 1].GetEntryType() == EntryType.Unknown)
                 {
                     List<byte> newData = Entries[i - 1].GetData().ToList();
                     newData.AddRange(Entries[i].GetData());
@@ -877,14 +896,43 @@ namespace Z64
         {
             //if (((data.Length + 0xF) & ~0xF) != ((GetSize()+0xF) & ~0xF))
             if (data.Length != GetSize())
-                throw new Exception($"Invalid data size (0x{data.Length:X} instead of 0x{GetSize():X})");
+            {
+                if (data.Length > GetSize())
+                    AddUnknow(data.Length - GetSize());
+                else
+                    throw new Exception($"Invalid data size (0x{data.Length:X} instead of 0x{GetSize():X})");
+            }
 
             using (MemoryStream ms = new MemoryStream(data))
             {
                 BinaryReader br = new BinaryReader(ms);
+                int bytesToTakeFromNextEntry = 0;
 
                 foreach (var iter in Entries)
-                    iter.SetData(br.ReadBytes(iter.GetSize()));
+                {
+                    if (iter.GetEntryType() == EntryType.DList && ((DListHolder)iter).detectSize)
+                    {
+                        long dListOff = ms.Position;
+                        byte[] dListEndData = { 0xDF, 0, 0, 0, 0, 0, 0, 0 };
+                        while (!br.ReadBytes(8).SequenceEqual(dListEndData)) ;
+                        int dListSize = (int)(ms.Position - dListOff);
+                        ms.Position = dListOff;
+                        bytesToTakeFromNextEntry = dListSize - iter.GetSize();
+                        iter.SetData(br.ReadBytes(dListSize));
+                    }
+                    else
+                    {
+                        if (bytesToTakeFromNextEntry != 0)
+                        {
+                            if (iter.GetEntryType() != EntryType.Unknown)
+                                throw new Exception($"Cannot take {bytesToTakeFromNextEntry} bytes from entry of non-Unknown type {iter.GetEntryType()}");
+                            UnknowHolder unkHolder = (UnknowHolder)iter;
+                            unkHolder.Data = new byte[unkHolder.GetSize() - bytesToTakeFromNextEntry];
+                            bytesToTakeFromNextEntry = 0;
+                        }
+                        iter.SetData(br.ReadBytes(iter.GetSize()));
+                    }
+                }
             }
         }
         public byte[] Build()
@@ -1037,7 +1085,7 @@ namespace Z64
                         throw new Z64ObjectException($"Invalid entry type ({iter.GetEntryType()})");
                 }
             }
-            return JsonSerializer.Serialize<object>(list, new JsonSerializerOptions() { WriteIndented = true }) ;
+            return JsonSerializer.Serialize<object>(list, new JsonSerializerOptions() { WriteIndented = true });
         }
         public static Z64Object FromJson(string json)
         {
@@ -1128,6 +1176,77 @@ namespace Z64
                     ((TextureHolder)obj.Entries[i]).Tlut = tlut;
                 }
             }
+            return obj;
+        }
+        public static Z64Object FromZapdXml(string xml)
+        {
+            Z64Object obj = new Z64Object();
+            XmlDocument doc = new XmlDocument();
+            doc.LoadXml(xml);
+            XmlNode root = doc.FirstChild;
+            XmlNode file = root.FirstChild;
+
+            for (int i = 0; i < file.ChildNodes.Count; i++)
+            {
+                XmlNode data = file.ChildNodes[i];
+                switch (data.Name)
+                {
+                    case "Texture":
+                        {
+                            int w = Int32.Parse(data.Attributes["Width"].InnerText);
+                            int h = Int32.Parse(data.Attributes["Height"].InnerText);
+                            string fmtStr = data.Attributes["Format"].InnerText;
+                            fmtStr = fmtStr.ToUpper();
+                            if (fmtStr == "RGB5A1")
+                                fmtStr = "RGBA16";
+                            N64TexFormat fmt = Enum.Parse<N64TexFormat>(fmtStr);
+                            string name = data.Attributes["Name"].InnerText;
+                            string offStr = data.Attributes["Offset"].InnerText;
+                            int off = (int)new System.ComponentModel.Int32Converter().ConvertFromString(offStr);
+                            obj.AddTexture(w, h, fmt, name, off);
+                        }
+                        break;
+                    case "DList":
+                        {
+                            string name = data.Attributes["Name"].InnerText;
+                            string offStr = data.Attributes["Offset"].InnerText;
+                            int off = (int)new System.ComponentModel.Int32Converter().ConvertFromString(offStr);
+                            obj.AddDListUnkSize(name, off);
+                        }
+                        break;
+                    case "Animation":
+                        {
+                            string name = data.Attributes["Name"].InnerText;
+                            string offStr = data.Attributes["Offset"].InnerText;
+                            int off = (int)new System.ComponentModel.Int32Converter().ConvertFromString(offStr);
+                            obj.AddAnimation(name, off);
+                        }
+                        break;
+                    case "Skeleton":
+                        {
+                            string name = data.Attributes["Name"].InnerText;
+                            string type = data.Attributes["Type"].InnerText;
+                            string offStr = data.Attributes["Offset"].InnerText;
+                            int off = (int)new System.ComponentModel.Int32Converter().ConvertFromString(offStr);
+                            switch(type)
+                            {
+                                // case "Curve":
+                                case "Normal":
+                                    {
+                                        obj.AddSkeleton(name, off);
+                                    }
+                                    break;
+                                case "Flex":
+                                    {
+                                        obj.AddFlexSkeleton(name, off);
+                                    }
+                                    break;
+                            }
+                        }
+                        break;
+                }
+            }
+
             return obj;
         }
 

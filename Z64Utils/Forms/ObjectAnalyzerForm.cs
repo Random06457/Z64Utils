@@ -131,7 +131,7 @@ namespace Z64.Forms
                 return;
             }
 
-            openInDlistViewerMenuItem.Visible = 
+            openInDlistViewerMenuItem.Visible =
             addToDlistViewerMenuItem.Visible =
             openSkeletonViewerMenuItem.Visible = false;
 
@@ -197,7 +197,7 @@ namespace Z64.Forms
                                 var values = "";
                                 for (int j = 0; j < 4; j++)
                                 {
-                                    values += $"0x{ArrayUtil.ReadUint32BE(matrices.Matrices[n].GetBuffer(), 4*(4 * i + j)):X08}";
+                                    values += $"0x{ArrayUtil.ReadUint32BE(matrices.Matrices[n].GetBuffer(), 4 * (4 * i + j)):X08}";
                                     if (j != 3)
                                         values += $"  ";
                                 }
@@ -292,7 +292,7 @@ namespace Z64.Forms
                     {
                         tabControl1.SelectedTab = tabPage_unknow;
 
-                        var provider = new DynamicByteProvider(holder.GetData());;
+                        var provider = new DynamicByteProvider(holder.GetData());
                         hexBox1.ByteProvider = provider;
                         hexBox1.LineInfoOffset = new SegmentedAddress(_segment, _obj.OffsetOf(holder)).VAddr;
                         break;
@@ -331,7 +331,7 @@ namespace Z64.Forms
             UpdateMap();
         }
 
-        
+
 
         private void openSkeletonViewerMenuItem_Click(object sender, EventArgs e)
         {
@@ -438,6 +438,19 @@ namespace Z64.Forms
             }
         }
 
+        private void importZapdXmlToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            openFileDialog1.FileName = "";
+            openFileDialog1.Filter = $"{Filters.XML}|{Filters.ALL}";
+            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                string xml = File.ReadAllText(openFileDialog1.FileName);
+                _obj = Z64Object.FromZapdXml(xml);
+                _obj.SetData(_data);
+                UpdateMap();
+            }
+        }
+
         private void exportCToolStripMenuItem_Click(object sender, EventArgs e)
         {
             saveFileDialog1.FileName = "";
@@ -478,7 +491,7 @@ namespace Z64.Forms
                                 sw.WriteLine($"u8 {entry.Name}[] = \r\n{{");
 
                                 var tex = entry.GetData();
-                                for (int i = 0; i < tex.Length; i+= 16)
+                                for (int i = 0; i < tex.Length; i += 16)
                                 {
                                     sw.Write("    ");
                                     for (int j = 0; j < 16 && i + j < tex.Length; j++)
@@ -497,7 +510,7 @@ namespace Z64.Forms
                                 for (int i = 0; i < bytes.Length; i += 16)
                                 {
                                     sw.Write("    ");
-                                    for (int j = 0; j < 16 && i+j < bytes.Length; j++)
+                                    for (int j = 0; j < 16 && i + j < bytes.Length; j++)
                                         sw.Write($"0x{bytes[i + j]:X2}, ");
                                     sw.Write("\r\n");
                                 }
@@ -518,7 +531,7 @@ namespace Z64.Forms
                                 for (int i = 0; i < 8; i += 8)
                                 {
                                     sw.Write("    ");
-                                    for (int j = 0; j < 8 && i+j < holder.FrameData.Length; j++)
+                                    for (int j = 0; j < 8 && i + j < holder.FrameData.Length; j++)
                                         sw.Write($"0x{holder.FrameData[i + j]:X4}, ");
                                 }
                                 sw.WriteLine("};");
