@@ -933,6 +933,8 @@ namespace Z64
                         iter.SetData(br.ReadBytes(iter.GetSize()));
                     }
                 }
+
+                Entries.RemoveAll(entry => entry.GetSize() == 0);
             }
         }
         public byte[] Build()
