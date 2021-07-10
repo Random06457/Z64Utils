@@ -74,6 +74,7 @@
             this.analyzeDlistsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.importJSONToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exportJSONToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.importZapdXmlToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.resetToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.settingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.disassemblySettingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -386,6 +387,7 @@
             this.analyzeDlistsToolStripMenuItem,
             this.importJSONToolStripMenuItem,
             this.exportJSONToolStripMenuItem,
+            this.importZapdXmlToolStripMenuItem,
             this.resetToolStripMenuItem});
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
             this.toolsToolStripMenuItem.Size = new System.Drawing.Size(62, 20);
@@ -420,6 +422,13 @@
             this.exportJSONToolStripMenuItem.Size = new System.Drawing.Size(220, 22);
             this.exportJSONToolStripMenuItem.Text = "Export JSON";
             this.exportJSONToolStripMenuItem.Click += new System.EventHandler(this.exportJSONToolStripMenuItem_Click);
+            // 
+            // importZapdXmlToolStripMenuItem
+            // 
+            this.importZapdXmlToolStripMenuItem.Name = "importZapdXmlToolStripMenuItem";
+            this.importZapdXmlToolStripMenuItem.Size = new System.Drawing.Size(220, 22);
+            this.importZapdXmlToolStripMenuItem.Text = "Import ZapdXml";
+            this.importZapdXmlToolStripMenuItem.Click += new System.EventHandler(this.importZapdXmlToolStripMenuItem_Click);
             // 
             // resetToolStripMenuItem
             // 
@@ -508,6 +517,7 @@
         private System.Windows.Forms.ColumnHeader columnHeader8;
         private System.Windows.Forms.ToolStripMenuItem importJSONToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem exportJSONToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem importZapdXmlToolStripMenuItem;
         private System.Windows.Forms.SaveFileDialog saveFileDialog1;
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
         private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
