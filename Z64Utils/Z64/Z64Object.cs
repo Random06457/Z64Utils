@@ -1188,6 +1188,9 @@ namespace Z64
             XmlNode root = doc.FirstChild;
             XmlNode file = root.FirstChild;
 
+            Dictionary<int, TextureHolder> texturesByOffset = new Dictionary<int, TextureHolder>();
+            Dictionary<int, List<TextureHolder>> texturesMissingTlutByTlutOffset = new Dictionary<int, List<TextureHolder>>();
+
             for (int i = 0; i < file.ChildNodes.Count; i++)
             {
                 XmlNode data = file.ChildNodes[i];
@@ -1205,7 +1208,39 @@ namespace Z64
                             string name = data.Attributes["Name"].InnerText;
                             string offStr = data.Attributes["Offset"].InnerText;
                             int off = (int)new System.ComponentModel.Int32Converter().ConvertFromString(offStr);
-                            obj.AddTexture(w, h, fmt, name, off);
+                            TextureHolder texHolder = obj.AddTexture(w, h, fmt, name, off);
+                            if (fmt == N64TexFormat.CI4 || fmt == N64TexFormat.CI8)
+                            {
+                                string tlutOffsetStr = data.Attributes["TlutOffset"]?.InnerText;
+                                if (tlutOffsetStr == null)
+                                {
+                                    Debug.WriteLine($"{texHolder} xml node has no TlutOffset attribute");
+                                }
+                                else
+                                {
+                                    int tlutOffset = (int)new System.ComponentModel.Int32Converter().ConvertFromString(tlutOffsetStr);
+                                    if (texturesByOffset.ContainsKey(tlutOffset))
+                                    {
+                                        texHolder.Tlut = texturesByOffset[tlutOffset];
+                                    }
+                                    else
+                                    {
+                                        if (!texturesMissingTlutByTlutOffset.ContainsKey(tlutOffset))
+                                        {
+                                            texturesMissingTlutByTlutOffset[tlutOffset] = new List<TextureHolder>();
+                                        }
+                                        texturesMissingTlutByTlutOffset[tlutOffset].Add(texHolder);
+                                    }
+                                }
+                            }
+                            texturesByOffset[off] = texHolder;
+                            if (texturesMissingTlutByTlutOffset.ContainsKey(off))
+                            {
+                                foreach (TextureHolder textureMissingThisTlut in texturesMissingTlutByTlutOffset[off])
+                                {
+                                    textureMissingThisTlut.Tlut = texHolder;
+                                }
+                            }
                         }
                         break;
                     case "DList":
