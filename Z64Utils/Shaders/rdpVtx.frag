@@ -115,11 +115,11 @@ out vec4 FragColor;
 const vec3 LigthFacing = vec3(0, 0, 1);
 
 
-
+// this is technically phong shading but whatever
 float gouraudShading(vec3 light, float ambient)
 {
     float diffuse = max(0, dot(normalize(light), normalize(v_VtxNormal)));
-    return diffuse + ambient;
+    return (diffuse + ambient) * 0.6; // hack
 }
 
 float rand(vec2 co){
@@ -301,6 +301,7 @@ vec3 combineC(vec4 x, int flag, float shadeAlpha)
         case G_CCMUX_ENV_ALPHA:
             return u_EnvColor.aaa;
         case G_CCMUX_LOD_FRACTION:
+            //return vec3(0);
             return vec3(u_PrimLod);
         // G_CCMUX_PRIM_LOD_FRAC
         // G_CCMUX_K5
@@ -319,6 +320,8 @@ vec3 combineD(vec4 x, int flag)
             return vec3(1);
     }
     // 0x07 : G_CCMUX_0
+    // if (flag == G_CCMUX_SHADE)
+    //     ret = vec3(0);
     return ret;
 }
 
@@ -361,6 +364,7 @@ float combineAlphaC(vec4 x, int flag, float shadeAlpha)
     switch (flag)
     {
         case G_ACMUX_LOD_FRACTION:
+            //return 0;
             return u_PrimLod;
         // G_ACMUX_PRIM_LOD_FRAC 
     }

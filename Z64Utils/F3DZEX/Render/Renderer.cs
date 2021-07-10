@@ -123,19 +123,8 @@ namespace F3DZEX.Render
                 return new Tuple<int, int>((int)wrapS, (int)wrapT);
             }
 
-            public int Width => (int)(lrs.Float() + 1);
-            public int Height => (int)(lrt.Float() + 1);
-
-            public int GetTexelCount()
-            {
-                int w = (int)(lrs.Float() - uls.Float() + 1);
-                int h = (int)(lrt.Float() - ult.Float() + 1);
-                return w * h;
-            }
-            public int GetTextureSize()
-            {
-                return N64Texture.GetTexSize(GetTexelCount(), siz);
-            }
+            public int WrapWidth => 1 << maskS;
+            public int WrapHeight => 1 << maskT;
         }
 
         public class ColorCombiner
@@ -456,11 +445,11 @@ namespace F3DZEX.Render
 
         private void DecodeTex(TextureHandler tex, Tile tile, byte[] tlut)
         {
-            int w = tile.Width;
-            int h = tile.Height;
+            int w = tile.WrapWidth;
+            int h = tile.WrapHeight;
 
-            // copy from dmem
-            int size = tile.GetTextureSize();
+            // copy from tmem
+            int size = N64Texture.GetTexSize(w * h, tile.siz);
             byte[] data = new byte[size];
             System.Buffer.BlockCopy(_tmem, tile.tmem * 8, data, 0, size);
 

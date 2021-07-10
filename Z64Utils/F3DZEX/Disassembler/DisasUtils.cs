@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using Common;
 using F3DZEX.Command;
 
@@ -162,7 +163,7 @@ namespace F3DZEX
                 return cmd.shift == shift && cmd.len == len;
             }
 
-            private static Tuple<string, string> GetCycleDepRenderFlags(uint x)
+            private static Tuple<string[], string[]> GetCycleDepRenderFlags(uint x)
             {
                 string[] pmValues = new string[]
                 {
@@ -188,25 +189,62 @@ namespace F3DZEX
                     "G_BL_0"
                 };
 
-                string c1 = $"GBL_c1({pmValues[x >> 14 & 3]}, {aValues[x >> 10 & 3]}, {pmValues[x >> 6 & 3]}, {bValues[x >> 2 & 3]})";
-                string c2 = $"GBL_c2({pmValues[x >> 12 & 3]}, {aValues[x >> 8 & 3]}, {pmValues[x >> 4 & 3]}, {bValues[x >> 0 & 3]})";
-                return new Tuple<string, string>(c1, c2);
+                string p1 = pmValues[x >> 14 & 3];
+                string a1 = aValues[x >> 10 & 3];
+                string m1 = pmValues[x >> 6 & 3];
+                string b1 = bValues[x >> 2 & 3];
+                
+                string p2 = pmValues[x >> 12 & 3];
+                string a2 = aValues[x >> 8 & 3];
+                string m2 = pmValues[x >> 4 & 3];
+                string b2 = bValues[x >> 0 & 3];
+
+                return new Tuple<string[], string[]>(new string[] {p1, a1, m1, b1}, new string[] {p2, a2, m2, b2});
             }
 
-            public static string DisasRenderMode(GSetOtherMode cmd)
+            public static (string, List<string>) DisasRenderMode(GSetOtherMode cmd)
             {
                 uint cyclIndep = BitUtils.GetBits(cmd.data, 3, 13);
                 uint cyclDep = BitUtils.GetBits(cmd.data, 16, 16);
 
                 List<string> flags = _renderModeFlags.GetFlags(cyclIndep);
                 var depFlags = GetCycleDepRenderFlags(cyclDep);
-                flags.Insert(0, depFlags.Item2);
+                string blc1 = $"GBL_c1({string.Join(", ", depFlags.Item1)})";
+                string blc2 = $"GBL_c2({string.Join(", ", depFlags.Item2)})";
 
-                string c0 = depFlags.Item1;
-                string c1 = string.Join(" | ", flags);
+                flags.Insert(0, blc2);
+
+                string c1 = blc1;
+                string c2 = string.Join(" | ", flags);
                 //flags.Add($"0x{cyclDep:X}<<16");
 
-                return $"gsDPSetRenderMode({c0}, {c1})";
+                // (P * A + M * B) / (A + B)
+                Func<string[], string> formatExpr = (blc) =>
+                {
+                    string p = blc[0].Remove(0, "G_BL_".Length);
+                    string a = blc[1].Remove(0, "G_BL_".Length);
+                    string m = blc[2].Remove(0, "G_BL_".Length);
+                    string b = blc[3].Remove(0, "G_BL_".Length);
+
+                    if (a == "0")
+                        return m;
+
+                    if (b == "0")
+                        return p;
+
+                    if (b == "1MA")
+                        return $"({p} * {a} + {m} * (1 - {a}))";
+                    
+                    return $"({p} * {a} + {m} * {b}) / ({a} + {b})";
+                };
+
+                List<string> comments = new List<string>()
+                {
+                    $"BL1: {formatExpr(depFlags.Item1)}",
+                    $"BL2: {formatExpr(depFlags.Item2)}",
+                };
+
+                return ($"gsDPSetRenderMode({c1}, {c2})", comments);
             }
         }
 
@@ -280,8 +318,8 @@ namespace F3DZEX
         }
         private static string DisTexWrap(G_TX_TEXWRAP v)
         {
-            var mirror = v & G_TX_TEXWRAP.G_TX_MIRROR;
-            var wrap = v & G_TX_TEXWRAP.G_TX_CLAMP;
+            var mirror = v.HasFlag(G_TX_TEXWRAP.G_TX_MIRROR) ? "G_TX_MIRROR" : "G_TX_NOMIRROR";
+            var wrap = v.HasFlag(G_TX_TEXWRAP.G_TX_CLAMP) ? "G_TX_CLAMP" : "G_TX_WRAP";
             return $"{mirror} | {wrap}";
         }
         private static string DisTexWrap(int v)

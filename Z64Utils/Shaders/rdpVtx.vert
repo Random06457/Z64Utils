@@ -14,7 +14,7 @@ flat out int v_VtxId;
 uniform mat4 u_View;
 uniform mat4 u_Model;
 uniform mat4 u_Projection;
-uniform sampler2D u_Tex;
+uniform sampler2D u_Tex0;
 
 float S105ToFloat(int fp)
 {
@@ -35,7 +35,7 @@ vec2 decodeTexCoords(sampler2D tex, ivec2 coords)
 
 vec2 getTexCoords()
 {
-    return decodeTexCoords(u_Tex, ivec2(bomSwap16(rdpVtxTexCoords.x), bomSwap16(rdpVtxTexCoords.y)));
+    return decodeTexCoords(u_Tex0, ivec2(bomSwap16(rdpVtxTexCoords.x), bomSwap16(rdpVtxTexCoords.y)));
 }
 
 vec3 getPos()
