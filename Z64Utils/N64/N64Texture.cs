@@ -384,21 +384,21 @@ namespace N64
             byte[] ret = new byte[texels * 4];
             for (int t = 0; t < inBuff.Length; t++)
             {
-                byte idx = (byte)(inBuff[t] & 0xF);
+                byte idx = (byte)(inBuff[t] >> 4 & 0xF);
                 byte b1 = tlut[2 * idx + 0];
                 byte b2 = tlut[2 * idx + 1];
-                ret[4 * t + 0] = (byte)((b1 >> 3) * 0xFF / 0x1F);
-                ret[4 * t + 1] = (byte)((((b1 & 7) << 2) | (b2 >> 6)) * 0xFF / 0x1F);
-                ret[4 * t + 2] = (byte)(((b2 >> 1) & 0x1F) * 0xFF / 0x1F);
-                ret[4 * t + 3] = (byte)(0xFF * (b2 & 1));
+                ret[8 * t + 0] = (byte)((b1 >> 3) * 0xFF / 0x1F);
+                ret[8 * t + 1] = (byte)((((b1 & 7) << 2) | (b2 >> 6)) * 0xFF / 0x1F);
+                ret[8 * t + 2] = (byte)(((b2 >> 1) & 0x1F) * 0xFF / 0x1F);
+                ret[8 * t + 3] = (byte)(0xFF * (b2 & 1));
 
-                idx = (byte)(inBuff[t] >> 4 & 0xF);
+                idx = (byte)(inBuff[t] & 0xF);
                 b1 = tlut[2 * idx + 0];
                 b2 = tlut[2 * idx + 1];
-                ret[4 * t + 4] = (byte)((b1 >> 3) * 0xFF / 0x1F);
-                ret[4 * t + 5] = (byte)((((b1 & 7) << 2) | (b2 >> 6)) * 0xFF / 0x1F);
-                ret[4 * t + 6] = (byte)(((b2 >> 1) & 0x1F) * 0xFF / 0x1F);
-                ret[4 * t + 7] = (byte)(0xFF * (b2 & 1));
+                ret[8 * t + 4] = (byte)((b1 >> 3) * 0xFF / 0x1F);
+                ret[8 * t + 5] = (byte)((((b1 & 7) << 2) | (b2 >> 6)) * 0xFF / 0x1F);
+                ret[8 * t + 6] = (byte)(((b2 >> 1) & 0x1F) * 0xFF / 0x1F);
+                ret[8 * t + 7] = (byte)(0xFF * (b2 & 1));
             }
 
             return ret;
