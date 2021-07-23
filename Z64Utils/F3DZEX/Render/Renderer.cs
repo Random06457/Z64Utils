@@ -120,6 +120,11 @@ namespace F3DZEX.Render
                     ? TextureWrapMode.ClampToEdge
                     : (mirrorV ? TextureWrapMode.MirroredRepeat : TextureWrapMode.Repeat);
 
+                wrapS = cmT.HasFlag(G_TX_TEXWRAP.G_TX_CLAMP) ? TextureWrapMode.ClampToEdge : TextureWrapMode.Repeat;
+                wrapT = cmT.HasFlag(G_TX_TEXWRAP.G_TX_CLAMP) ? TextureWrapMode.ClampToEdge : TextureWrapMode.Repeat;
+                //wrapS = (mirrorH ? TextureWrapMode.MirroredRepeat : TextureWrapMode.Repeat);
+                //wrapT = (mirrorV ? TextureWrapMode.MirroredRepeat : TextureWrapMode.Repeat);
+
                 return new Tuple<int, int>((int)wrapS, (int)wrapT);
             }
 
@@ -257,7 +262,7 @@ namespace F3DZEX.Render
         ColorCombiner _combiner;
         uint _otherModeHI = 0;
         uint _otherModeLO = 0;
-        uint _geoMode = 0;
+        uint _geoMode = (uint)(G_GEO_MODE.G_FOG | G_GEO_MODE.G_LIGHTING);
         ChromaKey _chromaKey;
 
         bool _initialized;
@@ -315,7 +320,6 @@ namespace F3DZEX.Render
             _rdpVtxDrawer.SendHighlightEnabled(enabled);
         }
 
-
         private void Init()
         {
             /* Init Texture */
@@ -353,26 +357,40 @@ namespace F3DZEX.Render
             if (!_initialized)
                 Init();
 
+            CheckGLErros();
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             GL.ClearColor(CurrentConfig.BackColor);
+            CheckGLErros();
 
             if (RenderFailed())
                 return;
 
+            CheckGLErros();
             RdpMtxStack.Clear();
             ModelMtxStack.Clear();
+
+            GL.ActiveTexture(TextureUnit.Texture0);
+            CheckGLErros();
+            _tex0.Use();
+
+            GL.ActiveTexture(TextureUnit.Texture1);
+            CheckGLErros();
+            _tex1.Use();
+            CheckGLErros();
 
 
             _gridDrawer.SendProjViewMatrices(ref proj, ref view);
             _axisDrawer.SendProjViewMatrices(ref proj, ref view);
             _rdpVtxDrawer.SendProjViewMatrices(ref proj, ref view);
             _rdpVtxDrawer.SendInitialColors(CurrentConfig);
+            CheckGLErros();
             Matrix4 id = Matrix4.Identity;
             _textDrawer.SendProjViewMatrices(ref id, ref id);
 
             _rdpVtxDrawer.SendModelMatrix(ModelMtxStack.Top());
             _gridDrawer.SendModelMatrix(Matrix4.Identity);
             _axisDrawer.SendModelMatrix(Matrix4.Identity);
+            CheckGLErros();
 
             _rdpVtxDrawer.SendHighlightColor(CurrentConfig.HighlightColor);
             _rdpVtxDrawer.SendHighlightEnabled(false);
@@ -380,6 +398,7 @@ namespace F3DZEX.Render
             _rdpVtxDrawer.SendNormalColor(CurrentConfig.NormalColor);
             _rdpVtxDrawer.SendWireFrameColor(CurrentConfig.WireframeColor);
             _rdpVtxDrawer.SendLightingEnabled(CurrentConfig.EnabledLighting);
+            CheckGLErros();
 
             GL.Enable(EnableCap.DepthTest);
             //GL.DepthFunc(DepthFunction.Lequal);
@@ -389,6 +408,7 @@ namespace F3DZEX.Render
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             GL.Enable(EnableCap.Texture2D);
+            CheckGLErros();
 
             if (CurrentConfig.ShowGrid)
                 RenderHelper.DrawGrid(_gridDrawer);
@@ -484,10 +504,13 @@ namespace F3DZEX.Render
                     DecodeTex(_tex1, tile1, tlut);
 
                 _reqDecodeTex = false;
+                
+                _rdpVtxDrawer.SendTile(0, _tiles[0]);
+                _rdpVtxDrawer.SendTile(1, _tiles[1]);
             }
 
-            _rdpVtxDrawer.SendTex0(0);
-            _rdpVtxDrawer.SendTex1(1);
+            // _rdpVtxDrawer.SendTex0(0);
+            // _rdpVtxDrawer.SendTex1(1);
         }
 
         private unsafe void ProcessInstruction(CmdInfo info)

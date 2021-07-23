@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
+using System.IO;
 
 namespace F3DZEX.Render
 {
@@ -10,7 +11,7 @@ namespace F3DZEX.Render
     {
         public ColoredVertexDrawer()
         {
-            _shader = new ShaderHandler("Shaders/coloredVtx.vert", "Shaders/coloredVtx.frag");
+            _shader = new ShaderHandler(File.ReadAllText("Shaders/coloredVtx.vert"), File.ReadAllText("Shaders/coloredVtx.frag"));
             _attrs = new VertexAttribs();
             // pos
             _attrs.LayoutAddFloat(3, VertexAttribPointerType.Float, false);

@@ -4,6 +4,7 @@ using System.Text;
 using OpenTK.Graphics.OpenGL;
 using OpenTK;
 using System.Drawing;
+using System.IO;
 
 namespace F3DZEX.Render
 {
@@ -11,7 +12,7 @@ namespace F3DZEX.Render
     {
         public SimpleVertexDrawer()
         {
-            _shader = new ShaderHandler("Shaders/simpleVtx.vert", "Shaders/coloredVtx.frag");
+            _shader = new ShaderHandler(File.ReadAllText("Shaders/simpleVtx.vert"), File.ReadAllText("Shaders/coloredVtx.frag"));
             _attrs = new VertexAttribs();
 
             _attrs.LayoutAddFloat(3, VertexAttribPointerType.Float, false);

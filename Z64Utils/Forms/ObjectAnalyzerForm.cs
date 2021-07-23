@@ -158,7 +158,7 @@ namespace Z64.Forms
                             var item = listView_vtx.Items.Add($"{addr:X8}");
                             item.SubItems.Add($"{vtx.Vertices[i].X}, {vtx.Vertices[i].Y}, {vtx.Vertices[i].Z}");
                             item.SubItems.Add($"0x{vtx.Vertices[i].Flag:X8}");
-                            item.SubItems.Add($"{vtx.Vertices[i].TexX}, {vtx.Vertices[i].TexY}");
+                            item.SubItems.Add($"{vtx.Vertices[i].TexX >> 5}, {vtx.Vertices[i].TexY >> 5}");
                             item.SubItems.Add($"{vtx.Vertices[i].R}, {vtx.Vertices[i].G}, {vtx.Vertices[i].B}, {vtx.Vertices[i].A}");
                             addr += 0x10;
                         }
