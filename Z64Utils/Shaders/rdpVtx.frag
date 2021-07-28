@@ -108,23 +108,6 @@ out vec4 FragColor;
 uniform vec3 u_DirLight;
 uniform TileAttribute u_Tiles[2];
 
-/*
-uniform vec4 u_PrimColor;
-uniform float u_PrimLod;
-uniform vec4 u_BlendColor;
-uniform vec4 u_EnvColor;
-uniform vec4 u_FogColor;
-
-uniform uint u_OtherModeHi;
-uniform uint u_OtherModeLo;
-uniform uint u_GeoMode;
-
-uniform ivec4 u_CombinerC1;
-uniform ivec4 u_CombinerA1;
-uniform ivec4 u_CombinerC2;
-uniform ivec4 u_CombinerA2;
-*/
-
 uniform vec3 u_ChromaKeyCenter;
 uniform vec3 u_ChromaKeyScale;
 
@@ -178,12 +161,8 @@ vec4 Green = vec4(0, 1, 0, 1);
 vec4 Blue = vec4(0, 0, 1, 1);
 
 
-
-// todo: investigate further
-float clampMirrorMask(float x, int l, int h, int mask, int cm)
+int clampMirrorMask(int x, int l, int h, int mask, int cm)
 {
-    //x = float(int(x));
-
     int bit = (1 << mask);
 
     // clamp
@@ -193,22 +172,39 @@ float clampMirrorMask(float x, int l, int h, int mask, int cm)
         x = max(x, l);
     }
 
-    bool mirror = (abs(int(x)) / bit) % 2 == (x >= 0 ? 1 : 0);
+    bool mirror = (abs(x) / bit) % 2 == (x >= 0 ? 1 : 0);
 
-    x = mod((mod(x, bit) + bit), bit);
+    x = ((x % bit) + bit) % bit;
 
     if (mirror && ((cm & G_TX_MIRROR) != 0))
         x = bit - 1 - x;
     
-    return x / (bit-1);
+    return x;
+}
+
+vec4 texelAt(int i, ivec2 pos)
+{
+    int s = clampMirrorMask(pos.x, int(u_Tiles[i].ul.x), int(u_Tiles[i].lr.x), u_Tiles[i].mask.x, u_Tiles[i].cm.x);
+    int t = clampMirrorMask(pos.y, int(u_Tiles[i].ul.y), int(u_Tiles[i].lr.y), u_Tiles[i].mask.y, u_Tiles[i].cm.y);
+
+    return texelFetch(u_Tiles[i].tex, ivec2(s, t), 0);
+}
+
+vec4 bilinearSample(int tile, vec2 uv)
+{
+    vec2 f = fract(uv);
+    ivec2 base = ivec2(floor(uv));
+    vec4 p00 = texelAt(tile, base + ivec2(0, 0));
+    vec4 p10 = texelAt(tile, base + ivec2(1, 0));
+    vec4 p01 = texelAt(tile, base + ivec2(0, 1));
+    vec4 p11 = texelAt(tile, base + ivec2(1, 1));
+
+    return mix(mix(p00, p10, f.x), mix(p01, p11, f.x), f.y);
 }
 
 vec4 texel(int i)
 {
-    float s = clampMirrorMask(v_VtxTexCoords.x, int(u_Tiles[i].ul.x), int(u_Tiles[i].lr.x), u_Tiles[i].mask.x, u_Tiles[i].cm.x);
-    float t = clampMirrorMask(v_VtxTexCoords.y, int(u_Tiles[i].ul.y), int(u_Tiles[i].lr.y), u_Tiles[i].mask.y, u_Tiles[i].cm.y);
-        
-    return texture(u_Tiles[i].tex, vec2(s, t));
+    return bilinearSample(i, v_VtxTexCoords);
 }
 
 
@@ -573,5 +569,4 @@ void main()
 
     /* highlight */
     FragColor = addHighlight(FragColor);
-
 }
