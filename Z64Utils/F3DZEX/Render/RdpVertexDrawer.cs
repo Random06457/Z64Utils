@@ -75,29 +75,9 @@ namespace F3DZEX.Render
             _nrmShader.Send("u_Model", model);
             _wireframeShader.Send("u_Model", model);
         }
-        // public void SendTex0(int tex)
-        // {
-        //     _shader.Send("u_Tex0", tex);
-
-            
-        // }
-        // public void SendTex1(int tex)
-        // {
-        //     _shader.Send("u_Tex1", tex);
-        // }
+        
         public void SendTile(int idx, Render.Renderer.Tile tile)
         {
-            /*
-            struct TileAttribute
-            {
-                sampler2D tex;
-                ivec2 cm;
-                ivec2 mask;
-                ivec2 shift;
-                vec2 ul;
-                vec2 lr;
-            };
-            */
             _shader.Send($"u_Tiles[{idx}].tex", idx);
             _shader.Send($"u_Tiles[{idx}].cm", (int)tile.cmS, (int)tile.cmT);
             _shader.Send($"u_Tiles[{idx}].mask", tile.maskS, tile.maskT);
