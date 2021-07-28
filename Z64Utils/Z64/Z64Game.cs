@@ -142,7 +142,7 @@ namespace Z64
 
             Version = Z64Version.IdentifyRom(rom, out int fileTableOff);
             if (Version == null)
-                throw new Z64GameException("Invalid or unknown build name");
+                throw new Z64GameException("Could not identify build. Please check your config files.");
 
             if (!N64CheckSum.Validate(Rom, Version.Cic))
                 throw new Exception("Invalid CRC");

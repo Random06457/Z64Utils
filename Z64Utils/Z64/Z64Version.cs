@@ -263,7 +263,13 @@ namespace Z64
         private static Dictionary<string, Z64Version> _versions;
         private static void LoadVersions()
         {
-            var files = Directory.GetFiles("versions", "*.json");
+            string path = "versions";
+            if (!Directory.Exists(path))
+                throw new Exception($"Could load config files (\"{path}/*.json\").");
+
+            var files = Directory.GetFiles(path, "*.json");
+            if (files.Length == 0)
+                throw new Exception($"Could load config files (\"{path}/*.json\").");
 
             _versions = new();
             var options = new JsonSerializerOptions()

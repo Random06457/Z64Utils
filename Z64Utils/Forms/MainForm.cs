@@ -129,18 +129,17 @@ namespace Z64.Forms
                 });
 
                 StartTask(() => {
-                    //try
-                    //{
+                    try
+                    {
                         _game = new Z64Game(openFileDialog1.FileName, ProcessCallback);
-                    /*}
+                    }
                     catch(Exception ex)
                     {
                         Invoke(new Action(() =>
                         {
-                            MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            MessageBox.Show(ex.Message + "\r\n\r\nIf this issue is related to config files, consider downloading the latest version at github.com/Random06457/Z64Utils-Config", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         }));
                     }
-                    */
 
                     Invoke(new Action(() =>
                     {

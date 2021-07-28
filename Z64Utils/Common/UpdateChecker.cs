@@ -125,7 +125,7 @@ namespace Common
     {
 
         public const string ReleaseURL = @"https://api.github.com/repos/Random06457/Z64Utils/releases/latest";
-        public const string CurrentTag = "v2.0.1";
+        public const string CurrentTag = "v2.1.0";
         
         public static GithubRelease GetLatestRelease()
         {

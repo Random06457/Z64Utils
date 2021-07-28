@@ -52,7 +52,7 @@ namespace Z64
             }
             catch (Exception ex)
             {
-                throw new Z64MemoryException("Error while creating the memory map. Please check your config file (versions/*.json)");
+                throw new Z64MemoryException("Error while creating the memory map. Please check your config files (versions/*.json)");
             }
         }
 

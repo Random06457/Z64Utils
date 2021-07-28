@@ -10,7 +10,7 @@ Demo (old) : https://youtu.be/AIVDunCtSnM
 ## Filesystem Parser
 The tool can parse the filesystem contained in a given Zelda ROM and extract/replace/open the files in it.
 
-### ROM/RAM Address Conversion
+## ROM/RAM Address Conversion
 The tool recreates the memory map of the ROM like how it would lie in virtual RAM (i.e. without any heap allocation / code relocation) and makes you able to convert addresses from one address space to another.
 
 ## Object Analyzer
@@ -29,6 +29,11 @@ The tool contains a renderer that can process [F3DZEX](https://wiki.cloudmodding
 The Skeleton Viewer can parse and render skeletons and animations used in Ocarina of Time and Majora's Mask.
 
 Note that currently only standart limbs are supported (no SkinLimb/LodLimb)
+
+# Configuration
+Z64Utils requires some configuration files in order to work properly. The purpose of these files is to give some basic information on the different ROM versions.
+
+You can find these configuration files as well as some additional information about them [here](https://github.com/Random06457/Z64Utils-Config).
 
 # Dependencies
 
