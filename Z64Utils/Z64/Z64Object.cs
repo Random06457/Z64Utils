@@ -1130,6 +1130,11 @@ namespace Z64
             }
             return obj;
         }
+        internal static Z64Object FromXmlZAPD(string xml)
+        {
+            throw new NotImplementedException();
+
+        }
 
     }
 }

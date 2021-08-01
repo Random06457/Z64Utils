@@ -568,5 +568,18 @@ namespace Z64.Forms
                 File.WriteAllText(saveFileDialog1.FileName, sw.ToString());
             }
         }
+
+        private void importXMLZAPDToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            openFileDialog1.FileName = "";
+            openFileDialog1.Filter = $"{Filters.XML}|{Filters.ALL}";
+            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                string xml = File.ReadAllText(openFileDialog1.FileName);
+                _obj = Z64Object.FromXmlZAPD(xml);
+                _obj.SetData(_data);
+                UpdateMap();
+            }
+        }
     }
 }
