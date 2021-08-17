@@ -26,10 +26,7 @@ namespace Z64.Forms
         {
             InitializeComponent();
 
-            if (segmentId > 15)
-                segmentId = 15;
-            if (segmentId < 0)
-                segmentId = 0;
+            segmentId = Math.Clamp(segmentId, 0, 15);
 
             _data = data;
             _obj = new Z64Object(_data);
@@ -98,11 +95,22 @@ namespace Z64.Forms
         {
             listView_map.Items.Clear();
             listView_map.BeginUpdate();
-            foreach (var entry in _obj.Entries)
+
+            string compare = textBox_filter.Text.ToLower();
+
+            for (int i = 0; i < _obj.Entries.Count; i++)
             {
-                var item = listView_map.Items.Add($"{new SegmentedAddress(_segment, _obj.OffsetOf(entry)).VAddr:X8}");
-                item.SubItems.Add(entry.Name);
-                item.SubItems.Add(entry.GetEntryType().ToString());
+                var entry = _obj.Entries[i];
+                string addrStr = $"{new SegmentedAddress(_segment, _obj.OffsetOf(entry)).VAddr:X8}";
+                string entryStr = $"{addrStr}{entry.Name}{entry.GetEntryType()}".ToLower();
+
+                if (entryStr.Contains(compare))
+                {
+                    var item = listView_map.Items.Add(addrStr);
+                    item.SubItems.Add(entry.Name);
+                    item.SubItems.Add(entry.GetEntryType().ToString());
+                    item.Tag = i;
+                }
             }
             listView_map.EndUpdate();
         }
@@ -115,6 +123,8 @@ namespace Z64.Forms
             int idx = listView_map.SelectedIndices[0];
             if (idx >= _obj.Entries.Count || idx < 0)
                 return null;
+
+            idx = (int)listView_map.Items[idx].Tag;
 
             return (typeof(T) == typeof(Z64Object.ObjectHolder) || typeof(T) == _obj.Entries[idx].GetType())
                 ? (T)_obj.Entries[idx]
@@ -567,6 +577,11 @@ namespace Z64.Forms
 
                 File.WriteAllText(saveFileDialog1.FileName, sw.ToString());
             }
+        }
+
+        private void textBox_filter_TextChanged(object sender, EventArgs e)
+        {
+            UpdateMap();
         }
     }
 }

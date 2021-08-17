@@ -500,7 +500,9 @@ namespace F3DZEX.Render
                 }
 
                 DecodeTex(_tex0, tile0, tlut);
-                if (tile1 != null)
+                // temp hack for hilite
+                // todo: handle hilite correctly
+                if (tile1 != null && tile1.on)
                     DecodeTex(_tex1, tile1, tlut);
 
                 _reqDecodeTex = false;
