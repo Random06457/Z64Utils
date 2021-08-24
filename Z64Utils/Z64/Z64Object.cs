@@ -1388,7 +1388,6 @@ namespace Z64
                                 throw new FileFormatException($"Expected Array node \"{name}\" to have exactly one child node, not {resource.ChildNodes.Count}");
 
                             XmlNode arrayElement = resource.FirstChild;
-                            int elementSize;
                             switch (arrayElement.Name)
                             {
                                 case "Scalar":
@@ -1414,19 +1413,22 @@ namespace Z64
                                             default:
                                                 throw new FileFormatException($"Unknown array element type: {type}");
                                         }
-                                        elementSize = dim * typeSize;
+
+                                        int elementSize = dim * typeSize;
+                                        int arraySize = elementSize * count;
+
+                                        // todo implement specific holders
+                                        obj.AddUnknow(arraySize, name, offset);
                                         break;
                                     }
                                 case "Vtx":
-                                    throw new NotImplementedException($"Unimplemented array element: {arrayElement.Name}");
+                                    {
+                                        obj.AddVertices(count, name, offset);
+                                        break;
+                                    }
                                 default:
                                     throw new FileFormatException($"Unknown array element: {arrayElement.Name}");
                             }
-
-                            int size = elementSize * count;
-
-                            // todo implement specific holders
-                            obj.AddUnknow(size, name, offset);
                             break;
                         }
                     case "Path":
