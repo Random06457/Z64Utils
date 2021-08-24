@@ -284,17 +284,18 @@ namespace Z64.Forms
 
 
             string defaultValue = null;
-            string fileName = _game.GetFileName(file.VRomStart).ToLower();
+            string fileName = _game.GetFileName(file.VRomStart);
+            string fileNameLC = fileName.ToLower();
 
-            if (fileName.StartsWith("object_"))
+            if (fileNameLC.StartsWith("object_"))
                 defaultValue = "6";
-            else if (fileName.Contains("_room_"))
+            else if (fileNameLC.Contains("_room_"))
                 defaultValue = "3";
-            else if (fileName.EndsWith("_scene"))
+            else if (fileNameLC.EndsWith("_scene"))
                 defaultValue = "2";
-            else if (fileName == "gameplay_keep")
+            else if (fileNameLC == "gameplay_keep")
                 defaultValue = "4";
-            else if (fileName.StartsWith("gameplay_"))
+            else if (fileNameLC.StartsWith("gameplay_"))
                 defaultValue = "5";
 
             var valueForm = new EditValueForm("Choose Segment", "Plase enter a segment id.", (v) =>
@@ -305,8 +306,8 @@ namespace Z64.Forms
             }, defaultValue);
             if (valueForm.ShowDialog() == DialogResult.OK)
             {
-                var form = new ObjectAnalyzerForm(_game, file.Data, int.Parse(valueForm.Result));
-                form.Text += $" - \"{_game.GetFileName(file.VRomStart)}\" ({file.VRomStart:X8}-{file.VRomEnd:X8})";
+                var form = new ObjectAnalyzerForm(_game, fileName, file.Data, int.Parse(valueForm.Result));
+                form.Text += $" - \"{fileName}\" ({file.VRomStart:X8}-{file.VRomEnd:X8})";
                 form.Show();
             }
         }

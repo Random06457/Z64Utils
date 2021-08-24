@@ -20,9 +20,10 @@ namespace Z64.Forms
         byte[] _data;
         Z64Object _obj;
         int _segment;
+        string _fileName;
         Z64Game _game;
 
-        public ObjectAnalyzerForm(Z64Game game, byte[] data, int segmentId)
+        public ObjectAnalyzerForm(Z64Game game, string fileName, byte[] data, int segmentId)
         {
             InitializeComponent();
 
@@ -34,6 +35,7 @@ namespace Z64.Forms
             _data = data;
             _obj = new Z64Object(_data);
             _segment = segmentId;
+            _fileName = fileName;
             _game = game;
 
             tabControl1.ItemSize = new Size(0, 1);
@@ -576,9 +578,38 @@ namespace Z64.Forms
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
                 string xml = File.ReadAllText(openFileDialog1.FileName);
-                _obj = Z64Object.FromXmlZAPD(xml);
-                _obj.SetData(_data);
-                UpdateMap();
+                StringWriter warnings = new StringWriter();
+                Z64Object newObj = null;
+
+                try
+                {
+                    newObj = Z64Object.FromXmlZAPD(xml, _fileName, _data, warnings);
+                }
+                catch (FileFormatException ex)
+                {
+                    warnings.WriteLine();
+                    warnings.WriteLine("The XML is not a ZAPD-compatible XML file:");
+                    warnings.WriteLine(ex.Message);
+                }
+                catch (NotImplementedException ex)
+                {
+                    warnings.WriteLine();
+                    warnings.WriteLine("The XML uses features that aren't implemented yet:");
+                    warnings.WriteLine(ex.Message);
+                }
+
+                string warningsStr = warnings.ToString();
+                if (warningsStr.Length != 0)
+                {
+                    TextForm form = new TextForm(SystemIcons.Warning, "Warning", warningsStr);
+                    form.ShowDialog();
+                }
+
+                if (newObj != null)
+                {
+                    _obj = newObj;
+                    UpdateMap();
+                }
             }
         }
     }

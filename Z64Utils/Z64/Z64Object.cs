@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using System.Xml;
 using N64;
 using F3DZEX;
 using Syroot.BinaryData;
@@ -1130,10 +1131,251 @@ namespace Z64
             }
             return obj;
         }
-        internal static Z64Object FromXmlZAPD(string xml)
+        internal static Z64Object FromXmlZAPD(string xml, string fileName, byte[] data, StringWriter warnings)
         {
-            throw new NotImplementedException();
+            XmlDocument doc = new XmlDocument();
+            doc.LoadXml(xml);
+            if (doc.ChildNodes.Count != 1)
+                throw new FileFormatException($"Expected only 1 node at root level, not {doc.ChildNodes.Count}");
 
+            XmlNode root = doc.FirstChild;
+            if (root.Name != "Root")
+                throw new FileFormatException($"Expected the node at root level to be \"Root\", not \"{root.Name}\"");
+            if (root.ChildNodes.Count == 0)
+                throw new FileFormatException("Expected the Root node to have at least 1 child, not 0");
+
+            XmlNode file = null;
+            if (root.ChildNodes.Count == 1)
+            {
+                file = root.FirstChild;
+                if (file.Name != "File")
+                    throw new FileFormatException($"Expected the child node of Root to be \"File\", not \"{file.Name}\"");
+                if (file.Attributes["Name"] == null)
+                    throw new FileFormatException("The File node does not set a Name attribute");
+                string fileNodeFileName = file.Attributes["Name"].InnerText;
+                if (fileNodeFileName != fileName)
+                    warnings.WriteLine($"There is only one File node but its name is {fileNodeFileName}, not {fileName}. Using it regardless.");
+            }
+            else
+            {
+                foreach (XmlNode candidateFile in root.ChildNodes)
+                {
+                    if (candidateFile.Name != "File")
+                        throw new FileFormatException($"Expected all child nodes of Root to be \"File\", but one is \"{file.Name}\"");
+                    if (candidateFile.Attributes["Name"] == null)
+                        throw new FileFormatException("A File node does not set a Name attribute");
+                    if (candidateFile.Attributes["Name"].InnerText == fileName)
+                    {
+                        if (file != null)
+                            throw new FileFormatException($"There are several File nodes with the Name attribute \"{fileName}\"");
+                        file = candidateFile;
+                    }
+                }
+            }
+
+            if (file == null)
+                throw new FileFormatException($"Found no File node with the Name attribute \"{fileName}\"");
+
+            System.ComponentModel.Int32Converter int32Converter = new System.ComponentModel.Int32Converter();
+            Func<string, int> parseIntSmart = str => (int)int32Converter.ConvertFromString(str);
+
+            Z64Object obj = new Z64Object();
+            List<TextureHolder> texHolders = new List<TextureHolder>();
+            List<XmlNode> deferredTextureNodes = new List<XmlNode>();
+
+            foreach (XmlNode resource in file)
+            {
+                if (resource is XmlComment)
+                    continue;
+                switch (resource.Name)
+                {
+                    case "Texture":
+                        {
+                            string fmtStr = resource.Attributes["Format"].InnerText;
+                            fmtStr = fmtStr.ToUpper();
+                            if (fmtStr == "RGB5A1")
+                                fmtStr = "RGBA16";
+                            N64TexFormat fmt = Enum.Parse<N64TexFormat>(fmtStr);
+                            if (fmt == N64TexFormat.CI4 || fmt == N64TexFormat.CI8)
+                            {
+                                deferredTextureNodes.Add(resource);
+                            }
+                            else
+                            {
+                                int w = Int32.Parse(resource.Attributes["Width"].InnerText);
+                                int h = Int32.Parse(resource.Attributes["Height"].InnerText);
+                                string name = resource.Attributes["Name"].InnerText;
+                                string offsetStr = resource.Attributes["Offset"].InnerText;
+                                int offset = parseIntSmart(offsetStr);
+
+                                TextureHolder texHolder = obj.AddTexture(w, h, fmt, name, offset);
+                                texHolders.Add(texHolder);
+                            }
+                            break;
+                        }
+                    case "Background":
+                        throw new NotImplementedException($"Unimplemented resource type: {resource.Name}");
+                    case "Blob":
+                        throw new NotImplementedException($"Unimplemented resource type: {resource.Name}");
+                    case "DList":
+                        {
+                            string name = resource.Attributes["Name"].InnerText;
+                            string offsetStr = resource.Attributes["Offset"].InnerText;
+                            int offset = parseIntSmart(offsetStr);
+                            int size;
+                            try
+                            {
+                                size = F3DZEX.Command.CmdEncoding.GetDListSize(data, offset);
+                            }
+                            catch (F3DZEX.Command.InvalidF3DZEXOpCodeException ex)
+                            {
+                                warnings.WriteLine($"Could not find the length of DList {name} at 0x{offset:X}");
+                                warnings.WriteLine(ex.Message);
+                                size = 8;
+                            }
+                            obj.AddDList(size, name, offset);
+                            break;
+                        }
+                    case "Animation":
+                        {
+                            string name = resource.Attributes["Name"].InnerText;
+                            string offsetStr = resource.Attributes["Offset"].InnerText;
+                            int offset = parseIntSmart(offsetStr);
+                            obj.AddAnimation(name, offset);
+                            break;
+                        }
+                    case "PlayerAnimation":
+                        {
+                            string name = resource.Attributes["Name"].InnerText;
+                            string offsetStr = resource.Attributes["Offset"].InnerText;
+                            int offset = parseIntSmart(offsetStr);
+                            // todo implement specific holders
+                            // sizeof(LinkAnimationHeader) == 8
+                            obj.AddUnknow(8, name, offset);
+                            break;
+                        }
+                    case "CurveAnimation":
+                        throw new NotImplementedException($"Unimplemented resource type: {resource.Name}");
+                    case "LegacyAnimation":
+                        throw new NotImplementedException($"Unimplemented resource type: {resource.Name}");
+                    case "Skeleton":
+                        {
+                            string name = resource.Attributes["Name"].InnerText;
+                            string type = resource.Attributes["Type"].InnerText;
+                            string offsetStr = resource.Attributes["Offset"].InnerText;
+                            int offset = parseIntSmart(offsetStr);
+
+                            switch (type)
+                            {
+                                case "Normal":
+                                    obj.AddSkeleton(name, offset);
+                                    break;
+                                case "Flex":
+                                    obj.AddFlexSkeleton(name, offset);
+                                    break;
+                                case "Curve":
+                                    throw new NotImplementedException($"Unimplemented skeleton type: {type}");
+                                default:
+                                    throw new FileFormatException($"Unknown skeleton type: {type}");
+                            }
+                            break;
+                        }
+                    case "LimbTable":
+                        throw new NotImplementedException($"Unimplemented resource type: {resource.Name}");
+                    case "Limb":
+                        throw new NotImplementedException($"Unimplemented resource type: {resource.Name}");
+                    case "Symbol":
+                        throw new NotImplementedException($"Unimplemented resource type: {resource.Name}");
+                    case "Collision":
+                        {
+                            string name = resource.Attributes["Name"].InnerText;
+                            string offsetStr = resource.Attributes["Offset"].InnerText;
+                            int offset = parseIntSmart(offsetStr);
+                            // todo implement specific holders
+                            // sizeof(CollisionHeader) == 0x2C
+                            obj.AddUnknow(0x2C, name, offset);
+                            break;
+                        }
+                    case "Scalar":
+                        throw new NotImplementedException($"Unimplemented resource type: {resource.Name}");
+                    case "Vector":
+                        throw new NotImplementedException($"Unimplemented resource type: {resource.Name}");
+                    case "Vtx":
+                        throw new NotImplementedException($"Unimplemented resource type: {resource.Name}");
+                    case "Mtx":
+                        throw new NotImplementedException($"Unimplemented resource type: {resource.Name}");
+                    case "Cutscene":
+                        throw new NotImplementedException($"Unimplemented resource type: {resource.Name}");
+                    case "Array":
+                        {
+                            string name = resource.Attributes["Name"].InnerText;
+                            string countStr = resource.Attributes["Count"].InnerText;
+                            int count = parseIntSmart(countStr);
+                            string offsetStr = resource.Attributes["Offset"].InnerText;
+                            int offset = parseIntSmart(offsetStr);
+
+                            if (resource.ChildNodes.Count != 1)
+                                throw new FileFormatException($"Expected Array node \"{name}\" to have exactly one child node, not {resource.ChildNodes.Count}");
+
+                            XmlNode arrayElement = resource.FirstChild;
+                            int elementSize;
+                            switch (arrayElement.Name)
+                            {
+                                case "Scalar":
+                                    throw new NotImplementedException($"Unimplemented array element: {arrayElement.Name}");
+                                case "Vector":
+                                    {
+                                        string type = arrayElement.Attributes["Type"].InnerText;
+                                        string dimStr = arrayElement.Attributes["Dimensions"].InnerText;
+                                        int dim = parseIntSmart(dimStr);
+
+                                        int typeSize;
+                                        switch (type)
+                                        {
+                                            case "s16":
+                                                typeSize = 2;
+                                                break;
+                                            case "s32":
+                                                typeSize = 4;
+                                                break;
+                                            case "f32":
+                                                typeSize = 4;
+                                                break;
+                                            default:
+                                                throw new FileFormatException($"Unknown array element type: {type}");
+                                        }
+                                        elementSize = dim * typeSize;
+                                        break;
+                                    }
+                                case "Vtx":
+                                    throw new NotImplementedException($"Unimplemented array element: {arrayElement.Name}");
+                                default:
+                                    throw new FileFormatException($"Unknown array element: {arrayElement.Name}");
+                            }
+
+                            int size = elementSize * count;
+
+                            // todo implement specific holders
+                            obj.AddUnknow(size, name, offset);
+                            break;
+                        }
+                    case "Path":
+                        throw new NotImplementedException($"Unimplemented resource type: {resource.Name}");
+                    default:
+                        throw new FileFormatException($"Unknown resource type: {resource.Name}");
+                }
+            }
+
+            // todo deferred textures
+
+            if (obj.GetSize() < data.Length)
+                obj.AddUnknow(data.Length - obj.GetSize());
+
+            obj.Entries.RemoveAll(entry => entry.GetSize() == 0 && entry.GetEntryType() == EntryType.Unknown);
+
+            obj.SetData(data);
+
+            return obj;
         }
 
     }
