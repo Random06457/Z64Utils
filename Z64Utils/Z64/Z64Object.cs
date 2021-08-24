@@ -1262,8 +1262,22 @@ namespace Z64
                         {
                             string name = resource.Attributes["Name"].InnerText;
                             string type = resource.Attributes["Type"].InnerText;
+                            string limbType = resource.Attributes["LimbType"].InnerText;
                             string offsetStr = resource.Attributes["Offset"].InnerText;
                             int offset = parseIntSmart(offsetStr);
+
+                            switch (limbType)
+                            {
+                                case "Standard":
+                                    break;
+                                case "LOD":
+                                case "Skin":
+                                case "Curve":
+                                case "Legacy":
+                                    throw new NotImplementedException($"Unimplemented skeleton limb type: {limbType}");
+                                default:
+                                    throw new FileFormatException($"Unknown skeleton limb type: {limbType}");
+                            }
 
                             switch (type)
                             {
