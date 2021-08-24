@@ -1216,7 +1216,16 @@ namespace Z64
                     case "Background":
                         throw new NotImplementedException($"Unimplemented resource type: {resource.Name}");
                     case "Blob":
-                        throw new NotImplementedException($"Unimplemented resource type: {resource.Name}");
+                        {
+                            string name = resource.Attributes["Name"].InnerText;
+                            string sizeStr = resource.Attributes["Size"].InnerText;
+                            int size = parseIntSmart(sizeStr);
+                            string offsetStr = resource.Attributes["Offset"].InnerText;
+                            int offset = parseIntSmart(offsetStr);
+
+                            obj.AddUnknow(size, name, offset);
+                            break;
+                        }
                     case "DList":
                         {
                             string name = resource.Attributes["Name"].InnerText;
