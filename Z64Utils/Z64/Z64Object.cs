@@ -1180,7 +1180,7 @@ namespace Z64
             Func<string, int> parseIntSmart = str => (int)int32Converter.ConvertFromString(str);
 
             Z64Object obj = new Z64Object();
-            List<TextureHolder> texHolders = new List<TextureHolder>();
+            Dictionary<int, TextureHolder> texturesByOffset = new Dictionary<int, TextureHolder>();
             List<XmlNode> deferredTextureNodes = new List<XmlNode>();
 
             foreach (XmlNode resource in file)
@@ -1209,7 +1209,7 @@ namespace Z64
                                 int offset = parseIntSmart(offsetStr);
 
                                 TextureHolder texHolder = obj.AddTexture(w, h, fmt, name, offset);
-                                texHolders.Add(texHolder);
+                                texturesByOffset[offset] = texHolder;
                             }
                             break;
                         }
@@ -1366,7 +1366,39 @@ namespace Z64
                 }
             }
 
-            // todo deferred textures
+            foreach (XmlNode resource in deferredTextureNodes)
+            {
+                string fmtStr = resource.Attributes["Format"].InnerText;
+                fmtStr = fmtStr.ToUpper();
+                N64TexFormat fmt = Enum.Parse<N64TexFormat>(fmtStr);
+                int w = Int32.Parse(resource.Attributes["Width"].InnerText);
+                int h = Int32.Parse(resource.Attributes["Height"].InnerText);
+                string name = resource.Attributes["Name"].InnerText;
+                string offsetStr = resource.Attributes["Offset"].InnerText;
+                int offset = parseIntSmart(offsetStr);
+
+                TextureHolder texHolder = obj.AddTexture(w, h, fmt, name, offset);
+
+                if (resource.Attributes["TlutOffset"] != null)
+                {
+                    string tlutOffsetStr = resource.Attributes["TlutOffset"].InnerText;
+                    int tlutOffset = parseIntSmart(tlutOffsetStr);
+
+                    if (texturesByOffset.ContainsKey(tlutOffset))
+                    {
+                        TextureHolder tlutHolder = texturesByOffset[tlutOffset];
+                        if (tlutHolder.Format == N64TexFormat.RGBA16)
+                            texHolder.Tlut = tlutHolder;
+                        else
+                            warnings.WriteLine($"Expected RGBA16 texture format for TLUT of Texture {name}, "
+                                + $"but TlutOffset {tlutOffset:X} is {tlutHolder.Name} and uses format {tlutHolder.Format}");
+                    }
+                    else
+                        warnings.WriteLine($"TlutOffset {tlutOffset:X} of Texture {name} does not correspond to any non-CI Texture");
+                }
+                else
+                    warnings.WriteLine($"Missing TlutOffset for Texture {name}");
+            }
 
             if (obj.GetSize() < data.Length)
                 obj.AddUnknow(data.Length - obj.GetSize());
