@@ -1304,7 +1304,29 @@ namespace Z64
                             break;
                         }
                     case "LimbTable":
-                        throw new NotImplementedException($"Unimplemented resource type: {resource.Name}");
+                        {
+                            string name = resource.Attributes["Name"].InnerText;
+                            string limbType = resource.Attributes["LimbType"].InnerText;
+                            string countStr = resource.Attributes["Count"].InnerText;
+                            int count = parseIntSmart(countStr);
+                            string offsetStr = resource.Attributes["Offset"].InnerText;
+                            int offset = parseIntSmart(offsetStr);
+
+                            switch (limbType)
+                            {
+                                case "Standard":
+                                    break;
+                                case "LOD":
+                                case "Skin":
+                                case "Curve":
+                                case "Legacy":
+                                    throw new NotImplementedException($"Unimplemented skeleton limb type: {limbType}");
+                                default:
+                                    throw new FileFormatException($"Unknown skeleton limb type: {limbType}");
+                            }
+                            obj.AddSkeletonLimbs(count, name, offset);
+                            break;
+                        }
                     case "Limb":
                         {
                             string name = resource.Attributes["Name"].InnerText;
