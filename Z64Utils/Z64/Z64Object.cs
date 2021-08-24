@@ -1283,7 +1283,32 @@ namespace Z64
                     case "LimbTable":
                         throw new NotImplementedException($"Unimplemented resource type: {resource.Name}");
                     case "Limb":
-                        throw new NotImplementedException($"Unimplemented resource type: {resource.Name}");
+                        {
+                            string name = resource.Attributes["Name"].InnerText;
+                            string type = resource.Attributes["Type"].InnerText;
+                            string offsetStr = resource.Attributes["Offset"].InnerText;
+                            int offset = parseIntSmart(offsetStr);
+
+                            switch (type)
+                            {
+                                case "Standard":
+                                    {
+                                        obj.AddSkeletonLimb(name, offset);
+                                        break;
+                                    }
+                                case "LOD":
+                                    throw new NotImplementedException($"Unimplemented limb type: {type}");
+                                case "Skin":
+                                    throw new NotImplementedException($"Unimplemented limb type: {type}");
+                                case "Curve":
+                                    throw new NotImplementedException($"Unimplemented limb type: {type}");
+                                case "Legacy":
+                                    throw new NotImplementedException($"Unimplemented limb type: {type}");
+                                default:
+                                    throw new FileFormatException($"Unknown limb type: {type}");
+                            }
+                            break;
+                        }
                     case "Symbol":
                         throw new NotImplementedException($"Unimplemented resource type: {resource.Name}");
                     case "Collision":
