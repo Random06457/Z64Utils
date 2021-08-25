@@ -44,6 +44,7 @@ namespace Z64
             SkeletonLimbs,
             SkeletonLimb,
             Unknown,
+            Unimplemented
         }
 
         public abstract class ObjectHolder
@@ -510,6 +511,24 @@ namespace Z64
             public override int GetSize() => JointIndices.Length * ENTRY_SIZE;
         }
 
+        public class UnimplementedHolder : ObjectHolder
+        {
+            public string Description { get; set; }
+            public byte[] Data { get; set; }
+
+            public UnimplementedHolder(string name, string description, byte[] data) : base(name)
+            {
+                Description = description;
+                Data = data;
+            }
+
+            public override EntryType GetEntryType() => EntryType.Unimplemented;
+            public override byte[] GetData() => Data;
+            public override void SetData(byte[] data) => Data = data;
+            public override int GetSize() => Data.Length;
+
+        }
+
         public List<ObjectHolder> Entries { get; set; }
 
         public Z64Object()
@@ -712,8 +731,14 @@ namespace Z64
         public UnknowHolder AddUnknow(int size, string name = null, int off = -1)
         {
             if (off == -1) off = GetSize();
-            var holder = new UnknowHolder(name?? $"unk_{off:X8}", new byte[size]);
+            var holder = new UnknowHolder(name ?? $"unk_{off:X8}", new byte[size]);
             return (UnknowHolder)AddHolder(holder, off);
+        }
+        public UnimplementedHolder AddUnimplemented(int size, string name = null, string description = null, int off = -1)
+        {
+            if (off == -1) off = GetSize();
+            var holder = new UnimplementedHolder(name ?? $"unimpl_{off:X8}", description ?? "", new byte[size]);
+            return (UnimplementedHolder)AddHolder(holder, off);
         }
         public TextureHolder AddTexture(int w, int h, N64TexFormat format, string name = null, int off = -1)
         {
@@ -914,6 +939,12 @@ namespace Z64
         {
             public int Size { get; set; }
         }
+        private class JsonUnimplementedHolder : JsonObjectHolder
+        {
+            public string Description { get; set; }
+            public int Size { get; set; }
+        }
+        
         private class JsonUCodeHolder : JsonObjectHolder
         {
             public int Size { get; set; }
@@ -985,6 +1016,18 @@ namespace Z64
                                 Name = iter.Name,
                                 EntryType = iter.GetEntryType(),
                                 Size = iter.GetSize()
+                            });
+                            break;
+                        }
+                    case EntryType.Unimplemented:
+                        {
+                            var holder = (UnimplementedHolder)iter;
+                            list.Add(new JsonUnimplementedHolder()
+                            {
+                                Name = holder.Name,
+                                Description = holder.Description,
+                                EntryType = holder.GetEntryType(),
+                                Size = holder.GetSize()
                             });
                             break;
                         }
@@ -1072,6 +1115,12 @@ namespace Z64
                         {
                             var holder = iter.ToObject<JsonUnknowHolder>();
                             obj.AddUnknow(holder.Size, holder.Name);
+                            break;
+                        }
+                    case EntryType.Unimplemented:
+                        {
+                            var holder = iter.ToObject<JsonUnimplementedHolder>();
+                            obj.AddUnimplemented(holder.Size, holder.Name, holder.Description);
                             break;
                         }
                     case EntryType.SkeletonHeader:
@@ -1260,7 +1309,7 @@ namespace Z64
                             int offset = parseIntSmart(offsetStr);
                             // todo implement specific holders
                             // sizeof(LinkAnimationHeader) == 8
-                            obj.AddUnknow(8, name, offset);
+                            obj.AddUnimplemented(8, name, "LinkAnimationHeader", offset);
                             break;
                         }
                     case "CurveAnimation":
@@ -1361,9 +1410,8 @@ namespace Z64
                             string name = resource.Attributes["Name"].InnerText;
                             string offsetStr = resource.Attributes["Offset"].InnerText;
                             int offset = parseIntSmart(offsetStr);
-                            // todo implement specific holders
                             // sizeof(CollisionHeader) == 0x2C
-                            obj.AddUnknow(0x2C, name, offset);
+                            obj.AddUnimplemented(0x2C, name, "CollisionHeader", offset);
                             break;
                         }
                     case "Scalar":
@@ -1417,8 +1465,7 @@ namespace Z64
                                         int elementSize = dim * typeSize;
                                         int arraySize = elementSize * count;
 
-                                        // todo implement specific holders
-                                        obj.AddUnknow(arraySize, name, offset);
+                                        obj.AddUnimplemented(arraySize, name, $"{type}[{count}]", offset);
                                         break;
                                     }
                                 case "Vtx":
