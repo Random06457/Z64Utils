@@ -1485,7 +1485,7 @@ namespace Z64
                                         int elementSize = dim * typeSize;
                                         int arraySize = elementSize * count;
 
-                                        obj.AddUnimplemented(arraySize, name, $"{type}[{count}]", offset);
+                                        obj.AddUnimplemented(arraySize, name, $"{type}[{count}][{dim}]", offset);
                                         break;
                                     }
                                 case "Vtx":
