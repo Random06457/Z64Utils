@@ -1407,7 +1407,11 @@ namespace Z64
                                         break;
                                     }
                                 case "LOD":
-                                    throw new NotImplementedException($"Unimplemented limb type: {type}");
+                                    {
+                                        // sizeof(LodLimb) == 0x10
+                                        obj.AddUnimplemented(0x10, name, "LodLimb", offset);
+                                        break;
+                                    }
                                 case "Skin":
                                     throw new NotImplementedException($"Unimplemented limb type: {type}");
                                 case "Curve":
