@@ -1324,11 +1324,40 @@ namespace Z64
                             string offsetStr = resource.Attributes["Offset"].InnerText;
                             int offset = parseIntSmart(offsetStr);
 
+                            switch (type)
+                            {
+                                case "Normal":
+                                case "Flex":
+                                case "Curve":
+                                    break;
+                                default:
+                                    throw new FileFormatException($"Unknown skeleton type: {type}");
+                            }
+
                             switch (limbType)
                             {
                                 case "Standard":
-                                    break;
+                                    {
+                                        switch (type)
+                                        {
+                                            case "Normal":
+                                                obj.AddSkeleton(name, offset);
+                                                break;
+                                            case "Flex":
+                                                obj.AddFlexSkeleton(name, offset);
+                                                break;
+                                            case "Curve":
+                                                throw new NotImplementedException($"Unimplemented skeleton type: {type}");
+                                        }
+                                        break;
+                                    }
                                 case "LOD":
+                                    {
+                                        // SkeletonHeader ?
+                                        // sizeof(SkeletonHeader) == 0x8
+                                        obj.AddUnimplemented(0x8, name, "SkeletonHeader (LOD limbs)", offset);
+                                        break;
+                                    }
                                 case "Skin":
                                 case "Curve":
                                 case "Legacy":
@@ -1337,19 +1366,6 @@ namespace Z64
                                     throw new FileFormatException($"Unknown skeleton limb type: {limbType}");
                             }
 
-                            switch (type)
-                            {
-                                case "Normal":
-                                    obj.AddSkeleton(name, offset);
-                                    break;
-                                case "Flex":
-                                    obj.AddFlexSkeleton(name, offset);
-                                    break;
-                                case "Curve":
-                                    throw new NotImplementedException($"Unimplemented skeleton type: {type}");
-                                default:
-                                    throw new FileFormatException($"Unknown skeleton type: {type}");
-                            }
                             break;
                         }
                     case "LimbTable":
