@@ -8,7 +8,6 @@ using F3DZEX;
 using N64;
 using System.Text.RegularExpressions;
 using System.IO;
-using Z64.Common;
 using F3DZEX.Command;
 using RDP;
 using System.Data;
@@ -651,7 +650,7 @@ found_limb_type:
         
         public static void FindMaterialAnimations(Z64Object obj, byte[] data, int segmentId, Dictionary<int, SegmentedTextureAttrs> textureLoads)
         {
-            if (obj.Game == null || !obj.Game.IsMm()) // material animations are MM only
+            if (obj.Game == null || obj.Game.Version.Game != Z64GameType.Mm) // material animations are MM only
                 return;
 
             // Search for Material Animations

@@ -104,38 +104,16 @@ namespace Common
             return true;
         }
 
-    }
-
-
-    public class BitFlag<T>
-        where T : Enum
-    {
-        public T Value { get; set; }
-
-        public override string ToString()
+        public static byte[] ZlibDecompress(byte[] input, int decSize)
         {
-            var values = Enum.GetValues(typeof(T)).Cast<T>().ToList();
-            string ret = "";
-            int count = 0;
-            foreach (var v in values)
+            using (MemoryStream inStream = new MemoryStream(input))
+            using (MemoryStream outStream = new MemoryStream(decSize))
+            using (var decompStream = new System.IO.Compression.DeflateStream(inStream, System.IO.Compression.CompressionMode.Decompress))
             {
-                if (Value.HasFlag(v))
-                {
-                    var name = Enum.GetName(typeof(T), v);
-                    if (count == 0) ret = name;
-                    else ret += $" | {name}";
-                    count++;
-                }
+                decompStream.CopyTo(outStream);
+                return outStream.GetBuffer();
             }
-            if (count == 0)
-                return Enum.GetName(typeof(T), 0);
-
-            return ret;
         }
 
-        public BitFlag(T v)
-        {
-            Value = v;
-        }
     }
 }

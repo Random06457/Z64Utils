@@ -39,7 +39,8 @@ namespace Z64.Forms
             comboBox1.Items.Clear();
             comboBox1.Items.Add(SRC_EMPTY);
             comboBox1.Items.Add(SRC_ADDR);
-            comboBox1.Items.Add(SRC_ROM_FS);
+            if (_game != null)
+                comboBox1.Items.Add(SRC_ROM_FS);
             comboBox1.Items.Add(SRC_FILE);
             comboBox1.Items.Add(SRC_IDENT_MTX);
             comboBox1.Items.Add(SRC_NULL);
@@ -140,7 +141,7 @@ namespace Z64.Forms
                     break;
 
                 case SRC_EMPTY_DLIST:
-                    ResultSegment = Memory.Segment.FromBytes("Empty Dlist", new byte[] { 0xDF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 });
+                    ResultSegment = Memory.Segment.FromFill("Empty Dlist", new byte[] { 0xDF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 });
                     break;
 
                 default:

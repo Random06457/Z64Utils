@@ -9,12 +9,14 @@ namespace F3DZEX.Render
     {
         int _texId;
 
+        public int TexID => _texId;
+
         public TextureHandler()
         {
             GL.GenTextures(1, out _texId);
             Use();
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
         }
 
         public void SetDataRGBA(byte[] data, int width, int height)

@@ -23,6 +23,7 @@ namespace F3DZEX.Render
     public class ShaderHandler
     {
         private int _program;
+        private bool _compiled;
         private Dictionary<string, int> _uniformLocations;
 
         private class TempResUsage<T> : IDisposable
@@ -43,33 +44,44 @@ namespace F3DZEX.Render
             }
         }
 
-        public ShaderHandler(string vertPath, string fragPath, string geomPath = null)
+        public ShaderHandler(string vertSrc, string fragSrc, string geomSrc = null)
         {
+            _compiled = false;
+            _uniformLocations = new Dictionary<string, int>();
+
+            RecompileShaders(vertSrc, fragSrc, geomSrc);
+        }
+
+        public void RecompileShaders(string vertSrc, string fragSrc, string geomSrc = null)
+        {
+            Unbind();
+            if (_compiled)
+                GL.DeleteProgram(_program);
+
             List<int> shaders = new List<int>();
+        
+            shaders.Add(CompileShader(vertSrc, ShaderType.VertexShader));
 
-            shaders.Add(CompileShader(vertPath, ShaderType.VertexShader));
+            if (!string.IsNullOrEmpty(geomSrc))
+                shaders.Add(CompileShader(geomSrc, ShaderType.GeometryShader));
 
-            if (!string.IsNullOrEmpty(geomPath))
-                shaders.Add(CompileShader(geomPath, ShaderType.GeometryShader));
-
-            shaders.Add(CompileShader(fragPath, ShaderType.FragmentShader));
+            shaders.Add(CompileShader(fragSrc, ShaderType.FragmentShader));
 
             LinkShaders(shaders.ToArray());
 
-            _uniformLocations = new Dictionary<string, int>();
+            _compiled = true;
         }
-
-        private int CompileShader(string path, ShaderType type)
+        private int CompileShader(string src, ShaderType type)
         {
             int shader = GL.CreateShader(type);
-            GL.ShaderSource(shader, File.ReadAllText(path));
+            GL.ShaderSource(shader, src);
             GL.CompileShader(shader);
 
             GL.GetShader(shader, ShaderParameter.CompileStatus, out int status);
 
             GL.GetShaderInfoLog(shader, out string info);
             if (!string.IsNullOrEmpty(info))
-                throw new ShaderException($"Failed to compile \"{path}\" : \n{info}");
+                throw new ShaderException($"Failed to compile \"{type}\" : \n{info}");
 
             return shader;
         }
@@ -98,6 +110,11 @@ namespace F3DZEX.Render
         public void Use()
         {
             GL.UseProgram(_program);
+        }
+
+        public void Unbind()
+        {
+            GL.UseProgram(0);
         }
 
         private TempResUsage<int> TempUse()
@@ -131,6 +148,17 @@ namespace F3DZEX.Render
             using (TempUse())
                 GL.Uniform1(GetUniformLocation(name), data);
         }
+        public void Send(string name, uint data)
+        {
+            using (TempUse())
+                GL.Uniform1(GetUniformLocation(name), data);
+        }
+        
+        public void Send(string name, int x, int y)
+        {
+            using (TempUse())
+                GL.Uniform2(GetUniformLocation(name), x, y);
+        }
         public void Send(string name, float x, float y)
         {
             using (TempUse())
@@ -142,6 +170,11 @@ namespace F3DZEX.Render
                 GL.Uniform3(GetUniformLocation(name), x, y, z);
         }
         public void Send(string name, float x, float y, float z, float w)
+        {
+            using (TempUse())
+                GL.Uniform4(GetUniformLocation(name), x, y, z, w);
+        }
+        public void Send(string name, int x, int y, int z, int w)
         {
             using (TempUse())
                 GL.Uniform4(GetUniformLocation(name), x, y, z, w);

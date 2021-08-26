@@ -45,48 +45,60 @@ namespace Z64
                 if (game.GetVrom("boot", out int vrom))
                     _blocks.Add(new MemBlock(game.Rom.EntryPoint + 0x60, vrom));
 
-                if (Z64Version.CodeInfos.ContainsKey(_game.Version) && Z64Version.CodeInfos[_game.Version].CodeVram.HasValue && game.GetVrom("code", out vrom))
-                    _blocks.Add(new MemBlock(Z64Version.CodeInfos[game.Version].CodeVram.Value, vrom));
+                if (game.Version.Memory.CodeVram.HasValue && game.GetVrom("code", out vrom))
+                    _blocks.Add(new MemBlock(game.Version.Memory.CodeVram.Value, vrom));
 
                 LoadOvls();
             }
             catch (Exception ex)
             {
-                throw new Z64MemoryException("Error while creating the memory map. Please check your config file (versions/*.json)");
+                throw new Z64MemoryException("Error while creating the memory map. Please check your config files (versions/*.json)");
             }
         }
 
         private void LoadOvls()
         {
-            if (!Z64Version.CodeInfos.ContainsKey(_game.Version))
-                return;
-
             //GameStates
-            int count = _game.IsOot() ? 6 : _game.IsMm() ? 7 : 0;
-            if (Z64Version.CodeInfos[_game.Version].GameStateTable.HasValue)
-                LoadOvlTable(Z64Version.CodeInfos[_game.Version].GameStateTable.Value, count, 0x30, 4, 0xC);
+            int count = _game.Version.Game switch
+            {
+                Z64GameType.Oot => 6,
+                Z64GameType.Mm => 7,
+                _ => 0,
+            };
+            if (_game.Version.Memory.GameStateTable.HasValue)
+                LoadOvlTable(_game.Version.Memory.GameStateTable.Value, count, 0x30, 4, 0xC);
 
             //Actors
-            count = _game.IsOot() ? 471 : _game.IsMm() ? 690 : 0;
-            if (Z64Version.CodeInfos[_game.Version].ActorTable.HasValue)
-                LoadOvlTable(Z64Version.CodeInfos[_game.Version].ActorTable.Value, count, 0x20, 0, 8);
+            count = _game.Version.Game switch
+            {
+                Z64GameType.Oot => 471,
+                Z64GameType.Mm => 690,
+                _ => 0,
+            };
+            if (_game.Version.Memory.ActorTable.HasValue)
+                LoadOvlTable(_game.Version.Memory.ActorTable.Value, count, 0x20, 0, 8);
 
             //EffectSS2
-            count = _game.IsOot() ? 37 : _game.IsMm() ? 39 : 0;
-            if (Z64Version.CodeInfos[_game.Version].EffectTable.HasValue)
-                LoadOvlTable(Z64Version.CodeInfos[_game.Version].EffectTable.Value, count, 0x1C, 0, 8);
+            count = _game.Version.Game switch
+            {
+                Z64GameType.Oot => 37,
+                Z64GameType.Mm => 39,
+                _ => 0,
+            };
+            if (_game.Version.Memory.EffectTable.HasValue)
+                LoadOvlTable(_game.Version.Memory.EffectTable.Value, count, 0x1C, 0, 8);
 
             //KaleidoMgr
-            if (Z64Version.CodeInfos[_game.Version].KaleidoMgrTable.HasValue)
-                LoadOvlTable(Z64Version.CodeInfos[_game.Version].KaleidoMgrTable.Value, 2, 0x1C, 4, 0xC);
+            if (_game.Version.Memory.KaleidoMgrTable.HasValue)
+                LoadOvlTable(_game.Version.Memory.KaleidoMgrTable.Value, 2, 0x1C, 4, 0xC);
 
             //map_mark_data
-            if (Z64Version.CodeInfos[_game.Version].MapMarkDataOvl.HasValue)
-                LoadOvlTable(Z64Version.CodeInfos[_game.Version].MapMarkDataOvl.Value, 1, 0x18, 4, 0xC);
+            if (_game.Version.Memory.MapMarkDataOvl.HasValue)
+                LoadOvlTable(_game.Version.Memory.MapMarkDataOvl.Value, 1, 0x18, 4, 0xC);
 
             //FBDemo
-            if (Z64Version.CodeInfos[_game.Version].FBDemoTable.HasValue)
-                LoadOvlTable(Z64Version.CodeInfos[_game.Version].FBDemoTable.Value, 7, 0x1C, 0xC, 4);
+            if (_game.Version.Memory.FBDemoTable.HasValue)
+                LoadOvlTable(_game.Version.Memory.FBDemoTable.Value, 7, 0x1C, 0xC, 4);
         }
 
         private void LoadOvlTable(uint tableAddr, int count, int entrySize, int vromOff, int vramOff)

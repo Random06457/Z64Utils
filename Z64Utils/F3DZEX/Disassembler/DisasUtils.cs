@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using Common;
 using F3DZEX.Command;
 
 namespace F3DZEX
@@ -141,14 +143,110 @@ namespace F3DZEX
 
             }
 
+            private static readonly BitFlag _renderModeFlags = new BitFlag(
+                new BitFlag.BoolField("AA_EN", 0),
+                new BitFlag.BoolField("Z_CMP", 1),
+                new BitFlag.BoolField("Z_UPD", 2),
+                new BitFlag.BoolField("IM_RD", 3),
+                new BitFlag.BoolField("CLR_ON_CVG", 4),
+                BitFlag.EnumField.FromBits(5, "CVG_DST_CLAMP", "CVG_DST_WRAP", "CVG_DST_FULL", "CVG_DST_SAVE"),
+                BitFlag.EnumField.FromBits(7, "ZMODE_OPA", "ZMODE_INTER", "ZMODE_XLU", "ZMODE_DEC"),
+                new BitFlag.BoolField("CVG_X_ALPHA", 9),
+                new BitFlag.BoolField("ALPHA_CVG_SEL", 10),
+                new BitFlag.BoolField("FORCE_BL", 11)
+                );
+
+
+
             public bool Match(GSetOtherMode cmd)
             {
                 return cmd.shift == shift && cmd.len == len;
             }
+
+            private static Tuple<string[], string[]> GetCycleDepRenderFlags(uint x)
+            {
+                string[] pmValues = new string[]
+                {
+                    "G_BL_CLR_IN",
+                    "G_BL_CLR_MEM",
+                    "G_BL_CLR_BL",
+                    "G_BL_CLR_FOG"
+                };
+
+                string[] aValues = new string[]
+                {
+                    "G_BL_A_IN",
+                    "G_BL_A_FOG",
+                    "G_BL_A_SHADE",
+                    "G_BL_0",
+                };
+
+                string[] bValues = new string[]
+                {
+                    "G_BL_1MA",
+                    "G_BL_A_MEM",
+                    "G_BL_1",
+                    "G_BL_0"
+                };
+
+                string p1 = pmValues[x >> 14 & 3];
+                string a1 = aValues[x >> 10 & 3];
+                string m1 = pmValues[x >> 6 & 3];
+                string b1 = bValues[x >> 2 & 3];
+                
+                string p2 = pmValues[x >> 12 & 3];
+                string a2 = aValues[x >> 8 & 3];
+                string m2 = pmValues[x >> 4 & 3];
+                string b2 = bValues[x >> 0 & 3];
+
+                return new Tuple<string[], string[]>(new string[] {p1, a1, m1, b1}, new string[] {p2, a2, m2, b2});
+            }
+
+            public static (string, List<string>) DisasRenderMode(GSetOtherMode cmd)
+            {
+                uint cyclIndep = BitUtils.GetBits(cmd.data, 3, 13);
+                uint cyclDep = BitUtils.GetBits(cmd.data, 16, 16);
+
+                List<string> flags = _renderModeFlags.GetFlags(cyclIndep);
+                var depFlags = GetCycleDepRenderFlags(cyclDep);
+                string blc1 = $"GBL_c1({string.Join(", ", depFlags.Item1)})";
+                string blc2 = $"GBL_c2({string.Join(", ", depFlags.Item2)})";
+
+                flags.Insert(0, blc2);
+
+                string c1 = blc1;
+                string c2 = string.Join(" | ", flags);
+                //flags.Add($"0x{cyclDep:X}<<16");
+
+                // (P * A + M * B) / (A + B)
+                Func<string[], string> formatExpr = (blc) =>
+                {
+                    string p = blc[0].Remove(0, "G_BL_".Length);
+                    string a = blc[1].Remove(0, "G_BL_".Length);
+                    string m = blc[2].Remove(0, "G_BL_".Length);
+                    string b = blc[3].Remove(0, "G_BL_".Length);
+
+                    if (a == "0")
+                        return m;
+
+                    if (b == "0")
+                        return p;
+
+                    if (b == "1MA")
+                        return $"({p} * {a} + {m} * (1 - {a}))";
+                    
+                    return $"({p} * {a} + {m} * {b}) / ({a} + {b})";
+                };
+
+                List<string> comments = new List<string>()
+                {
+                    $"BL1: {formatExpr(depFlags.Item1)}",
+                    $"BL2: {formatExpr(depFlags.Item2)}",
+                };
+
+                return ($"gsDPSetRenderMode({c1}, {c2})", comments);
+            }
         }
-
-
-
 
         // These 2 functions are reimps of oot's code
         private static string DisCCM(G_CCMUX value, int idx)
@@ -220,8 +318,8 @@ namespace F3DZEX
         }
         private static string DisTexWrap(G_TX_TEXWRAP v)
         {
-            var mirror = v & G_TX_TEXWRAP.G_TX_MIRROR;
-            var wrap = v & G_TX_TEXWRAP.G_TX_CLAMP;
+            var mirror = v.HasFlag(G_TX_TEXWRAP.G_TX_MIRROR) ? "G_TX_MIRROR" : "G_TX_NOMIRROR";
+            var wrap = v.HasFlag(G_TX_TEXWRAP.G_TX_CLAMP) ? "G_TX_CLAMP" : "G_TX_WRAP";
             return $"{mirror} | {wrap}";
         }
         private static string DisTexWrap(int v)

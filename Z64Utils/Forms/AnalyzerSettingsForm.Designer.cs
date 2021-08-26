@@ -45,7 +45,7 @@
             // 
             // textBoxOpCodeList
             // 
-            this.textBoxOpCodeList.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.textBoxOpCodeList.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.textBoxOpCodeList.Location = new System.Drawing.Point(15, 87);
             this.textBoxOpCodeList.Multiline = true;
             this.textBoxOpCodeList.Name = "textBoxOpCodeList";
@@ -115,7 +115,7 @@
             // 
             // textBoxPatterns
             // 
-            this.textBoxPatterns.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.textBoxPatterns.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.textBoxPatterns.Location = new System.Drawing.Point(15, 247);
             this.textBoxPatterns.Multiline = true;
             this.textBoxPatterns.Name = "textBoxPatterns";
