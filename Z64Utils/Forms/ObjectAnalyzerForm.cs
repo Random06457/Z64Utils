@@ -287,6 +287,34 @@ namespace Z64.Forms
                         textBox_holderInfo.Text = sw.ToString();
                         break;
                     }
+                case Z64Object.EntryType.MatAnimTextureIndexList:
+                    {
+                        tabControl1.SelectedTab = tabPage_text;
+                        var textureIndexList = (Z64Object.MatAnimTextureIndexListHolder)holder;
+
+                        StringWriter sw = new StringWriter();
+                        sw.WriteLine("Texture Indices:");
+                        foreach (var index in textureIndexList.TextureIndices)
+                        {
+                            sw.WriteLine($"  {index:X02}");
+                        }
+                        textBox_holderInfo.Text = sw.ToString();
+                        break;
+                    }
+                case Z64Object.EntryType.MatAnimTextureList:
+                    {
+                        tabControl1.SelectedTab = tabPage_text;
+                        var textureList = (Z64Object.MatAnimTextureListHolder)holder;
+
+                        StringWriter sw = new StringWriter();
+                        sw.WriteLine("Texture List:");
+                        foreach (var segment in textureList.TextureSegments)
+                        {
+                            sw.WriteLine($"  0x{segment.VAddr:X08}");
+                        }
+                        textBox_holderInfo.Text = sw.ToString();
+                        break;
+                    }
                 case Z64Object.EntryType.MatAnimHeader:
                     {
                         tabControl1.SelectedTab = tabPage_text;

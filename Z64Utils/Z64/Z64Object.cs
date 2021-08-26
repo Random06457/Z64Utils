@@ -60,6 +60,8 @@ namespace Z64
             MatAnimTexScrollParams,
             MatAnimColorParams,
             MatAnimTexCycleParams,
+            MatAnimTextureIndexList,
+            MatAnimTextureList,
             Unknown,
         }
 
@@ -1144,7 +1146,95 @@ namespace Z64
             }
             public override int GetSize() => SIZE;
         }
+        public class MatAnimTextureIndexListHolder : ObjectHolder
+        {
+            public const int ENTRY_SIZE = 1;
 
+            public byte[] TextureIndices { get; set; }
+
+            public MatAnimTextureIndexListHolder(string name, byte[] data) : base(name)
+            {
+                SetData(data);
+            }
+            public override EntryType GetEntryType() => EntryType.MatAnimTextureIndexList;
+
+            public override byte[] GetData()
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    BinaryStream bw = new BinaryStream(ms, ByteConverter.Big);
+
+                    for (int i = 0; i < TextureIndices.Length; i++)
+                    {
+                        bw.Write(TextureIndices[i]);
+                    }
+
+                    return ms.GetBuffer().Take((int)ms.Length).ToArray();
+                }
+            }
+
+            public override void SetData(byte[] data)
+            {
+                TextureIndices = new byte[data.Length / ENTRY_SIZE];
+                using (MemoryStream ms = new MemoryStream(data))
+                {
+                    BinaryStream br = new BinaryStream(ms, ByteConverter.Big);
+
+                    for (int i = 0; i < TextureIndices.Length; i++)
+                    {
+                        TextureIndices[i] = br.Read1Byte();
+                    }
+                }
+            }
+            public override int GetSize() => TextureIndices.Length * ENTRY_SIZE;
+        }
+
+        public class MatAnimTextureListHolder : ObjectHolder
+        {
+            public const int ENTRY_SIZE = 4;
+
+            public SegmentedAddress[] TextureSegments { get; set; }
+
+            public MatAnimTextureListHolder(string name, byte[] data) : base(name)
+            {
+                SetData(data);
+            }
+            public override EntryType GetEntryType() => EntryType.MatAnimTextureList;
+
+            public override byte[] GetData()
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    BinaryStream bw = new BinaryStream(ms, ByteConverter.Big);
+
+                    for (int i = 0; i < TextureSegments.Length; i++)
+                    {
+                        bw.Write(TextureSegments[i].VAddr);
+                    }
+
+                    return ms.GetBuffer().Take((int)ms.Length).ToArray();
+                }
+            }
+
+            public override void SetData(byte[] data)
+            {
+                if ((data.Length % ENTRY_SIZE) != 0)
+                    throw new Z64ObjectException($"Invalid data size (0x{data.Length:X}) should be a multiple of 0x10");
+
+                TextureSegments = new SegmentedAddress[data.Length / ENTRY_SIZE];
+                using (MemoryStream ms = new MemoryStream(data))
+                {
+                    BinaryStream br = new BinaryStream(ms, ByteConverter.Big);
+
+                    for (int i = 0; i < TextureSegments.Length; i++)
+                    {
+                        TextureSegments[i] = new SegmentedAddress(br.ReadUInt32());
+                    }
+                }
+            }
+            public override int GetSize() => TextureSegments.Length * ENTRY_SIZE;
+        }
+        
         public Z64Game Game;
         public Z64File File;
         public List<ObjectHolder> Entries { get; set; }
@@ -1495,6 +1585,18 @@ namespace Z64
             var holder = new MatAnimTexCycleParamsHolder(name ?? $"texcycleparams_{off:X8}", new byte[MatAnimTexCycleParamsHolder.SIZE]);
             return (MatAnimTexCycleParamsHolder)AddHolder(holder, off);
         }
+        public MatAnimTextureIndexListHolder AddMatAnimTextureIndexList(int count, string name = null, int off = -1)
+        {
+            if (off == -1) off = GetSize();
+            var holder = new MatAnimTextureIndexListHolder(name ?? $"waterbox_{off:X8}", new byte[count * MatAnimTextureIndexListHolder.ENTRY_SIZE]);
+            return (MatAnimTextureIndexListHolder)AddHolder(holder, off);
+        }
+        public MatAnimTextureListHolder AddMatAnimTextureList(int count, string name = null, int off = -1)
+        {
+            if (off == -1) off = GetSize();
+            var holder = new MatAnimTextureListHolder(name ?? $"waterbox_{off:X8}", new byte[count * MatAnimTextureListHolder.ENTRY_SIZE]);
+            return (MatAnimTextureListHolder)AddHolder(holder, off);
+        }
 
         public void FixNames()
         {
@@ -1566,6 +1668,12 @@ namespace Z64
                         break;
                     case EntryType.MatAnimColorParams:
                         entry.Name = "colorparams_" + entryOff.ToString("X8");
+                        break;
+                    case EntryType.MatAnimTextureIndexList:
+                        entry.Name = "texindexlist_" + entryOff.ToString("X8");
+                        break;
+                    case EntryType.MatAnimTextureList:
+                        entry.Name = "texlist_" + entryOff.ToString("X8");
                         break;
                     case EntryType.MatAnimTexCycleParams:
                         entry.Name = "texcycleparams_" + entryOff.ToString("X8");
@@ -1845,6 +1953,28 @@ namespace Z64
                             });
                             break;
                         }
+                    case EntryType.MatAnimTextureIndexList:
+                        {
+                            var holder = (MatAnimTextureIndexListHolder)iter;
+                            list.Add(new JsonArrayHolder()
+                            {
+                                Name = iter.Name,
+                                EntryType = iter.GetEntryType(),
+                                Count = holder.TextureIndices.Length
+                            });
+                            break;
+                        }
+                    case EntryType.MatAnimTextureList:
+                        {
+                            var holder = (MatAnimTextureListHolder)iter;
+                            list.Add(new JsonArrayHolder()
+                            {
+                                Name = iter.Name,
+                                EntryType = iter.GetEntryType(),
+                                Count = holder.TextureSegments.Length
+                            });
+                            break;
+                        }
                     case EntryType.Mtx:
                     case EntryType.SkeletonHeader:
                     case EntryType.FlexSkeletonHeader:
@@ -2004,6 +2134,18 @@ namespace Z64
                     case EntryType.MatAnimColorParams:
                         {
                             obj.AddMatAnimColorParams();
+                            break;
+                        }
+                    case EntryType.MatAnimTextureIndexList:
+                        {
+                            var holder = iter.ToObject<JsonArrayHolder>();
+                            obj.AddMatAnimTextureIndexList(holder.Count);
+                            break;
+                        }
+                    case EntryType.MatAnimTextureList:
+                        {
+                            var holder = iter.ToObject<JsonArrayHolder>();
+                            obj.AddMatAnimTextureList(holder.Count);
                             break;
                         }
                     case EntryType.MatAnimTexCycleParams:

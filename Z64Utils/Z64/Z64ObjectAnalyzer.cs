@@ -675,8 +675,7 @@ found_limb_type:
 
                 short paramsType = ArrayUtil.ReadInt16BE(data, i + 2);
                 
-                // TODO check possible bounds on texSegment
-                if (texSegment > 7 && texSegment < 16 && 
+                if (texSegment > 7 && texSegment < 14 && 
                     paramsType >= 0 && paramsType < 6 && 
                     data[i + 1] == 0)
                 {
@@ -685,6 +684,10 @@ found_limb_type:
                     // check valid segment address
                     if (paramsSeg.SegmentId != segmentId || paramsSeg.SegmentOff >= data.Length || 
                         !obj.IsOffsetFree((int)paramsSeg.SegmentOff))
+                        continue;
+
+                    // params segment should always be before the header
+                    if (paramsSeg.SegmentOff > i)
                         continue;
 
                     // do params
@@ -768,8 +771,9 @@ found_limb_type:
                                 obj.AddTexture(texAttrs.Width, texAttrs.Height, texAttrs.Fmt, off: (int)textureSegment.SegmentOff);
                             }
                         }
-                        
-                        // TODO also add the texture index list and texture list themselves eventually
+
+                        obj.AddMatAnimTextureIndexList(keyFrameLength, off: (int)textureIndexListSeg.SegmentOff);
+                        obj.AddMatAnimTextureList(nTextures, off: (int)textureListSeg.SegmentOff);
 
                         obj.AddMatAnimTexCycleParams(off: (int)paramsSeg.SegmentOff);
                     }
@@ -827,7 +831,6 @@ found_limb_type:
                     obj.AddMatAnimHeader(off: i);
                 }
             }
-
         }
 
         public static void FindDlists(Z64Object obj, byte[] data, int segmentId, Config cfg)
