@@ -387,7 +387,7 @@ namespace Z64.Forms
                 string filePath = openFileDialog1.FileName;
                 string fileName = Path.GetFileName(filePath);
                 byte[] data = File.ReadAllBytes(filePath);
-                string title = $" - {filePath}";
+                string title = $"{filePath}";
                 OpenObjectAnalyzer(null, fileName, data, title);
             }
         }
