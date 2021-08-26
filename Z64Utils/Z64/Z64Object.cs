@@ -1359,6 +1359,11 @@ namespace Z64
                                         break;
                                     }
                                 case "Skin":
+                                    {
+                                        // sizeof(SkeletonHeader) == 0x8
+                                        obj.AddUnimplemented(0x8, name, "SkeletonHeader (Skin limbs)", offset);
+                                        break;
+                                    }
                                 case "Curve":
                                 case "Legacy":
                                     throw new NotImplementedException($"Unimplemented skeleton limb type: {limbType}");
@@ -1413,7 +1418,11 @@ namespace Z64
                                         break;
                                     }
                                 case "Skin":
-                                    throw new NotImplementedException($"Unimplemented limb type: {type}");
+                                    {
+                                        // sizeof(SkinLimb) == 0x10
+                                        obj.AddUnimplemented(0x10, name, "SkinLimb", offset);
+                                        break;
+                                    }
                                 case "Curve":
                                     throw new NotImplementedException($"Unimplemented limb type: {type}");
                                 case "Legacy":
