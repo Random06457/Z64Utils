@@ -347,8 +347,7 @@ namespace Z64
                 // check for Limbs 0x4 alignment, check for nonzero limb count,
                 // check for zeroes in struct padding
                 if (segment.SegmentId == segmentId && segment.SegmentOff < data.Length && 
-                    (segment.SegmentOff % 4) == 0 && data[i+4] > 1 && // There should be no single-limb skeletons
-                    data[i + 5] == 0 && data[i + 6] == 0 && data[i + 7] == 0)
+                    (segment.SegmentOff % 4) == 0 && data[i + 5] == 0 && data[i + 6] == 0 && data[i + 7] == 0)
                 {
                     if (!obj.IsOffsetFree(i))
                         continue;
@@ -504,6 +503,9 @@ found_limb_type:
             if (obj.GetName() != "gameplay_keep")
                 return;
 
+            if (obj.Game == null)
+                return;
+
             Z64File linkAnimetion = obj.Game.GetFileForName("link_animetion");
             // only search if the link_animetion file is known
             if (linkAnimetion == null)
@@ -649,7 +651,7 @@ found_limb_type:
         
         public static void FindMaterialAnimations(Z64Object obj, byte[] data, int segmentId, Dictionary<int, SegmentedTextureAttrs> textureLoads)
         {
-            if (!obj.Game.IsMm()) // material animations are MM only
+            if (obj.Game == null || !obj.Game.IsMm()) // material animations are MM only
                 return;
 
             // Search for Material Animations
