@@ -1395,7 +1395,7 @@ namespace Z64
                     case "Limb":
                         {
                             string name = resource.Attributes["Name"].InnerText;
-                            string type = resource.Attributes["Type"].InnerText;
+                            string type = resource.Attributes["LimbType"].InnerText;
                             string offsetStr = resource.Attributes["Offset"].InnerText;
                             int offset = parseIntSmart(offsetStr);
 
