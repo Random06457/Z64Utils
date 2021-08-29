@@ -1410,7 +1410,13 @@ namespace Z64
                     case "Limb":
                         {
                             string name = resource.Attributes["Name"].InnerText;
-                            string type = resource.Attributes["LimbType"].InnerText;
+                            string type = resource.Attributes["LimbType"]?.InnerText;
+                            if (type == null)
+                            {
+                                type = resource.Attributes["Type"]?.InnerText;
+                                if (type == null)
+                                    throw new FileFormatException($"Limb {name} is missing a Type");
+                            }
 
                             switch (type)
                             {
