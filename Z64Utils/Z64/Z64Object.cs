@@ -1232,10 +1232,28 @@ namespace Z64
             Dictionary<int, TextureHolder> texturesByOffset = new Dictionary<int, TextureHolder>();
             List<XmlNode> deferredTextureNodes = new List<XmlNode>();
 
+            int prevResourceEndOffset = 0;
+
             foreach (XmlNode resource in file)
             {
                 if (resource is XmlComment)
                     continue;
+
+                // offset is optional and defaults to the end of the previously added resource.
+                // See ZAPD issue #171
+                string offsetStr = resource.Attributes["Offset"]?.InnerText;
+                int offset;
+                if (offsetStr != null)
+                    offset = parseIntSmart(offsetStr);
+                else
+                    offset = prevResourceEndOffset;
+
+                // resourceHolder is expected to hold the newly created ObjectHolder for this resource.
+                // if no holder is created yet (eg deferred CI texture holders) resourceSize should be set instead
+                // this is used to compute prevResourceEndOffset for the next resource (see after the switch)
+                int resourceSize = -1;
+                ObjectHolder resourceHolder = null;
+
                 switch (resource.Name)
                 {
                     case "Texture":
@@ -1245,20 +1263,24 @@ namespace Z64
                             if (fmtStr == "RGB5A1")
                                 fmtStr = "RGBA16";
                             N64TexFormat fmt = Enum.Parse<N64TexFormat>(fmtStr);
+
+                            int w = Int32.Parse(resource.Attributes["Width"].InnerText);
+                            int h = Int32.Parse(resource.Attributes["Height"].InnerText);
+
                             if (fmt == N64TexFormat.CI4 || fmt == N64TexFormat.CI8)
                             {
                                 deferredTextureNodes.Add(resource);
+
+                                resourceSize = N64Texture.GetTexSize(w * h, fmt);
                             }
                             else
                             {
-                                int w = Int32.Parse(resource.Attributes["Width"].InnerText);
-                                int h = Int32.Parse(resource.Attributes["Height"].InnerText);
                                 string name = resource.Attributes["Name"].InnerText;
-                                string offsetStr = resource.Attributes["Offset"].InnerText;
-                                int offset = parseIntSmart(offsetStr);
 
                                 TextureHolder texHolder = obj.AddTexture(w, h, fmt, name, offset);
                                 texturesByOffset[offset] = texHolder;
+
+                                resourceHolder = texHolder;
                             }
                             break;
                         }
@@ -1269,17 +1291,13 @@ namespace Z64
                             string name = resource.Attributes["Name"].InnerText;
                             string sizeStr = resource.Attributes["Size"].InnerText;
                             int size = parseIntSmart(sizeStr);
-                            string offsetStr = resource.Attributes["Offset"].InnerText;
-                            int offset = parseIntSmart(offsetStr);
 
-                            obj.AddUnknow(size, name, offset);
+                            resourceHolder = obj.AddUnknow(size, name, offset);
                             break;
                         }
                     case "DList":
                         {
                             string name = resource.Attributes["Name"].InnerText;
-                            string offsetStr = resource.Attributes["Offset"].InnerText;
-                            int offset = parseIntSmart(offsetStr);
                             int size;
                             try
                             {
@@ -1291,25 +1309,21 @@ namespace Z64
                                 warnings.WriteLine(ex.Message);
                                 size = 8;
                             }
-                            obj.AddDList(size, name, offset);
+                            resourceHolder = obj.AddDList(size, name, offset);
                             break;
                         }
                     case "Animation":
                         {
                             string name = resource.Attributes["Name"].InnerText;
-                            string offsetStr = resource.Attributes["Offset"].InnerText;
-                            int offset = parseIntSmart(offsetStr);
-                            obj.AddAnimation(name, offset);
+                            resourceHolder = obj.AddAnimation(name, offset);
                             break;
                         }
                     case "PlayerAnimation":
                         {
                             string name = resource.Attributes["Name"].InnerText;
-                            string offsetStr = resource.Attributes["Offset"].InnerText;
-                            int offset = parseIntSmart(offsetStr);
                             // todo implement specific holders
                             // sizeof(LinkAnimationHeader) == 8
-                            obj.AddUnimplemented(8, name, "LinkAnimationHeader", offset);
+                            resourceHolder = obj.AddUnimplemented(8, name, "LinkAnimationHeader", offset);
                             break;
                         }
                     case "CurveAnimation":
@@ -1321,8 +1335,6 @@ namespace Z64
                             string name = resource.Attributes["Name"].InnerText;
                             string type = resource.Attributes["Type"].InnerText;
                             string limbType = resource.Attributes["LimbType"].InnerText;
-                            string offsetStr = resource.Attributes["Offset"].InnerText;
-                            int offset = parseIntSmart(offsetStr);
 
                             switch (type)
                             {
@@ -1341,10 +1353,10 @@ namespace Z64
                                         switch (type)
                                         {
                                             case "Normal":
-                                                obj.AddSkeleton(name, offset);
+                                                resourceHolder = obj.AddSkeleton(name, offset);
                                                 break;
                                             case "Flex":
-                                                obj.AddFlexSkeleton(name, offset);
+                                                resourceHolder = obj.AddFlexSkeleton(name, offset);
                                                 break;
                                             case "Curve":
                                                 throw new NotImplementedException($"Unimplemented skeleton type: {type}");
@@ -1355,13 +1367,13 @@ namespace Z64
                                     {
                                         // SkeletonHeader ?
                                         // sizeof(SkeletonHeader) == 0x8
-                                        obj.AddUnimplemented(0x8, name, "SkeletonHeader (LOD limbs)", offset);
+                                        resourceHolder = obj.AddUnimplemented(0x8, name, "SkeletonHeader (LOD limbs)", offset);
                                         break;
                                     }
                                 case "Skin":
                                     {
                                         // sizeof(SkeletonHeader) == 0x8
-                                        obj.AddUnimplemented(0x8, name, "SkeletonHeader (Skin limbs)", offset);
+                                        resourceHolder = obj.AddUnimplemented(0x8, name, "SkeletonHeader (Skin limbs)", offset);
                                         break;
                                     }
                                 case "Curve":
@@ -1379,8 +1391,6 @@ namespace Z64
                             string limbType = resource.Attributes["LimbType"].InnerText;
                             string countStr = resource.Attributes["Count"].InnerText;
                             int count = parseIntSmart(countStr);
-                            string offsetStr = resource.Attributes["Offset"].InnerText;
-                            int offset = parseIntSmart(offsetStr);
 
                             switch (limbType)
                             {
@@ -1394,33 +1404,31 @@ namespace Z64
                                 default:
                                     throw new FileFormatException($"Unknown skeleton limb type: {limbType}");
                             }
-                            obj.AddSkeletonLimbs(count, name, offset);
+                            resourceHolder = obj.AddSkeletonLimbs(count, name, offset);
                             break;
                         }
                     case "Limb":
                         {
                             string name = resource.Attributes["Name"].InnerText;
                             string type = resource.Attributes["LimbType"].InnerText;
-                            string offsetStr = resource.Attributes["Offset"].InnerText;
-                            int offset = parseIntSmart(offsetStr);
 
                             switch (type)
                             {
                                 case "Standard":
                                     {
-                                        obj.AddSkeletonLimb(name, offset);
+                                        resourceHolder = obj.AddSkeletonLimb(name, offset);
                                         break;
                                     }
                                 case "LOD":
                                     {
                                         // sizeof(LodLimb) == 0x10
-                                        obj.AddUnimplemented(0x10, name, "LodLimb", offset);
+                                        resourceHolder = obj.AddUnimplemented(0x10, name, "LodLimb", offset);
                                         break;
                                     }
                                 case "Skin":
                                     {
                                         // sizeof(SkinLimb) == 0x10
-                                        obj.AddUnimplemented(0x10, name, "SkinLimb", offset);
+                                        resourceHolder = obj.AddUnimplemented(0x10, name, "SkinLimb", offset);
                                         break;
                                     }
                                 case "Curve":
@@ -1437,10 +1445,8 @@ namespace Z64
                     case "Collision":
                         {
                             string name = resource.Attributes["Name"].InnerText;
-                            string offsetStr = resource.Attributes["Offset"].InnerText;
-                            int offset = parseIntSmart(offsetStr);
                             // sizeof(CollisionHeader) == 0x2C
-                            obj.AddUnimplemented(0x2C, name, "CollisionHeader", offset);
+                            resourceHolder = obj.AddUnimplemented(0x2C, name, "CollisionHeader", offset);
                             break;
                         }
                     case "Scalar":
@@ -1458,8 +1464,6 @@ namespace Z64
                             string name = resource.Attributes["Name"].InnerText;
                             string countStr = resource.Attributes["Count"].InnerText;
                             int count = parseIntSmart(countStr);
-                            string offsetStr = resource.Attributes["Offset"].InnerText;
-                            int offset = parseIntSmart(offsetStr);
 
                             if (resource.ChildNodes.Count != 1)
                                 throw new FileFormatException($"Expected Array node \"{name}\" to have exactly one child node, not {resource.ChildNodes.Count}");
@@ -1494,12 +1498,12 @@ namespace Z64
                                         int elementSize = dim * typeSize;
                                         int arraySize = elementSize * count;
 
-                                        obj.AddUnimplemented(arraySize, name, $"{type}[{count}][{dim}]", offset);
+                                        resourceHolder = obj.AddUnimplemented(arraySize, name, $"{type}[{count}][{dim}]", offset);
                                         break;
                                     }
                                 case "Vtx":
                                     {
-                                        obj.AddVertices(count, name, offset);
+                                        resourceHolder = obj.AddVertices(count, name, offset);
                                         break;
                                     }
                                 default:
@@ -1512,6 +1516,14 @@ namespace Z64
                     default:
                         throw new FileFormatException($"Unknown resource type: {resource.Name}");
                 }
+
+                if (resourceSize < 0)
+                {
+                    if (resourceHolder == null)
+                        throw new InvalidOperationException("One of resourceSize or resourceHolder should be set.");
+                    resourceSize = resourceHolder.GetSize();
+                }
+                prevResourceEndOffset = offset + resourceSize;
             }
 
             foreach (XmlNode resource in deferredTextureNodes)
