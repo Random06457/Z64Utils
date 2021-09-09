@@ -115,6 +115,36 @@ namespace Z64.Forms
             listView_files.EndUpdate();
         }
 
+        private void OpenObjectAnalyzer(Z64Game game, string fileName, byte[] data, string title)
+        {
+            int defaultSegment = -1;
+
+            if (fileName.StartsWith("object_"))
+                defaultSegment = 6;
+            else if (fileName.Contains("_room_"))
+                defaultSegment = 3;
+            else if (fileName.EndsWith("_scene"))
+                defaultSegment = 2;
+            else if (fileName == "gameplay_keep")
+                defaultSegment = 4;
+            else if (fileName.StartsWith("gameplay_"))
+                defaultSegment = 5;
+
+            var valueForm = new EditValueForm("Choose Segment", "Plase enter a segment id.", (v) =>
+            {
+                return (int.TryParse(v, out int ret) && ret >= 0 && ret < 16)
+                ? null
+                : "Segment ID must be a value between 0 and 15";
+            }, defaultSegment < 0 ? "" : $"{defaultSegment}");
+
+            if (valueForm.ShowDialog() == DialogResult.OK)
+            {
+                var form = new ObjectAnalyzerForm(game, data, int.Parse(valueForm.Result));
+                form.Text += $" - {title}";
+                form.Show();
+            }
+        }
+
         private void RomOpenItem_Click(object sender, EventArgs e)
         {
             openFileDialog1.FileName = "";
@@ -282,33 +312,9 @@ namespace Z64.Forms
                 return;
             }
 
-
-            string defaultValue = null;
             string fileName = _game.GetFileName(file.VRomStart).ToLower();
-
-            if (fileName.StartsWith("object_"))
-                defaultValue = "6";
-            else if (fileName.Contains("_room_"))
-                defaultValue = "3";
-            else if (fileName.EndsWith("_scene"))
-                defaultValue = "2";
-            else if (fileName == "gameplay_keep")
-                defaultValue = "4";
-            else if (fileName.StartsWith("gameplay_"))
-                defaultValue = "5";
-
-            var valueForm = new EditValueForm("Choose Segment", "Plase enter a segment id.", (v) =>
-            {
-                return (int.TryParse(v, out int ret) && ret >= 0 && ret < 16)
-                ? null
-                : "Segment ID must be a value between 0 and 15";
-            }, defaultValue);
-            if (valueForm.ShowDialog() == DialogResult.OK)
-            {
-                var form = new ObjectAnalyzerForm(_game, file.Data, int.Parse(valueForm.Result));
-                form.Text += $" - \"{_game.GetFileName(file.VRomStart)}\" ({file.VRomStart:X8}-{file.VRomEnd:X8})";
-                form.Show();
-            }
+            string title = $"\"{_game.GetFileName(file.VRomStart)}\" ({file.VRomStart:X8}-{file.VRomEnd:X8})";
+            OpenObjectAnalyzer(_game, fileName, file.Data, title);
         }
 
         private void renameToolStripMenuItem_Click(object sender, EventArgs e)
@@ -372,5 +378,18 @@ namespace Z64.Forms
                 MessageBox.Show("No new release available.");
         }
 
+        private void openObjectToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            openFileDialog1.FileName = "";
+            openFileDialog1.Filter = $"{Filters.ALL}";
+            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                string filePath = openFileDialog1.FileName;
+                string fileName = Path.GetFileName(filePath);
+                byte[] data = File.ReadAllBytes(filePath);
+                string title = $"{filePath}";
+                OpenObjectAnalyzer(null, fileName, data, title);
+            }
+        }
     }
 }
