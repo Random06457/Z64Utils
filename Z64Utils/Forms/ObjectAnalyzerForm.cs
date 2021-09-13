@@ -244,19 +244,44 @@ namespace Z64.Forms
                         StringWriter sw = new StringWriter();
                         for (int n = 0; n < matrices.Matrices.Count; n++)
                         {
-                            sw.WriteLine($" ┌                                                ┐ ");
+                            string[,] mtxStr = new string[4, 4];
+                            int[] columnsWidth = { 0, 0, 0, 0 };
+                            for (int i = 0; i < 4; i++)
+                            {
+                                for (int j = 0; j < 4; j++)
+                                {
+                                    // see Matrix_MtxToMtxF
+                                    int elemIndex = 4 * j + i;
+                                    byte[] buffer = matrices.Matrices[n].GetBuffer();
+                                    byte[] bytes = {
+                                        // integer part
+                                        buffer[2 * elemIndex], buffer[2 * elemIndex + 1],
+                                        // fractional part
+                                        buffer[2 * (4 * 4 + elemIndex)], buffer[2 * (4 * 4 + elemIndex) + 1],
+                                    };
+                                    float val = ArrayUtil.ReadInt32BE(bytes) / (float)0x10000;
+                                    string valStr = $"{val}";
+                                    mtxStr[i,j] = valStr;
+                                    columnsWidth[j] = Math.Max(valStr.Length, columnsWidth[j]);
+                                }
+                            }
+
+                            int w = 6;
+                            for (int j = 0; j < 4; j++)
+                                w += columnsWidth[j];
+                            sw.WriteLine(" ┌ " + new string(' ', w) + " ┐ ");
                             for (int i = 0; i < 4; i++)
                             {
                                 var values = "";
                                 for (int j = 0; j < 4; j++)
                                 {
-                                    values += $"0x{ArrayUtil.ReadUint32BE(matrices.Matrices[n].GetBuffer(), 4*(4 * i + j)):X08}";
+                                    values += mtxStr[i, j].PadLeft(columnsWidth[j]);
                                     if (j != 3)
                                         values += $"  ";
                                 }
                                 sw.WriteLine($" │ {values} │ ");
                             }
-                            sw.WriteLine($" └                                                ┘ ");
+                            sw.WriteLine(" └ " + new string(' ', w) + " ┘ ");
                         }
                         textBox_holderInfo.Text = sw.ToString();
                         break;

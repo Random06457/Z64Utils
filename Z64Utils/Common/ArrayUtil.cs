@@ -8,6 +8,12 @@ namespace Common
 {
     class ArrayUtil
     {
+        public static int ReadInt32BE(byte[] data, int offset = 0)
+        {
+            byte[] buff = new byte[sizeof(int)];
+            Buffer.BlockCopy(data, offset, buff, 0, sizeof(int));
+            return BitConverter.ToInt32(buff.Reverse().ToArray(), 0);
+        }
         public static uint ReadUint32BE(byte[] data, int offset = 0)
         {
             byte[] buff = new byte[sizeof(uint)];
