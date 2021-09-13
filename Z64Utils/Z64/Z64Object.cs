@@ -1462,7 +1462,11 @@ namespace Z64
                     case "Vtx":
                         throw new NotImplementedException($"Unimplemented resource type: {resource.Name}");
                     case "Mtx":
-                        throw new NotImplementedException($"Unimplemented resource type: {resource.Name}");
+                        {
+                            string name = resource.Attributes["Name"].InnerText;
+                            resourceHolder = obj.AddMtx(1, name, offset);
+                            break;
+                        }
                     case "Cutscene":
                         throw new NotImplementedException($"Unimplemented resource type: {resource.Name}");
                     case "Array":
