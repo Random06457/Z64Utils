@@ -22,15 +22,15 @@ namespace Z64.Forms
         int _segment;
         Z64Game _game;
 
-        public ObjectAnalyzerForm(Z64Game game, Z64File file, int segmentId)
+        public ObjectAnalyzerForm(Z64Game game, byte[] data, string fileName, int segmentId)
         {
             InitializeComponent();
 
             segmentId = Math.Clamp(segmentId, 0, 15);
 
             _game = game;
-            _data = file.Data;
-            _obj = new Z64Object(_game, file);
+            _data = data;
+            _obj = new Z64Object(_game, _data, fileName);
             _segment = segmentId;
 
 

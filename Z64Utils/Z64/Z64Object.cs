@@ -1397,7 +1397,7 @@ namespace Z64
         }
         
         public Z64Game Game;
-        public Z64File File;
+        public string FileName;
         public List<ObjectHolder> Entries { get; set; }
 
         public Z64Object()
@@ -1405,18 +1405,13 @@ namespace Z64
             Game = null;
             Entries = new List<ObjectHolder>();
         }
-        public Z64Object(Z64Game game, Z64File file) : this()
+        public Z64Object(Z64Game game, byte[] data, string fileName) : this()
         {
             Game = game;
-            File = file;
+            FileName = fileName;
 
-            AddUnknow(file.Data.Length);
-            SetData(file.Data);
-        }
-
-        public string GetName()
-        {
-            return Game.GetFileName(File.VRomStart);
+            AddUnknow(data.Length);
+            SetData(data);
         }
 
         private bool HolderOverlaps(ObjectHolder holder, int holderOff)
