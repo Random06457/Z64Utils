@@ -102,11 +102,11 @@
             this.tabControl1.Controls.Add(this.tabPage_vtx);
             this.tabControl1.Controls.Add(this.tabPage_unknow);
             this.tabControl1.ItemSize = new System.Drawing.Size(47, 18);
-            this.tabControl1.Location = new System.Drawing.Point(377, 27);
+            this.tabControl1.Location = new System.Drawing.Point(404, 27);
             this.tabControl1.MinimumSize = new System.Drawing.Size(357, 207);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(632, 499);
+            this.tabControl1.Size = new System.Drawing.Size(670, 522);
             this.tabControl1.TabIndex = 8;
             // 
             // tabPage_empty
@@ -114,7 +114,7 @@
             this.tabPage_empty.Location = new System.Drawing.Point(4, 22);
             this.tabPage_empty.Name = "tabPage_empty";
             this.tabPage_empty.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage_empty.Size = new System.Drawing.Size(624, 473);
+            this.tabPage_empty.Size = new System.Drawing.Size(662, 496);
             this.tabPage_empty.TabIndex = 0;
             this.tabPage_empty.Text = "nothing";
             this.tabPage_empty.UseVisualStyleBackColor = true;
@@ -125,7 +125,7 @@
             this.tabPage_text.Location = new System.Drawing.Point(4, 22);
             this.tabPage_text.Name = "tabPage_text";
             this.tabPage_text.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage_text.Size = new System.Drawing.Size(624, 473);
+            this.tabPage_text.Size = new System.Drawing.Size(662, 495);
             this.tabPage_text.TabIndex = 1;
             this.tabPage_text.Text = "ucode";
             this.tabPage_text.UseVisualStyleBackColor = true;
@@ -152,7 +152,7 @@
             this.tabPage_texture.Location = new System.Drawing.Point(4, 22);
             this.tabPage_texture.Name = "tabPage_texture";
             this.tabPage_texture.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage_texture.Size = new System.Drawing.Size(624, 473);
+            this.tabPage_texture.Size = new System.Drawing.Size(662, 495);
             this.tabPage_texture.TabIndex = 2;
             this.tabPage_texture.Text = "texture";
             this.tabPage_texture.UseVisualStyleBackColor = true;
@@ -187,7 +187,7 @@
             this.tabPage_vtx.Location = new System.Drawing.Point(4, 22);
             this.tabPage_vtx.Name = "tabPage_vtx";
             this.tabPage_vtx.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage_vtx.Size = new System.Drawing.Size(624, 473);
+            this.tabPage_vtx.Size = new System.Drawing.Size(662, 495);
             this.tabPage_vtx.TabIndex = 3;
             this.tabPage_vtx.Text = "vertex";
             this.tabPage_vtx.UseVisualStyleBackColor = true;
@@ -246,7 +246,7 @@
             this.tabPage_unknow.Location = new System.Drawing.Point(4, 22);
             this.tabPage_unknow.Name = "tabPage_unknow";
             this.tabPage_unknow.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage_unknow.Size = new System.Drawing.Size(624, 473);
+            this.tabPage_unknow.Size = new System.Drawing.Size(662, 495);
             this.tabPage_unknow.TabIndex = 4;
             this.tabPage_unknow.Text = "unknow";
             this.tabPage_unknow.UseVisualStyleBackColor = true;
@@ -286,7 +286,7 @@
             this.listView_map.Location = new System.Drawing.Point(12, 49);
             this.listView_map.MultiSelect = false;
             this.listView_map.Name = "listView_map";
-            this.listView_map.Size = new System.Drawing.Size(359, 477);
+            this.listView_map.Size = new System.Drawing.Size(390, 500);
             this.listView_map.TabIndex = 7;
             this.listView_map.UseCompatibleStateImageBehavior = false;
             this.listView_map.View = System.Windows.Forms.View.Details;
@@ -300,12 +300,12 @@
             // columnHeader2
             // 
             this.columnHeader2.Text = "Name";
-            this.columnHeader2.Width = 151;
+            this.columnHeader2.Width = 163;
             // 
             // columnHeader3
             // 
             this.columnHeader3.Text = "Type";
-            this.columnHeader3.Width = 124;
+            this.columnHeader3.Width = 162;
             // 
             // contextMenuStrip1
             // 
@@ -361,7 +361,7 @@
             this.settingsToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(1009, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(1074, 24);
             this.menuStrip1.TabIndex = 9;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -453,7 +453,7 @@
             // 
             this.textBox_filter.Location = new System.Drawing.Point(56, 27);
             this.textBox_filter.Name = "textBox_filter";
-            this.textBox_filter.Size = new System.Drawing.Size(315, 20);
+            this.textBox_filter.Size = new System.Drawing.Size(346, 20);
             this.textBox_filter.TabIndex = 10;
             this.textBox_filter.TextChanged += new System.EventHandler(this.textBox_filter_TextChanged);
             // 
@@ -470,7 +470,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1009, 528);
+            this.ClientSize = new System.Drawing.Size(1074, 551);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.textBox_filter);
             this.Controls.Add(this.tabControl1);

@@ -18,6 +18,7 @@ using System.Text.RegularExpressions;
 using RDP;
 using Common;
 using System.Diagnostics;
+using System.Windows.Forms.Design;
 
 namespace Z64.Forms
 {
@@ -115,7 +116,7 @@ namespace Z64.Forms
             listView_files.EndUpdate();
         }
 
-        private void OpenObjectAnalyzer(Z64Game game, string fileName, byte[] data, string title)
+        private void OpenObjectAnalyzer(Z64Game game, byte[] data, string fileName, string title)
         {
             int defaultSegment = -1;
 
@@ -139,7 +140,7 @@ namespace Z64.Forms
 
             if (valueForm.ShowDialog() == DialogResult.OK)
             {
-                var form = new ObjectAnalyzerForm(game, data, int.Parse(valueForm.Result));
+                var form = new ObjectAnalyzerForm(game, data, fileName, int.Parse(valueForm.Result));
                 form.Text += $" - {title}";
                 form.Show();
             }
@@ -314,7 +315,7 @@ namespace Z64.Forms
 
             string fileName = _game.GetFileName(file.VRomStart).ToLower();
             string title = $"\"{_game.GetFileName(file.VRomStart)}\" ({file.VRomStart:X8}-{file.VRomEnd:X8})";
-            OpenObjectAnalyzer(_game, fileName, file.Data, title);
+            OpenObjectAnalyzer(_game, file.Data, fileName, title);
         }
 
         private void renameToolStripMenuItem_Click(object sender, EventArgs e)
@@ -388,7 +389,8 @@ namespace Z64.Forms
                 string fileName = Path.GetFileName(filePath);
                 byte[] data = File.ReadAllBytes(filePath);
                 string title = $"{filePath}";
-                OpenObjectAnalyzer(null, fileName, data, title);
+
+                OpenObjectAnalyzer(null, data, fileName, title);
             }
         }
     }
