@@ -505,7 +505,7 @@ found_limb_type:
             if (obj.Game == null)
                 return;
 
-            Z64File linkAnimetion = obj.Game.GetFileForName("link_animetion");
+            Z64File linkAnimetion = obj.Game.GetFileByName("link_animetion");
             // only search if the link_animetion file is known
             if (linkAnimetion == null)
                 return;
@@ -546,7 +546,7 @@ found_limb_type:
                 // check free and skip whole region if occupied
                 if (!obj.IsOffsetFree(i))
                 {
-                    Z64Object.ObjectHolder holder = obj.HolderAtOffset(i);
+                    Z64Object.ObjectHolder holder = obj.GetHolderAtOffset(i);
                     i = obj.OffsetOf(holder) + holder.GetSize();
                     if (i % 4 != 0)
                         i += (4 - i % 4);
@@ -662,7 +662,7 @@ found_limb_type:
                 // check free and skip whole region if occupied
                 if (!obj.IsOffsetFree(i))
                 {
-                    Z64Object.ObjectHolder holder = obj.HolderAtOffset(i);
+                    Z64Object.ObjectHolder holder = obj.GetHolderAtOffset(i);
                     i = obj.OffsetOf(holder) + holder.GetSize();
                     if (i % 4 != 0)
                         i += (4 - i % 4);
@@ -824,7 +824,12 @@ found_limb_type:
                             keyFrames.SegmentOff % 2 != 0))
                             continue;
 
-                        // TODO add colors and keyframes arrays eventually
+                        if (primColors.VAddr != 0)
+                            obj.AddMatAnimPrimColors(arrayLengths, off: (int)primColors.SegmentOff);
+                        if (envColors.VAddr != 0)
+                            obj.AddMatAnimEnvColors(arrayLengths, off: (int)envColors.SegmentOff);
+                        if (keyFrames.VAddr != 0)
+                            obj.AddMatAnimKeyFrames(arrayLengths, off: (int)keyFrames.SegmentOff);
 
                         obj.AddMatAnimColorParams(off: (int)paramsSeg.SegmentOff);
                     }

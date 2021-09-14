@@ -239,7 +239,7 @@ namespace Z64.Forms
                     }
                 case Z64Object.EntryType.CollisionHeader:
                     {
-                        tabControl1.SelectedTab = tabPage_text;
+                        SelectTabPage(tabPage_text);
                         var colHdr = (Z64Object.ColHeaderHolder)holder;
 
                         StringWriter sw = new StringWriter();
@@ -259,7 +259,7 @@ namespace Z64.Forms
                     }
                 case Z64Object.EntryType.CollisionVertices:
                     {
-                        tabControl1.SelectedTab = tabPage_text;
+                        SelectTabPage(tabPage_text);
                         var vertices = (Z64Object.CollisionVerticesHolder)holder;
 
                         StringWriter sw = new StringWriter();
@@ -272,7 +272,7 @@ namespace Z64.Forms
                     }
                 case Z64Object.EntryType.CollisionPolygons:
                     {
-                        tabControl1.SelectedTab = tabPage_text;
+                        SelectTabPage(tabPage_text);
                         var polygons = (Z64Object.CollisionPolygonsHolder)holder;
 
                         StringWriter sw = new StringWriter();
@@ -288,7 +288,7 @@ namespace Z64.Forms
                     }
                 case Z64Object.EntryType.CollisionSurfaceTypes:
                     {
-                        tabControl1.SelectedTab = tabPage_text;
+                        SelectTabPage(tabPage_text);
                         var surfaceTypes = (Z64Object.CollisionSurfaceTypesHolder)holder;
 
                         StringWriter sw = new StringWriter();
@@ -301,7 +301,7 @@ namespace Z64.Forms
                     }
                 case Z64Object.EntryType.CollisionCamData:
                     {
-                        tabControl1.SelectedTab = tabPage_text;
+                        SelectTabPage(tabPage_text);
                         var camData = (Z64Object.CollisionCamDataHolder)holder;
 
                         StringWriter sw = new StringWriter();
@@ -319,7 +319,7 @@ namespace Z64.Forms
                     }
                 case Z64Object.EntryType.WaterBox:
                     {
-                        tabControl1.SelectedTab = tabPage_text;
+                        SelectTabPage(tabPage_text);
                         var waterBoxes = (Z64Object.WaterBoxHolder)holder;
 
                         StringWriter sw = new StringWriter();
@@ -342,7 +342,7 @@ namespace Z64.Forms
                     }
                 case Z64Object.EntryType.MatAnimTextureIndexList:
                     {
-                        tabControl1.SelectedTab = tabPage_text;
+                        SelectTabPage(tabPage_text);
                         var textureIndexList = (Z64Object.MatAnimTextureIndexListHolder)holder;
 
                         StringWriter sw = new StringWriter();
@@ -356,7 +356,7 @@ namespace Z64.Forms
                     }
                 case Z64Object.EntryType.MatAnimTextureList:
                     {
-                        tabControl1.SelectedTab = tabPage_text;
+                        SelectTabPage(tabPage_text);
                         var textureList = (Z64Object.MatAnimTextureListHolder)holder;
 
                         StringWriter sw = new StringWriter();
@@ -370,7 +370,7 @@ namespace Z64.Forms
                     }
                 case Z64Object.EntryType.MatAnimHeader:
                     {
-                        tabControl1.SelectedTab = tabPage_text;
+                        SelectTabPage(tabPage_text);
                         var header = (Z64Object.MatAnimHeaderHolder)holder;
                         StringWriter sw = new StringWriter();
 
@@ -396,7 +396,7 @@ namespace Z64.Forms
                     }
                 case Z64Object.EntryType.MatAnimTexScrollParams:
                     {
-                        tabControl1.SelectedTab = tabPage_text;
+                        SelectTabPage(tabPage_text);
                         var scrollParams = (Z64Object.MatAnimTexScrollParamsHolder)holder;
                         StringWriter sw = new StringWriter();
 
@@ -410,7 +410,7 @@ namespace Z64.Forms
                     }
                 case Z64Object.EntryType.MatAnimColorParams:
                     {
-                        tabControl1.SelectedTab = tabPage_text;
+                        SelectTabPage(tabPage_text);
                         var colorParams = (Z64Object.MatAnimColorParamsHolder)holder;
                         StringWriter sw = new StringWriter();
 
@@ -423,9 +423,48 @@ namespace Z64.Forms
                         textBox_holderInfo.Text = sw.ToString();
                         break;
                     }
+                case Z64Object.EntryType.MatAnimPrimColors:
+                    {
+                        SelectTabPage(tabPage_text);
+                        var primColors = (Z64Object.MatAnimPrimColorsHolder)holder;
+                        
+                        StringWriter sw = new StringWriter();
+                        sw.WriteLine($"Prim Colors:");
+                        foreach (var primColor in primColors.PrimColors)
+                            sw.WriteLine($"{{ R {primColor.R,3}, G {primColor.G,3}, B {primColor.B,3}, A {primColor.A,3}, LodFrac {primColor.LodFrac,3} }}");
+
+                        textBox_holderInfo.Text = sw.ToString();
+                        break;
+                    }
+                case Z64Object.EntryType.MatAnimEnvColors:
+                    {
+                        SelectTabPage(tabPage_text);
+                        var envColors = (Z64Object.MatAnimEnvColorsHolder)holder;
+
+                        StringWriter sw = new StringWriter();
+                        sw.WriteLine($"Env Colors:");
+                        foreach (var envColor in envColors.EnvColors)
+                            sw.WriteLine($"{{ R {envColor.R:3}, G {envColor.G:3}, B {envColor.B:3}, A {envColor.A:3} }}");
+
+                        textBox_holderInfo.Text = sw.ToString();
+                        break;
+                    }
+                case Z64Object.EntryType.MatAnimKeyFrames:
+                    {
+                        SelectTabPage(tabPage_text);
+                        var envColors = (Z64Object.MatAnimKeyFramesHolder)holder;
+
+                        StringWriter sw = new StringWriter();
+                        sw.WriteLine($"Key Frames:");
+                        foreach (var keyFrame in envColors.KeyFrames)
+                            sw.WriteLine($"{keyFrame}");
+
+                        textBox_holderInfo.Text = sw.ToString();
+                        break;
+                    }
                 case Z64Object.EntryType.MatAnimTexCycleParams:
                     {
-                        tabControl1.SelectedTab = tabPage_text;
+                        SelectTabPage(tabPage_text);
                         var cycleParams = (Z64Object.MatAnimTexCycleParamsHolder)holder;
                         StringWriter sw = new StringWriter();
 
@@ -524,7 +563,7 @@ namespace Z64.Forms
                     }
                 case Z64Object.EntryType.LinkAnimationHeader:
                     {
-                        tabControl1.SelectedTab = tabPage_text;
+                        SelectTabPage(tabPage_text);
                         var anim = (Z64Object.LinkAnimationHolder)holder;
 
                         StringWriter sw = new StringWriter();

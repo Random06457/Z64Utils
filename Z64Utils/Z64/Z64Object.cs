@@ -12,6 +12,7 @@ using F3DZEX;
 using Syroot.BinaryData;
 using Common;
 using RDP;
+using System.Runtime.CompilerServices;
 
 namespace Z64
 {
@@ -59,6 +60,9 @@ namespace Z64
             MatAnimHeader,
             MatAnimTexScrollParams,
             MatAnimColorParams,
+            MatAnimPrimColors,
+            MatAnimEnvColors,
+            MatAnimKeyFrames,
             MatAnimTexCycleParams,
             MatAnimTextureIndexList,
             MatAnimTextureList,
@@ -231,7 +235,7 @@ namespace Z64
             public const int LOD_LIMB_SIZE = 0x10;
             public const int SKIN_LIMB_SIZE = 0x10;
 
-            public EntryType Type { get; set; } // For internal use only
+            public EntryType Type;
 
             public short JointX { get; set; }
             public short JointY { get; set; }
@@ -1103,6 +1107,163 @@ namespace Z64
             }
             public override int GetSize() => SIZE;
         }
+        public class MatAnimPrimColorsHolder : ObjectHolder
+        {
+            public const int ENTRY_SIZE = 5;
+            public struct MatAnimPrimColor
+            {
+                public byte R, G, B, A, LodFrac;
+            };
+
+            public MatAnimPrimColor[] PrimColors { get; set; }
+
+            public MatAnimPrimColorsHolder(string name, byte[] data) : base(name)
+            {
+                SetData(data);
+            }
+            public override EntryType GetEntryType() => EntryType.MatAnimPrimColors;
+
+            public override byte[] GetData()
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    BinaryStream bw = new BinaryStream(ms, ByteConverter.Big);
+
+                    for (int i = 0; i < PrimColors.Length; i++)
+                    {
+                        bw.Write(PrimColors[i].R);
+                        bw.Write(PrimColors[i].G);
+                        bw.Write(PrimColors[i].B);
+                        bw.Write(PrimColors[i].A);
+                        bw.Write(PrimColors[i].LodFrac);
+                    }
+
+                    return ms.GetBuffer().Take((int)ms.Length).ToArray();
+                }
+            }
+
+            public override void SetData(byte[] data)
+            {
+                if ((data.Length % ENTRY_SIZE) != 0)
+                    throw new Z64ObjectException($"Invalid data size (0x{data.Length:X}) should be a multiple of 5");
+
+                PrimColors = new MatAnimPrimColor[data.Length / ENTRY_SIZE];
+                using (MemoryStream ms = new MemoryStream(data))
+                {
+                    BinaryStream br = new BinaryStream(ms, ByteConverter.Big);
+
+                    for (int i = 0; i < PrimColors.Length; i++)
+                        PrimColors[i] = new MatAnimPrimColor()
+                        {
+                            R = br.Read1Byte(),
+                            G = br.Read1Byte(),
+                            B = br.Read1Byte(),
+                            A = br.Read1Byte(),
+                            LodFrac = br.Read1Byte()
+                        };
+                }
+            }
+            public override int GetSize() => PrimColors.Length * ENTRY_SIZE;
+        }
+        public class MatAnimEnvColorsHolder : ObjectHolder
+        {
+            public const int ENTRY_SIZE = 4;
+            public struct MatAnimEnvColor
+            {
+                public byte R, G, B, A;
+            };
+
+            public MatAnimEnvColor[] EnvColors { get; set; }
+
+            public MatAnimEnvColorsHolder(string name, byte[] data) : base(name)
+            {
+                SetData(data);
+            }
+            public override EntryType GetEntryType() => EntryType.MatAnimEnvColors;
+
+            public override byte[] GetData()
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    BinaryStream bw = new BinaryStream(ms, ByteConverter.Big);
+
+                    for (int i = 0; i < EnvColors.Length; i++)
+                    {
+                        bw.Write(EnvColors[i].R);
+                        bw.Write(EnvColors[i].G);
+                        bw.Write(EnvColors[i].B);
+                        bw.Write(EnvColors[i].A);
+                    }
+
+                    return ms.GetBuffer().Take((int)ms.Length).ToArray();
+                }
+            }
+
+            public override void SetData(byte[] data)
+            {
+                if ((data.Length % ENTRY_SIZE) != 0)
+                    throw new Z64ObjectException($"Invalid data size (0x{data.Length:X}) should be a multiple of 4");
+
+                EnvColors = new MatAnimEnvColor[data.Length / ENTRY_SIZE];
+                using (MemoryStream ms = new MemoryStream(data))
+                {
+                    BinaryStream br = new BinaryStream(ms, ByteConverter.Big);
+
+                    for (int i = 0; i < EnvColors.Length; i++)
+                        EnvColors[i] = new MatAnimEnvColor()
+                        {
+                            R = br.Read1Byte(),
+                            G = br.Read1Byte(),
+                            B = br.Read1Byte(),
+                            A = br.Read1Byte()
+                        };
+                }
+            }
+            public override int GetSize() => EnvColors.Length * ENTRY_SIZE;
+        }
+        public class MatAnimKeyFramesHolder : ObjectHolder
+        {
+            public const int ENTRY_SIZE = 2;
+
+            public ushort[] KeyFrames { get; set; }
+
+            public MatAnimKeyFramesHolder(string name, byte[] data) : base(name)
+            {
+                SetData(data);
+            }
+            public override EntryType GetEntryType() => EntryType.MatAnimKeyFrames;
+
+            public override byte[] GetData()
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    BinaryStream bw = new BinaryStream(ms, ByteConverter.Big);
+
+                    for (int i = 0; i < KeyFrames.Length; i++)
+                    {
+                        bw.Write(KeyFrames[i]);
+                    }
+
+                    return ms.GetBuffer().Take((int)ms.Length).ToArray();
+                }
+            }
+
+            public override void SetData(byte[] data)
+            {
+                if ((data.Length % ENTRY_SIZE) != 0)
+                    throw new Z64ObjectException($"Invalid data size (0x{data.Length:X}) should be a multiple of 2");
+
+                KeyFrames = new ushort[data.Length / ENTRY_SIZE];
+                using (MemoryStream ms = new MemoryStream(data))
+                {
+                    BinaryStream br = new BinaryStream(ms, ByteConverter.Big);
+
+                    for (int i = 0; i < KeyFrames.Length; i++)
+                        KeyFrames[i] = br.ReadUInt16();
+                }
+            }
+            public override int GetSize() => KeyFrames.Length * ENTRY_SIZE;
+        }
         public class MatAnimTexCycleParamsHolder : ObjectHolder
         {
             public const int SIZE = 0xC;
@@ -1579,6 +1740,24 @@ namespace Z64
             var holder = new MatAnimColorParamsHolder(name ?? $"colorparams_{off:X8}", new byte[MatAnimColorParamsHolder.SIZE]);
             return (MatAnimColorParamsHolder)AddHolder(holder, off);
         }
+        public MatAnimPrimColorsHolder AddMatAnimPrimColors(int count, string name = null, int off = -1)
+        {
+            if (off == -1) off = GetSize();
+            var holder = new MatAnimPrimColorsHolder(name ?? $"primcolors_{off:X8}", new byte[count * MatAnimPrimColorsHolder.ENTRY_SIZE]);
+            return (MatAnimPrimColorsHolder)AddHolder(holder, off);
+        }
+        public MatAnimEnvColorsHolder AddMatAnimEnvColors(int count, string name = null, int off = -1)
+        {
+            if (off == -1) off = GetSize();
+            var holder = new MatAnimEnvColorsHolder(name ?? $"envcolors_{off:X8}", new byte[count * MatAnimEnvColorsHolder.ENTRY_SIZE]);
+            return (MatAnimEnvColorsHolder)AddHolder(holder, off);
+        }
+        public MatAnimKeyFramesHolder AddMatAnimKeyFrames(int count, string name = null, int off = -1)
+        {
+            if (off == -1) off = GetSize();
+            var holder = new MatAnimKeyFramesHolder(name ?? $"keyframes_{off:X8}", new byte[count * MatAnimKeyFramesHolder.ENTRY_SIZE]);
+            return (MatAnimKeyFramesHolder)AddHolder(holder, off);
+        }
         public MatAnimTexCycleParamsHolder AddMatAnimTexCycleParams(string name = null, int off = -1)
         {
             if (off == -1) off = GetSize();
@@ -1669,6 +1848,15 @@ namespace Z64
                     case EntryType.MatAnimColorParams:
                         entry.Name = "colorparams_" + entryOff.ToString("X8");
                         break;
+                    case EntryType.MatAnimPrimColors:
+                        entry.Name = "primcolors_" + entryOff.ToString("X8");
+                        break;
+                    case EntryType.MatAnimEnvColors:
+                        entry.Name = "envcolors_" + entryOff.ToString("X8");
+                        break;
+                    case EntryType.MatAnimKeyFrames:
+                        entry.Name = "keyframes_" + entryOff.ToString("X8");
+                        break;
                     case EntryType.MatAnimTextureIndexList:
                         entry.Name = "texindexlist_" + entryOff.ToString("X8");
                         break;
@@ -1713,7 +1901,7 @@ namespace Z64
                 }
             }
         }
-        public ObjectHolder HolderAtOffset(int target)
+        public ObjectHolder GetHolderAtOffset(int target)
         {
             int entryOff = 0;
             foreach (var entry in Entries)
@@ -1996,6 +2184,39 @@ namespace Z64
                             });
                             break;
                         }
+                    case EntryType.MatAnimPrimColors:
+                        {
+                            var holder = (MatAnimPrimColorsHolder)iter;
+                            list.Add(new JsonArrayHolder()
+                            {
+                                Name = iter.Name,
+                                EntryType = iter.GetEntryType(),
+                                Count = holder.PrimColors.Length
+                            }); ;
+                            break;
+                        }
+                    case EntryType.MatAnimEnvColors:
+                        {
+                            var holder = (MatAnimEnvColorsHolder)iter;
+                            list.Add(new JsonArrayHolder()
+                            {
+                                Name = iter.Name,
+                                EntryType = iter.GetEntryType(),
+                                Count = holder.EnvColors.Length
+                            }); ;
+                            break;
+                        }
+                    case EntryType.MatAnimKeyFrames:
+                        {
+                            var holder = (MatAnimKeyFramesHolder)iter;
+                            list.Add(new JsonArrayHolder()
+                            {
+                                Name = iter.Name,
+                                EntryType = iter.GetEntryType(),
+                                Count = holder.KeyFrames.Length
+                            }); ;
+                            break;
+                        }
                     default:
                         throw new Z64ObjectException($"Invalid entry type ({iter.GetEntryType()})");
                 }
@@ -2151,6 +2372,24 @@ namespace Z64
                     case EntryType.MatAnimTexCycleParams:
                         {
                             obj.AddMatAnimTexCycleParams();
+                            break;
+                        }
+                    case EntryType.MatAnimPrimColors:
+                        {
+                            var holder = iter.ToObject<JsonArrayHolder>();
+                            obj.AddMatAnimPrimColors(holder.Count);
+                            break;
+                        }
+                    case EntryType.MatAnimEnvColors:
+                        {
+                            var holder = iter.ToObject<JsonArrayHolder>();
+                            obj.AddMatAnimEnvColors(holder.Count);
+                            break;
+                        }
+                    case EntryType.MatAnimKeyFrames:
+                        {
+                            var holder = iter.ToObject<JsonArrayHolder>();
+                            obj.AddMatAnimKeyFrames(holder.Count);
                             break;
                         }
                     default: throw new Z64ObjectException($"Invalid entry type ({type})");
