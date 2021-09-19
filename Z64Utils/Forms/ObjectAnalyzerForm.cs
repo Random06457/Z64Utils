@@ -20,31 +20,64 @@ namespace Z64.Forms
         byte[] _data;
         Z64Object _obj;
         int _segment;
-        string _fileName;
         Z64Game _game;
 
-        public ObjectAnalyzerForm(Z64Game game, string fileName, byte[] data, int segmentId)
+        public ObjectAnalyzerForm(Z64Game game, byte[] data, int segmentId)
         {
             InitializeComponent();
 
-            if (segmentId > 15)
-                segmentId = 15;
-            if (segmentId < 0)
-                segmentId = 0;
+            segmentId = Math.Clamp(segmentId, 0, 15);
 
             _data = data;
             _obj = new Z64Object(_data);
             _segment = segmentId;
-            _fileName = fileName;
             _game = game;
 
-            tabControl1.ItemSize = new Size(0, 1);
-            tabControl1.SizeMode = TabSizeMode.Fixed;
-            tabControl1.Appearance = TabAppearance.FlatButtons;
+
+            // setup page stuff
+            tabPage_text.Text = tabPage_texture.Text = tabPage_vtx.Text = "Data";
+            tabPage_unknow.Text = "Hex";
+            _defaultTabItemSize = tabControl1.ItemSize;
+            _defaultTabSizeMode = tabControl1.SizeMode;
+            _defaultTabAppearance = tabControl1.Appearance;
+            SetTabControlVisible(false);
 
             MinimumSize = new Size(Width, Height);
 
             UpdateMap();
+        }
+
+
+
+        Size _defaultTabItemSize = new Size(0, 0);
+        TabSizeMode _defaultTabSizeMode;
+        TabAppearance _defaultTabAppearance;
+        void SetTabControlVisible(bool visible)
+        {
+            if (visible)
+            {
+                tabControl1.ItemSize = _defaultTabItemSize;
+                tabControl1.SizeMode = _defaultTabSizeMode;
+                tabControl1.Appearance = _defaultTabAppearance;
+            }
+            else
+            {
+                tabControl1.ItemSize = new Size(0, 1);
+                tabControl1.SizeMode = TabSizeMode.Fixed;
+                tabControl1.Appearance = TabAppearance.FlatButtons;
+            }
+        }
+
+        void SelectTabPage(TabPage page)
+        {
+            SetTabControlVisible(page != tabPage_empty && page != tabPage_unknow);
+
+            tabControl1.TabPages.Clear();
+            if (page != tabPage_unknow)
+                tabControl1.TabPages.Add(page);
+            tabControl1.TabPages.Add(tabPage_unknow);
+
+            tabControl1.SelectedTab = page;
         }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
@@ -100,16 +133,27 @@ namespace Z64.Forms
         {
             listView_map.Items.Clear();
             listView_map.BeginUpdate();
-            foreach (var entry in _obj.Entries)
+
+            string compare = textBox_filter.Text.ToLower();
+
+            for (int i = 0; i < _obj.Entries.Count; i++)
             {
-                var item = listView_map.Items.Add($"{new SegmentedAddress(_segment, _obj.OffsetOf(entry)).VAddr:X8}");
-                item.SubItems.Add(entry.Name);
+                var entry = _obj.Entries[i];
                 string type;
                 if (entry.GetEntryType() == Z64Object.EntryType.Unimplemented)
                     type = "XXX " + ((Z64Object.UnimplementedHolder)entry).Description;
                 else
                     type = entry.GetEntryType().ToString();
-                item.SubItems.Add(type);
+                string addrStr = $"{new SegmentedAddress(_segment, _obj.OffsetOf(entry)).VAddr:X8}";
+                string entryStr = $"{addrStr}{entry.Name}{type}".ToLower();
+
+                if (entryStr.Contains(compare))
+                {
+                    var item = listView_map.Items.Add(addrStr);
+                    item.SubItems.Add(entry.Name);
+                    item.SubItems.Add(type);
+                    item.Tag = i;
+                }
             }
             listView_map.EndUpdate();
         }
@@ -122,6 +166,8 @@ namespace Z64.Forms
             int idx = listView_map.SelectedIndices[0];
             if (idx >= _obj.Entries.Count || idx < 0)
                 return null;
+
+            idx = (int)listView_map.Items[idx].Tag;
 
             return (typeof(T) == typeof(Z64Object.ObjectHolder) || typeof(T) == _obj.Entries[idx].GetType())
                 ? (T)_obj.Entries[idx]
@@ -141,6 +187,12 @@ namespace Z64.Forms
             addToDlistViewerMenuItem.Visible =
             openSkeletonViewerMenuItem.Visible = false;
 
+
+            var provider = new DynamicByteProvider(holder.GetData()); ;
+            hexBox1.ByteProvider = provider;
+            hexBox1.LineInfoOffset = new SegmentedAddress(_segment, _obj.OffsetOf(holder)).VAddr;
+
+
             switch (holder.GetEntryType())
             {
                 case Z64Object.EntryType.DList:
@@ -148,13 +200,13 @@ namespace Z64.Forms
                         openInDlistViewerMenuItem.Visible =
                         addToDlistViewerMenuItem.Visible = true;
 
-                        tabControl1.SelectedTab = tabPage_text;
+                        SelectTabPage(tabPage_text);
                         UpdateDisassembly();
                         break;
                     }
                 case Z64Object.EntryType.Vertex:
                     {
-                        tabControl1.SelectedTab = tabPage_vtx;
+                        SelectTabPage(tabPage_vtx);
                         var vtx = (Z64Object.VertexHolder)holder;
 
                         listView_vtx.BeginUpdate();
@@ -175,7 +227,7 @@ namespace Z64.Forms
                     }
                 case Z64Object.EntryType.Texture:
                     {
-                        tabControl1.SelectedTab = tabPage_texture;
+                        SelectTabPage(tabPage_texture);
                         var tex = (Z64Object.TextureHolder)holder;
 
                         label_textureInfo.Text = $"{tex.Width}x{tex.Height} {tex.Format}";
@@ -192,7 +244,7 @@ namespace Z64.Forms
                     }
                 case Z64Object.EntryType.Mtx:
                     {
-                        tabControl1.SelectedTab = tabPage_text;
+                        SelectTabPage(tabPage_text);
                         var matrices = (Z64Object.MtxHolder)holder;
                         StringWriter sw = new StringWriter();
                         for (int n = 0; n < matrices.Matrices.Count; n++)
@@ -217,7 +269,7 @@ namespace Z64.Forms
                 case Z64Object.EntryType.SkeletonHeader:
                     {
                         openSkeletonViewerMenuItem.Visible = true;
-                        tabControl1.SelectedTab = tabPage_text;
+                        SelectTabPage(tabPage_text);
                         var skel = (Z64Object.SkeletonHolder)holder;
                         StringWriter sw = new StringWriter();
                         sw.WriteLine($"Limbs: 0x{skel.LimbsSeg.VAddr:X8}");
@@ -228,7 +280,7 @@ namespace Z64.Forms
                 case Z64Object.EntryType.FlexSkeletonHeader:
                     {
                         openSkeletonViewerMenuItem.Visible = true;
-                        tabControl1.SelectedTab = tabPage_text;
+                        SelectTabPage(tabPage_text);
                         var skel = (Z64Object.FlexSkeletonHolder)holder;
 
                         StringWriter sw = new StringWriter();
@@ -241,7 +293,7 @@ namespace Z64.Forms
                     }
                 case Z64Object.EntryType.SkeletonLimbs:
                     {
-                        tabControl1.SelectedTab = tabPage_text;
+                        SelectTabPage(tabPage_text);
                         var limbs = (Z64Object.SkeletonLimbsHolder)holder;
 
                         StringWriter sw = new StringWriter();
@@ -254,7 +306,7 @@ namespace Z64.Forms
                     }
                 case Z64Object.EntryType.SkeletonLimb:
                     {
-                        tabControl1.SelectedTab = tabPage_text;
+                        SelectTabPage(tabPage_text);
                         var limb = (Z64Object.SkeletonLimbHolder)holder;
 
                         StringWriter sw = new StringWriter();
@@ -268,7 +320,7 @@ namespace Z64.Forms
                     }
                 case Z64Object.EntryType.AnimationHeader:
                     {
-                        tabControl1.SelectedTab = tabPage_text;
+                        SelectTabPage(tabPage_text);
                         var anim = (Z64Object.AnimationHolder)holder;
 
                         StringWriter sw = new StringWriter();
@@ -282,7 +334,7 @@ namespace Z64.Forms
                     }
                 case Z64Object.EntryType.JointIndices:
                     {
-                        tabControl1.SelectedTab = tabPage_text;
+                        SelectTabPage(tabPage_text);
                         var joints = (Z64Object.AnimationJointIndicesHolder)holder;
 
                         StringWriter sw = new StringWriter();
@@ -295,23 +347,20 @@ namespace Z64.Forms
                     }
                 case Z64Object.EntryType.FrameData:
                 case Z64Object.EntryType.Unknown:
-                case Z64Object.EntryType.Unimplemented:
                     {
-                        if (holder.GetEntryType() == Z64Object.EntryType.Unimplemented)
-                        {
-                            string description = ((Z64Object.UnimplementedHolder)holder).Description;
-                            // todo show description
-                        }
-
-                        tabControl1.SelectedTab = tabPage_unknow;
-
-                        var provider = new DynamicByteProvider(holder.GetData());;
-                        hexBox1.ByteProvider = provider;
-                        hexBox1.LineInfoOffset = new SegmentedAddress(_segment, _obj.OffsetOf(holder)).VAddr;
+                        SelectTabPage(tabPage_unknow);
                         break;
                     }
-                default: tabControl1.SelectedTab = tabPage_empty; break;
+                case Z64Object.EntryType.Unimplemented:
+                    {
+                        string description = ((Z64Object.UnimplementedHolder)holder).Description;
+                        // todo show description
+                        SelectTabPage(tabPage_unknow);
+                        break;
+                    }
+                default: SelectTabPage(tabPage_empty); break;
             }
+
             listView_map.Focus();
         }
 
@@ -596,7 +645,8 @@ namespace Z64.Forms
 
                 try
                 {
-                    newObj = Z64Object.FromXmlZAPD(xml, _fileName, _data, warnings);
+                    // todo allow the user to provide fileName somehow
+                    newObj = Z64Object.FromXmlZAPD(xml, _data, warnings);
                 }
                 catch (FileFormatException ex)
                 {
@@ -624,6 +674,11 @@ namespace Z64.Forms
                     UpdateMap();
                 }
             }
+        }
+
+        private void textBox_filter_TextChanged(object sender, EventArgs e)
+        {
+            UpdateMap();
         }
     }
 }

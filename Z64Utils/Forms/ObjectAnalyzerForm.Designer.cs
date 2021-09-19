@@ -29,13 +29,13 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.ListViewItem listViewItem3 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem(new string[] {
             "06000000",
             "-32767, -32767, -32767",
             "0xFFFF",
             "-32767, -32767",
             "255, 255, 255, 255"}, -1);
-            System.Windows.Forms.ListViewItem listViewItem4 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem2 = new System.Windows.Forms.ListViewItem(new string[] {
             "00000000",
             "cube_vtx",
             "Vertex"}, -1);
@@ -80,6 +80,8 @@
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.importXMLZAPDToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.textBox_filter = new System.Windows.Forms.TextBox();
+            this.label1 = new System.Windows.Forms.Label();
             this.tabControl1.SuspendLayout();
             this.tabPage_text.SuspendLayout();
             this.tabPage_texture.SuspendLayout();
@@ -206,7 +208,7 @@
             this.listView_vtx.FullRowSelect = true;
             this.listView_vtx.HideSelection = false;
             this.listView_vtx.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem3});
+            listViewItem1});
             this.listView_vtx.Location = new System.Drawing.Point(6, 6);
             this.listView_vtx.Name = "listView_vtx";
             this.listView_vtx.Size = new System.Drawing.Size(619, 461);
@@ -281,11 +283,11 @@
             this.listView_map.FullRowSelect = true;
             this.listView_map.HideSelection = false;
             this.listView_map.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem4});
-            this.listView_map.Location = new System.Drawing.Point(12, 27);
+            listViewItem2});
+            this.listView_map.Location = new System.Drawing.Point(12, 49);
             this.listView_map.MultiSelect = false;
             this.listView_map.Name = "listView_map";
-            this.listView_map.Size = new System.Drawing.Size(359, 499);
+            this.listView_map.Size = new System.Drawing.Size(359, 477);
             this.listView_map.TabIndex = 7;
             this.listView_map.UseCompatibleStateImageBehavior = false;
             this.listView_map.View = System.Windows.Forms.View.Details;
@@ -456,11 +458,30 @@
             this.importXMLZAPDToolStripMenuItem.Text = "Import XML (ZAPD)";
             this.importXMLZAPDToolStripMenuItem.Click += new System.EventHandler(this.importXMLZAPDToolStripMenuItem_Click);
             // 
+            // textBox_filter
+            // 
+            this.textBox_filter.Location = new System.Drawing.Point(56, 27);
+            this.textBox_filter.Name = "textBox_filter";
+            this.textBox_filter.Size = new System.Drawing.Size(315, 20);
+            this.textBox_filter.TabIndex = 10;
+            this.textBox_filter.TextChanged += new System.EventHandler(this.textBox_filter_TextChanged);
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(18, 29);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(32, 13);
+            this.label1.TabIndex = 11;
+            this.label1.Text = "Filter:";
+            // 
             // ObjectAnalyzerForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1009, 528);
+            this.Controls.Add(this.label1);
+            this.Controls.Add(this.textBox_filter);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.listView_map);
             this.Controls.Add(this.menuStrip1);
@@ -527,5 +548,7 @@
         private System.Windows.Forms.ToolStripMenuItem openSkeletonViewerMenuItem;
         private System.Windows.Forms.Label label_textureInfo;
         private System.Windows.Forms.ToolStripMenuItem importXMLZAPDToolStripMenuItem;
+        private System.Windows.Forms.TextBox textBox_filter;
+        private System.Windows.Forms.Label label1;
     }
 }

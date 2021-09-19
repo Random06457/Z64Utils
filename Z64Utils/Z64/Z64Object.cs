@@ -1180,7 +1180,8 @@ namespace Z64
             }
             return obj;
         }
-        internal static Z64Object FromXmlZAPD(string xml, string fileName, byte[] data, StringWriter warnings)
+
+        internal static Z64Object FromXmlZAPD(string xml, byte[] data, StringWriter warnings, string fileName = null)
         {
             XmlDocument doc = new XmlDocument();
             doc.LoadXml(xml);
@@ -1201,9 +1202,12 @@ namespace Z64
                     throw new FileFormatException($"Expected the child node of Root to be \"File\", not \"{file.Name}\"");
                 if (file.Attributes["Name"] == null)
                     throw new FileFormatException("The File node does not set a Name attribute");
-                string fileNodeFileName = file.Attributes["Name"].InnerText;
-                if (fileNodeFileName != fileName)
-                    warnings.WriteLine($"There is only one File node but its name is {fileNodeFileName}, not {fileName}. Using it regardless.");
+                if (fileName != null)
+                {
+                    string fileNodeFileName = file.Attributes["Name"].InnerText;
+                    if (fileNodeFileName != fileName)
+                        warnings.WriteLine($"There is only one File node but its name is {fileNodeFileName}, not {fileName}. Using it regardless.");
+                }
             }
             else
             {
@@ -1213,17 +1217,31 @@ namespace Z64
                         throw new FileFormatException($"Expected all child nodes of Root to be \"File\", but one is \"{file.Name}\"");
                     if (candidateFile.Attributes["Name"] == null)
                         throw new FileFormatException("A File node does not set a Name attribute");
-                    if (candidateFile.Attributes["Name"].InnerText == fileName)
+                    if (fileName == null)
                     {
                         if (file != null)
-                            throw new FileFormatException($"There are several File nodes with the Name attribute \"{fileName}\"");
+                            throw new ArgumentException($"There are several File nodes, can't pick one without a target file name (fileName == null)");
                         file = candidateFile;
+                    }
+                    else
+                    {
+                        if (candidateFile.Attributes["Name"].InnerText == fileName)
+                        {
+                            if (file != null)
+                                throw new FileFormatException($"There are several File nodes with the Name attribute \"{fileName}\"");
+                            file = candidateFile;
+                        }
                     }
                 }
             }
 
             if (file == null)
-                throw new FileFormatException($"Found no File node with the Name attribute \"{fileName}\"");
+            {
+                if (fileName == null)
+                    throw new FileFormatException($"Found no File node");
+                else
+                    throw new FileFormatException($"Found no File node with the Name attribute \"{fileName}\"");
+            }
 
             System.ComponentModel.Int32Converter int32Converter = new System.ComponentModel.Int32Converter();
             Func<string, int> parseIntSmart = str => (int)int32Converter.ConvertFromString(str);
