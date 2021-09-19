@@ -244,29 +244,22 @@ namespace Z64.Forms
                         StringWriter sw = new StringWriter();
                         for (int n = 0; n < matrices.Matrices.Count; n++)
                         {
+                            var mtx = new Mtx(matrices.Matrices[n].GetBuffer()).ToMatrix4();
                             string[,] mtxStr = new string[4, 4];
                             int[] columnsWidth = { 0, 0, 0, 0 };
                             for (int i = 0; i < 4; i++)
                             {
                                 for (int j = 0; j < 4; j++)
                                 {
-                                    // see Matrix_MtxToMtxF
-                                    int elemIndex = 4 * j + i;
-                                    byte[] buffer = matrices.Matrices[n].GetBuffer();
-                                    byte[] bytes = {
-                                        // integer part
-                                        buffer[2 * elemIndex], buffer[2 * elemIndex + 1],
-                                        // fractional part
-                                        buffer[2 * (4 * 4 + elemIndex)], buffer[2 * (4 * 4 + elemIndex) + 1],
-                                    };
-                                    float val = ArrayUtil.ReadInt32BE(bytes) / (float)0x10000;
+                                    float val = mtx[j, i]; // Matrix4 uses column-major order
                                     string valStr = $"{val}";
                                     mtxStr[i,j] = valStr;
                                     columnsWidth[j] = Math.Max(valStr.Length, columnsWidth[j]);
                                 }
                             }
 
-                            int w = 6;
+                            string columnSeparator = "  ";
+                            int w = 3 * columnSeparator.Length;
                             for (int j = 0; j < 4; j++)
                                 w += columnsWidth[j];
                             sw.WriteLine(" ┌ " + new string(' ', w) + " ┐ ");
@@ -277,7 +270,7 @@ namespace Z64.Forms
                                 {
                                     values += mtxStr[i, j].PadLeft(columnsWidth[j]);
                                     if (j != 3)
-                                        values += $"  ";
+                                        values += columnSeparator;
                                 }
                                 sw.WriteLine($" │ {values} │ ");
                             }
