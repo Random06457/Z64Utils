@@ -88,6 +88,8 @@ namespace Z64.Forms
             GL.Color3(0xFF, 0, 0);
             _skelRenderer.RenderFrame(_renderer, selNodes, true);
             */
+            
+            _renderer.RenderEnd();
 
             toolStripErrorLabel.Text = _renderer.RenderFailed()
                 ? $"RENDER ERROR AT 0x{_renderer.RenderErrorAddr:X8}! ({_renderer.ErrorMsg})"

@@ -322,8 +322,50 @@ namespace F3DZEX.Render
             _rdpVtxDrawer.SendHighlightEnabled(enabled);
         }
 
+        int _fbo;
+        int _fboTex;
+        FrameBufferDrawer2 _fbDrawer;
         private void Init()
         {
+            // create fbo
+            _fbo = GL.GenFramebuffer();
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, _fbo);
+
+            // create color texture
+            _fboTex = GL.GenTexture();
+            GL.BindTexture(TextureTarget.Texture2D, _fboTex);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, 1000, 1000, 0, PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+            GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, _fboTex, 0);
+            GL.DrawBuffers(1, new DrawBuffersEnum[] { DrawBuffersEnum.ColorAttachment0, });
+            /*
+            // create depth buffer
+            int fboDepth = GL.GenTexture();
+            GL.BindTexture(TextureTarget.Texture2D, fboDepth);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Depth24Stencil8, 1000, 1000, 0, PixelFormat.DepthStencil, PixelType.UnsignedInt248, IntPtr.Zero);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+            GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthStencilAttachment, TextureTarget.Texture2D, fboDepth, 0);
+            */
+            // create render buffer for depth / stencil attachment
+            int rbo = GL.GenRenderbuffer();
+            GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, rbo);
+            GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, RenderbufferStorage.Depth24Stencil8, 1000, 1000);
+            GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthStencilAttachment, RenderbufferTarget.Renderbuffer, rbo);
+
+            if (GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer) != FramebufferErrorCode.FramebufferComplete)
+            {
+                throw new Exception();
+            }
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+
+            _fbDrawer = new FrameBufferDrawer2();
+
+
+
+
+
             /* Init Texture */
             GL.Hint(HintTarget.PerspectiveCorrectionHint, HintMode.Nicest);
 
@@ -354,45 +396,32 @@ namespace F3DZEX.Render
             _initialized = true;
         }
 
-        public void RenderStart(Matrix4 proj, Matrix4 view)
+        void RenderScene(Matrix4 proj, Matrix4 view)
         {
-            if (!_initialized)
-                Init();
-
-            CheckGLErros();
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             GL.ClearColor(CurrentConfig.BackColor);
-            CheckGLErros();
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            if (RenderFailed())
-                return;
-
-            CheckGLErros();
             RdpMtxStack.Clear();
             ModelMtxStack.Clear();
 
             GL.ActiveTexture(TextureUnit.Texture0);
-            CheckGLErros();
             _tex0.Use();
 
-            GL.ActiveTexture(TextureUnit.Texture1);
-            CheckGLErros();
-            _tex1.Use();
-            CheckGLErros();
+            // GL.ActiveTexture(TextureUnit.Texture1);
+            // _tex1.Use();
 
 
             _gridDrawer.SendProjViewMatrices(ref proj, ref view);
             _axisDrawer.SendProjViewMatrices(ref proj, ref view);
             _rdpVtxDrawer.SendProjViewMatrices(ref proj, ref view);
             _rdpVtxDrawer.SendInitialColors(CurrentConfig);
-            CheckGLErros();
+
             Matrix4 id = Matrix4.Identity;
             _textDrawer.SendProjViewMatrices(ref id, ref id);
 
             _rdpVtxDrawer.SendModelMatrix(ModelMtxStack.Top());
             _gridDrawer.SendModelMatrix(Matrix4.Identity);
             _axisDrawer.SendModelMatrix(Matrix4.Identity);
-            CheckGLErros();
 
             _rdpVtxDrawer.SendHighlightColor(CurrentConfig.HighlightColor);
             _rdpVtxDrawer.SendHighlightEnabled(false);
@@ -400,9 +429,8 @@ namespace F3DZEX.Render
             _rdpVtxDrawer.SendNormalColor(CurrentConfig.NormalColor);
             _rdpVtxDrawer.SendWireFrameColor(CurrentConfig.WireframeColor);
             _rdpVtxDrawer.SendLightingEnabled(CurrentConfig.EnabledLighting);
-            CheckGLErros();
 
-            GL.Enable(EnableCap.DepthTest);
+            // GL.Enable(EnableCap.DepthTest);
             //GL.DepthFunc(DepthFunction.Lequal);
             //GL.DepthMask(false);
             //glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND)
@@ -410,7 +438,6 @@ namespace F3DZEX.Render
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             GL.Enable(EnableCap.Texture2D);
-            CheckGLErros();
 
             if (CurrentConfig.ShowGrid)
                 RenderHelper.DrawGrid(_gridDrawer);
@@ -427,8 +454,134 @@ namespace F3DZEX.Render
                     $"Renderer: {GL.GetString(StringName.Renderer)}\n" +
                     $"Vendor: {GL.GetString(StringName.Vendor)}");
             }
+        }
+
+        static int _tex = -1;
+
+
+
+        int test_texW = 500;
+        int test_texH = 500;
+        int test_colorTex = 0;
+        int test_depthTex = 0;
+        int test_fbo = 0;
+        FrameBufferDrawer2 test_fbDrawer;
+
+        void TestFbo(Matrix4 proj, Matrix4 view)
+        {
+
+            if (!_initialized)
+            {
+                Init();
+                test_fbDrawer = new FrameBufferDrawer2();
+
+                // color tex
+                test_colorTex = GL.GenTexture();
+                GL.BindTexture(TextureTarget.Texture2D, test_colorTex);
+                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba8, test_texW, test_texH, 0, PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToBorder);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToBorder);
+
+                // depth Tex
+                test_depthTex = GL.GenTexture();
+                GL.BindTexture(TextureTarget.Texture2D, test_depthTex);
+                GL.TexImage2D(TextureTarget.Texture2D, 0, (PixelInternalFormat)All.DepthComponent32, test_texW, test_texH, 0, PixelFormat.DepthComponent, PixelType.UnsignedInt, IntPtr.Zero);
+                // things go horribly wrong if DepthComponent's Bitcount does not match the main Framebuffer's Depth
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToBorder);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToBorder);
+
+
+                // fb
+                test_fbo = GL.GenFramebuffer();
+                GL.BindFramebuffer(FramebufferTarget.Framebuffer, test_fbo);
+                GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, test_colorTex, 0);
+                GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment, TextureTarget.Texture2D, test_depthTex, 0);
+
+                if (GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer) != FramebufferErrorCode.FramebufferComplete)
+                    throw new Exception();
+
+                GL.BindTexture(TextureTarget.Texture2D, test_colorTex);
+
+                _initialized = true;
+            }
+
+            if (RenderFailed())
+                return;
+
+            // render to fbo
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, test_fbo);
+            GL.Enable(EnableCap.DepthTest);
+            
+            RenderScene(proj, view);
+        }
+
+        public void RenderStart(Matrix4 proj, Matrix4 view)
+        {
+
+            TestFbo(proj, view);
+            return;
+
+            if (!_initialized)
+                Init();
+
+            if (RenderFailed())
+                return;
+
+
+            if (_tex == -1 && false)
+            {
+                byte[] texData = new byte[1000 * 1000 * 4];
+                for (int y = 0; y < 1000; y++)
+                    for (int x = 0; x < 1000; x++)
+                    {
+                        int idx = (y * 1000 + x) * 4;
+                        texData[idx + 0] = 0xFF;
+                        texData[idx + 1] = 0x00;
+                        texData[idx + 2] = 0x00;
+                        texData[idx + 3] = 0xFF;
+                    }
+
+                GL.BindTexture(TextureTarget.Texture2D, _fboTex);
+                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, 1000, 1000, 0, PixelFormat.Rgba, PixelType.UnsignedByte, texData);
+                _tex = 0;
+            }
+
+
+            GL.Enable(EnableCap.Blend);
+            GL.Enable(EnableCap.Texture2D);
+
+            // render to framebuffer
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, _fbo);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
+            GL.Enable(EnableCap.DepthTest);
+            RenderScene(proj, view);
+            
+            // render framebuffer to screen
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+            GL.Disable(EnableCap.DepthTest);
+            GL.ClearColor(Color.Red);
+            GL.Clear(ClearBufferMask.ColorBufferBit);
+
+
+            GL.BindTexture(TextureTarget.Texture2D, _fboTex);
+            _fbDrawer.Draw();
 
             CheckGLErros();
+        }
+
+        public void RenderEnd()
+        {
+            // render screen
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+            GL.Disable(EnableCap.DepthTest);
+            GL.ClearColor(Color.Red);
+            GL.Clear(ClearBufferMask.ColorBufferBit);
+            GL.BindTexture(TextureTarget.Texture2D, test_colorTex);
+            test_fbDrawer.Draw();   
         }
 
         public Dlist GetDlist(uint vaddr)

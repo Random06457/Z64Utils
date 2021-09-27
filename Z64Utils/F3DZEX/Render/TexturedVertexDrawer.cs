@@ -26,6 +26,11 @@ namespace F3DZEX.Render
             _shader.Send("u_Color", color);
         }
 
+        public void SendTexture(int tex)
+        {
+            _shader.Send("u_Tex", tex);
+        }
+
         public void SetData(float[] data, BufferUsageHint hint) => SetVertexData(data, data.Length * sizeof(float), hint);
 
         public void SendProjViewMatrices(ref Matrix4 proj, ref Matrix4 view)

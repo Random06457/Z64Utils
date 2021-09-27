@@ -72,7 +72,7 @@ namespace Z64.Forms
 
             _routines = new List<RenderRoutine>();
             DecodeDlists();
-            NewRender();
+            RequestRender();
         }
 
         void DecodeDlists()
@@ -111,11 +111,13 @@ namespace Z64.Forms
                 _renderer.ModelMtxStack.Pop();
             }
 
+            _renderer.RenderEnd();
+
             toolStripStatusErrorLabel.Text = _renderer.RenderFailed()
                 ? $"RENDER ERROR AT 0x{_renderer.RenderErrorAddr:X8}! ({_renderer.ErrorMsg})"
                 : "";
         }
-        private void NewRender(object sender = null, EventArgs e = null)
+        private void RequestRender(object sender = null, EventArgs e = null)
         {
             _renderer.ClearErrors();
 
@@ -147,7 +149,7 @@ namespace Z64.Forms
             {
                 _renderer.Memory.Segments[index] = segment;
                 DecodeDlists();
-                NewRender();
+                RequestRender();
             }
         }
 
@@ -161,7 +163,7 @@ namespace Z64.Forms
             _routines.Add(routine);
 
             DecodeDlists();
-            NewRender();
+            RequestRender();
         }
 
         public void AddDList(uint vaddr, int x = 0, int y = 0, int z = 0)
@@ -171,7 +173,7 @@ namespace Z64.Forms
             _routines.Add(routine);
 
             DecodeDlists();
-            NewRender();
+            RequestRender();
         }
 
 
@@ -210,7 +212,7 @@ namespace Z64.Forms
             _renderer.Memory.Segments[(int)sender] = e;
 
             DecodeDlists();
-            NewRender();
+            RequestRender();
         }
 
         private void toolStripDisasBtn_Click(object sender, EventArgs e)
@@ -377,7 +379,7 @@ namespace Z64.Forms
                         routine.Y = int.Parse(parts[2]);
                         routine.Z = int.Parse(parts[3]);
                     }
-                    NewRender();
+                    RequestRender();
                 }
             }
             
@@ -393,7 +395,7 @@ namespace Z64.Forms
                 _routines.RemoveAt(idx);
 
                 DecodeDlists();
-                NewRender();
+                RequestRender();
             }
         }
 
