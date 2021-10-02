@@ -39,6 +39,7 @@ namespace Z64.Forms
 
         SkeletonRenderer _skelRenderer;
         List<AnimationHolder> _anims;
+        Func<int, SegmentedAddress, string> _limbNamer;
 
         public SkeletonViewerForm(Z64Game game)
         {
@@ -124,18 +125,19 @@ namespace Z64.Forms
 
 
 
-        public void SetSkeleton(SkeletonHolder skel, List<AnimationHolder> anims)
+        public void SetSkeleton(SkeletonHolder skel, List<AnimationHolder> anims, Func<int, SegmentedAddress, string> limbNamer = null)
         {
             _dlistError = null;
             try
             {
-                _skelRenderer.SetSkeleton(skel, _renderer.Memory);
+                _skelRenderer.SetSkeleton(skel, _renderer.Memory, limbNamer);
             }
             catch (Exception ex)
             {
                 _dlistError = ex.Message;
             }
             _anims = anims;
+            _limbNamer = limbNamer;
 
             listBox_anims.Items.Clear();
             _anims.ForEach(a => listBox_anims.Items.Add(a.Name));
@@ -157,7 +159,7 @@ namespace Z64.Forms
         {
             var limb = _skelRenderer.Limbs[i];
             
-            var node = parent.Nodes.Add($"limb_{i}");
+            var node = parent.Nodes.Add(limb.Name);
             node.Tag = limb;
 
             if (limb.Sibling != 0xFF)
@@ -219,7 +221,7 @@ namespace Z64.Forms
 
             if (_skelRenderer.Limbs!= null)
             {
-                SetSkeleton(_skelRenderer.Skeleton, _anims);
+                SetSkeleton(_skelRenderer.Skeleton, _anims, _limbNamer);
             }
         }
         private void ToolStripSegmentsBtn_Click(object sender, System.EventArgs e)
@@ -240,7 +242,7 @@ namespace Z64.Forms
                     {
                         _renderer.Memory.Segments[(int)sender] = seg;
 
-                        SetSkeleton(_skelRenderer.Skeleton, _anims);
+                        SetSkeleton(_skelRenderer.Skeleton, _anims, _limbNamer);
                         RequestRender();
                     }
                 };
