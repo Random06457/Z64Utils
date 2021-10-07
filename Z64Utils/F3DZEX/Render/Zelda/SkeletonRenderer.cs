@@ -100,10 +100,9 @@ namespace F3DZEX.Render.Zelda
             SetFrame(mem, 0);
         }
 
-        public void SetSkeleton(SkeletonHolder skel, Memory mem)
+        public void SetSkeleton(SkeletonHolder skel, Memory mem, Func<int, SegmentedAddress, string> limbNameCallback = null)
         {
             _skel = skel;
-
 
             byte[] limbsData = mem.ReadBytes(_skel.LimbsSeg, _skel.LimbCount * 4);
 
@@ -112,8 +111,16 @@ namespace F3DZEX.Render.Zelda
             _limbs = new List<SkeletonLimbHolder>();
             for (int i = 0; i < limbs.LimbSegments.Length; i++)
             {
+                string limbNameBase = limbNameCallback != null
+                    ? limbNameCallback(i, limbs.LimbSegments[i])
+                    : null;
+                string limbName = limbNameBase != null
+                    // prepend limb index to the callback-provided limb name
+                    ? $"{i + 1} {limbNameBase}"
+                    // no callback or the callback didn't provide a name, use a default limb name
+                    : $"limb_{i + 1}";
                 byte[] limbData = mem.ReadBytes(limbs.LimbSegments[i], SkeletonLimbHolder.ENTRY_SIZE);
-                var limb = new SkeletonLimbHolder($"limb_{i}", limbData);
+                var limb = new SkeletonLimbHolder(limbName, limbData);
                 _limbs.Add(limb);
             }
 

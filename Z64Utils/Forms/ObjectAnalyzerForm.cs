@@ -386,6 +386,9 @@ namespace Z64.Forms
         private void openSkeletonViewerMenuItem_Click(object sender, EventArgs e)
         {
             var holder = GetCurrentHolder<Z64Object.ObjectHolder>();
+            Func<int, SegmentedAddress, string> limbNamer = (i, addr) => {
+                return _obj.Entries.Find(e => _obj.OffsetOf(e) == addr.SegmentOff)?.Name;
+            };
             switch (holder.GetEntryType())
             {
                 case Z64Object.EntryType.FlexSkeletonHeader:
@@ -400,7 +403,7 @@ namespace Z64.Forms
 
                         SkeletonViewerForm form = new SkeletonViewerForm(_game);
                         form.SetSegment(_segment, F3DZEX.Memory.Segment.FromBytes("[Current Object]", _data));
-                        form.SetSkeleton(skel, anims);
+                        form.SetSkeleton(skel, anims, limbNamer);
                         form.Show();
                         break;
                     }
@@ -416,7 +419,7 @@ namespace Z64.Forms
 
                         SkeletonViewerForm form = new SkeletonViewerForm(_game);
                         form.SetSegment(_segment, F3DZEX.Memory.Segment.FromBytes("[Current Object]", _data));
-                        form.SetSkeleton(skel, anims);
+                        form.SetSkeleton(skel, anims, limbNamer);
                         form.Show();
                         break;
                     }
