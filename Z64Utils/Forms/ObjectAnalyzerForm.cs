@@ -244,19 +244,37 @@ namespace Z64.Forms
                         StringWriter sw = new StringWriter();
                         for (int n = 0; n < matrices.Matrices.Count; n++)
                         {
-                            sw.WriteLine($" ┌                                                ┐ ");
+                            var mtx = new Mtx(matrices.Matrices[n].GetBuffer()).ToMatrix4();
+                            string[,] mtxStr = new string[4, 4];
+                            int[] columnsWidth = { 0, 0, 0, 0 };
+                            for (int i = 0; i < 4; i++)
+                            {
+                                for (int j = 0; j < 4; j++)
+                                {
+                                    float val = mtx[j, i]; // Matrix4 uses column-major order
+                                    string valStr = $"{val}";
+                                    mtxStr[i,j] = valStr;
+                                    columnsWidth[j] = Math.Max(valStr.Length, columnsWidth[j]);
+                                }
+                            }
+
+                            string columnSeparator = "  ";
+                            int w = 3 * columnSeparator.Length;
+                            for (int j = 0; j < 4; j++)
+                                w += columnsWidth[j];
+                            sw.WriteLine(" ┌ " + new string(' ', w) + " ┐ ");
                             for (int i = 0; i < 4; i++)
                             {
                                 var values = "";
                                 for (int j = 0; j < 4; j++)
                                 {
-                                    values += $"0x{ArrayUtil.ReadUint32BE(matrices.Matrices[n].GetBuffer(), 4*(4 * i + j)):X08}";
+                                    values += mtxStr[i, j].PadLeft(columnsWidth[j]);
                                     if (j != 3)
-                                        values += $"  ";
+                                        values += columnSeparator;
                                 }
                                 sw.WriteLine($" │ {values} │ ");
                             }
-                            sw.WriteLine($" └                                                ┘ ");
+                            sw.WriteLine(" └ " + new string(' ', w) + " ┘ ");
                         }
                         textBox_holderInfo.Text = sw.ToString();
                         break;
