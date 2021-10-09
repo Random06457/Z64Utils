@@ -70,7 +70,28 @@ namespace F3DZEX.Command
                 return ms.GetBuffer().Take((int)ms.Length).ToArray();
             }
         }
+        public static int GetDListSize(byte[] ucode, int off = 0)
+        {
+            int length = 0;
+            using (MemoryStream ms = new MemoryStream(ucode))
+            {
+                ms.Position = off;
+                while (ms.Position < ms.Length)
+                {
+                    length += 1;
+                    CmdID id = (CmdID)ms.ReadByte();
 
+                    if (!DEC_TABLE.ContainsKey(id))
+                        throw new InvalidF3DZEXOpCodeException($"Invalid OpCode : {id:X}");
+
+                    ms.Seek(7, SeekOrigin.Current);
+
+                    if (id == CmdID.G_ENDDL)
+                        break;
+                }
+            }
+            return length * 8;
+        }
 
         public static readonly Dictionary<CmdID, Func<BitReader, CmdInfo>> DEC_TABLE = new Dictionary<CmdID, Func<BitReader, CmdInfo>>()
         {

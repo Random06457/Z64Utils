@@ -139,14 +139,19 @@ namespace Z64.Forms
             for (int i = 0; i < _obj.Entries.Count; i++)
             {
                 var entry = _obj.Entries[i];
+                string type;
+                if (entry.GetEntryType() == Z64Object.EntryType.Unimplemented)
+                    type = "XXX " + ((Z64Object.UnimplementedHolder)entry).Description;
+                else
+                    type = entry.GetEntryType().ToString();
                 string addrStr = $"{new SegmentedAddress(_segment, _obj.OffsetOf(entry)).VAddr:X8}";
-                string entryStr = $"{addrStr}{entry.Name}{entry.GetEntryType()}".ToLower();
+                string entryStr = $"{addrStr}{entry.Name}{type}".ToLower();
 
                 if (entryStr.Contains(compare))
                 {
                     var item = listView_map.Items.Add(addrStr);
                     item.SubItems.Add(entry.Name);
-                    item.SubItems.Add(entry.GetEntryType().ToString());
+                    item.SubItems.Add(type);
                     item.Tag = i;
                 }
             }
@@ -343,6 +348,13 @@ namespace Z64.Forms
                 case Z64Object.EntryType.FrameData:
                 case Z64Object.EntryType.Unknown:
                     {
+                        SelectTabPage(tabPage_unknow);
+                        break;
+                    }
+                case Z64Object.EntryType.Unimplemented:
+                    {
+                        string description = ((Z64Object.UnimplementedHolder)holder).Description;
+                        // todo show description
                         SelectTabPage(tabPage_unknow);
                         break;
                     }
@@ -543,6 +555,7 @@ namespace Z64.Forms
                                 break;
                             }
                         case Z64Object.EntryType.Unknown:
+                        case Z64Object.EntryType.Unimplemented:
                             {
                                 sw.WriteLine($"u8 {entry.Name}[] = \r\n{{");
 
@@ -620,6 +633,49 @@ namespace Z64.Forms
                 }
 
                 File.WriteAllText(saveFileDialog1.FileName, sw.ToString());
+            }
+        }
+
+        private void importXMLZAPDToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            openFileDialog1.FileName = "";
+            openFileDialog1.Filter = $"{Filters.XML}|{Filters.ALL}";
+            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                string xml = File.ReadAllText(openFileDialog1.FileName);
+                StringWriter warnings = new StringWriter();
+                Z64Object newObj = null;
+
+                try
+                {
+                    // todo allow the user to provide fileName somehow
+                    newObj = Z64Object.FromXmlZAPD(xml, _data, warnings);
+                }
+                catch (FileFormatException ex)
+                {
+                    warnings.WriteLine();
+                    warnings.WriteLine("The XML is not a ZAPD-compatible XML file:");
+                    warnings.WriteLine(ex.Message);
+                }
+                catch (NotImplementedException ex)
+                {
+                    warnings.WriteLine();
+                    warnings.WriteLine("The XML uses features that aren't implemented yet:");
+                    warnings.WriteLine(ex.Message);
+                }
+
+                string warningsStr = warnings.ToString();
+                if (warningsStr.Length != 0)
+                {
+                    TextForm form = new TextForm(SystemIcons.Warning, "Warning", warningsStr);
+                    form.ShowDialog();
+                }
+
+                if (newObj != null)
+                {
+                    _obj = newObj;
+                    UpdateMap();
+                }
             }
         }
 

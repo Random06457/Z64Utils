@@ -79,6 +79,7 @@
             this.disassemblySettingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
+            this.importXMLZAPDToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.textBox_filter = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
             this.tabControl1.SuspendLayout();
@@ -388,6 +389,7 @@
             this.analyzeDlistsToolStripMenuItem,
             this.importJSONToolStripMenuItem,
             this.exportJSONToolStripMenuItem,
+            this.importXMLZAPDToolStripMenuItem,
             this.resetToolStripMenuItem});
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
             this.toolsToolStripMenuItem.Size = new System.Drawing.Size(62, 20);
@@ -448,6 +450,13 @@
             // openFileDialog1
             // 
             this.openFileDialog1.FileName = "openFileDialog1";
+            // 
+            // importXMLZAPDToolStripMenuItem
+            // 
+            this.importXMLZAPDToolStripMenuItem.Name = "importXMLZAPDToolStripMenuItem";
+            this.importXMLZAPDToolStripMenuItem.Size = new System.Drawing.Size(276, 26);
+            this.importXMLZAPDToolStripMenuItem.Text = "Import XML (ZAPD)";
+            this.importXMLZAPDToolStripMenuItem.Click += new System.EventHandler(this.importXMLZAPDToolStripMenuItem_Click);
             // 
             // textBox_filter
             // 
@@ -538,6 +547,7 @@
         private System.Windows.Forms.ToolStripMenuItem addToDlistViewerMenuItem;
         private System.Windows.Forms.ToolStripMenuItem openSkeletonViewerMenuItem;
         private System.Windows.Forms.Label label_textureInfo;
+        private System.Windows.Forms.ToolStripMenuItem importXMLZAPDToolStripMenuItem;
         private System.Windows.Forms.TextBox textBox_filter;
         private System.Windows.Forms.Label label1;
     }
